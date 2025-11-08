@@ -1,0 +1,56 @@
+Zadanie: rozwiązanie problemu grafikowania Call Center
+
+Zaczynasz z problemem opisanym przez nas na Loom, jego podsumowanie znajdziesz też niżej:  
+https://www.loom.com/share/8efcbe5b8e704420b70687b0fd7e9cd7?sid=0e2e405e-12ff-407f-8c8e-09998275b292
+
+
+Kontekst problemu:
+Mamy Call Center w jakiejś firmie telekomunikacyjnej, obsługujące różne “kolejki” tematyczne (np. sprzedaż, wsparcie techniczne, reklamacje itd)
+Pracuje tam kilkadziesiąt osób w elastycznych godzinach pracy, dostępność ludzie deklarują z tygodniowym wyprzedzeniem, ale jest ona zmienna i może się zmienić po wygenerowaniu grafiku
+Trudno jest układać grafik dla tych agentów, by pokryć zapotrzebowanie a jednocześnie, żeby nie było za dużo ich w ramach jednej godziny.
+Różni agenci umieją obsługiwać różne kolejki (niektórzy wiele różnych kolejek, niektórzy 1-2 kolejki)
+Każdy agent na danej kolejce ma swoją efektywność, bazującą na danych historycznych.
+Znamy historię połączeń w minionych tygodniach na każdej kolejce, w każdej godzinie, celem robienia predykcji
+
+Cel do osiągnięcia: 
+Zaprojektować optymalny proces układania grafiku pracy agentów CC tak, żeby brać pod uwagę obsługiwane kolejki, efektywność i zapotrzebowanie
+
+Przyjmij następujące założenia (utwórz swoje dane przykładowe):
+Określ samodzielnie, jakie kolejki na CC są obsługiwane (możesz też posłużyć się tymi z przykładu)
+Określ samodzielnie, ilu operatorów mamy i jakie kolejki obsługują
+Określ samodzielnie, jak wygląda historia połączeń, lub też jak wygląda predykcja zapotrzebowania na kolejkach
+
+Jak stwierdzić, czy rozwiązanie i proces grafikowania będzie optymalne?
+Chodzi o proces (i rozwiązanie go wspierające) taki, który z jednej strony sensownie umożliwia tworzenie grafiku (poprzez zarządzającego lub operatorów dodających swoją dostępność w danych porach), a z drugiej strony jasny pogląd, czy dany stan grafiku pokrywa zapotrzebowanie.
+
+Zakres zadania wydaje się za duży? 
+Przypominamy - chodzi o prorotyp, więc pewne uproszczenia lub zahardkodowane zmienne są OK - to nie musi być w 100% działająca aplikacja - chodzi o to, żeby zilustrować rozwiązanie problemu (a samo rozwiązanie do gotowości produkcyjnej może wymagać trochę dodatkowej pracy kiedy indziej).
+
+Naszym zdaniem pracując z AI w IDE można napisać działający prototyp w około 3-4h, skupiając się na wartości biznesowej. Potraktuj to jako punkt odniesienia dot. szczegółowości/kompletności rozwiązania. Możesz przyjąć pewne założenia upraszczające, jeśli wyjaśnisz dlaczego takie przyjąłeś.
+Co masz zrobić?
+zaprojektuj optymalny proces układania grafiku agentów Call Center
+Narysuj diagram procesu np. na Miro  (tj. przebieg procesu, kto, co i kiedy robi)
+Przygotuj prototyp aplikacji, która może rozwiązać opisany problem.
+nie zalezy nam na aplikacji “production ready”
+to ma być klikalny prorotyp aplikacji, która ilustruje zamysł rozwiązania
+Użyj technologii:
+backend - (PHP, najlepiej Symfony, jako API)
+frontend - (React)
+DB - Xano lub Airtable, ew. MySQL
+IDE - Cursor / Windsurf
+note: u nas cały team koduje w Cursorze
+
+Czego oczekujemy w rozwiązaniu?
+
+Prosimy, żeby przesyłane rozwiązanie zawierało:
+diagram procesu (polecamy Miro.com)
+kod prototypu aplikacji, która pomoże rozwiązać przedstawiony problem (link do repozytorium z uprawnieniami dostępu, najlepiej na Github)
+krótkie wideo (max kilka minut) na którym:
+opowiesz, jak wygląda optymalny proces
+“przeklikasz” pokrótce tę aplikację/prototyp, prezentując zasady jej działania, jak Twoja aplikacja rozwiązuje ten problem, oraz jakie założenia przyjmujesz
+do video polecamy np. Loom.com
+
+Co będzie dodatkowym plusem?
+Wystawienie nam prototypu tej aplikacji do samodzielnego poklikania (link dowolny, dostępy mogą być np. jako HTTP BasicAuth)
+Dobre wyczucie stosunku value/effort - czyli co w takim procesie w prawdziwym życiu w jest najbardziej potrzebne i wnosi największą wartość biznesową - i sprytna propozycja zaadresowania tej potrzeby 
+do każdego problemu może być dużo różnych rozwiązań - cenimy bardzo ludzi potrafiących samodzielnie trafiać w takie rozwiązania, które my sami byśmy wybrali 🙂

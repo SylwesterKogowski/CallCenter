@@ -1,0 +1,49 @@
+services:
+  backend:
+    profiles: [all]
+    build: ./backend
+    container_name: backend
+    environment:
+      APP_ROOT: /var/www/html/public
+    volumes:
+      - ../backend:/var/www/html
+    ports:
+      - "${BACKEND_PORT}:80"
+    networks:
+      - app-network
+
+  database:
+    profiles: [all]
+    image: mariadb:12
+    container_name: database
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: app_db
+      MYSQL_USER: app_user
+      MYSQL_PASSWORD: app_password
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - app-network
+
+  frontend:
+    profiles: [all]
+    image: node:25
+    container_name: frontend
+    working_dir: /app
+    volumes:
+      - ../frontend:/app
+    ports:
+      - "${FRONTEND_PORT}:3000"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mariadb_data:
+
