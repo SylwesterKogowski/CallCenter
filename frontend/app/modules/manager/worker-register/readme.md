@@ -2,75 +2,27 @@
 
 ## Opis modułu
 
-Moduł dodawania pracowników jest komponentem Reactowym, który umożliwia managerowi zarejestrowanie nowego pracownika w systemie Call Center. Moduł składa się z przycisku, który otwiera okienko (modal/dialog) z formularzem rejestracji pracownika.
+Moduł dodawania pracowników jest komponentem Reactowym, który umożliwia managerowi zarejestrowanie nowego pracownika w systemie Call Center. Moduł zawiera wyłącznie formularz rejestracji pracownika. Layout strony (tytuł, header, nawigacja) jest obsługiwany przez inny komponent.
 
 Moduł jest dostępny wyłącznie dla zalogowanych pracowników z rolą managera. Manager może utworzyć nowe konto pracownicze z loginem i hasłem oraz przypisać pracownikowi uprawnienia do wybranych kategorii ticketów (kolejek tematycznych).
 
 ## Funkcjonalność
 
-1. **Przycisk otwierający formularz** - przycisk, który otwiera okienko z formularzem rejestracji pracownika
-2. **Formularz rejestracji** - okienko modalne z formularzem zawierającym:
+1. **Formularz rejestracji** - formularz rejestracji pracownika zawierający:
    - Pole loginu pracownika (wymagane)
    - Pole hasła pracownika (wymagane)
    - Pole potwierdzenia hasła (wymagane)
    - Lista checkboxów z kategoriami ticketów do przypisania uprawnień
    - Checkbox do oznaczenia pracownika jako managera (opcjonalnie)
-3. **Walidacja danych** - weryfikacja poprawności wprowadzonych danych przed wysłaniem
-4. **Wysyłanie żądania rejestracji** - wysłanie żądania do API backendu w celu utworzenia nowego konta pracowniczego
-5. **Obsługa błędów** - wyświetlanie komunikatów błędów w przypadku nieprawidłowych danych lub problemów z połączeniem
-6. **Zamykanie okienka** - możliwość zamknięcia okienka bez zapisywania (anulowanie)
+2. **Walidacja danych** - weryfikacja poprawności wprowadzonych danych przed wysłaniem
+3. **Wysyłanie żądania rejestracji** - wysłanie żądania do API backendu w celu utworzenia nowego konta pracowniczego
+4. **Obsługa błędów** - wyświetlanie komunikatów błędów w przypadku nieprawidłowych danych lub problemów z połączeniem
+5. **Komunikat sukcesu** - wyświetlanie komunikatu sukcesu po pomyślnej rejestracji z możliwością rejestracji kolejnego pracownika
 
 ## Podkomponenty
 
-### WorkerRegisterButton (Przycisk otwierający formularz)
-Główny komponent przycisku, który otwiera okienko z formularzem rejestracji.
-
-**Funkcjonalność:**
-- Wyświetlanie przycisku z etykietą (np. "Dodaj pracownika", "Zarejestruj pracownika")
-- Otwieranie okienka modalnego z formularzem po kliknięciu
-- Wizualne wyróżnienie przycisku jako głównej akcji
-- Wyświetlanie ikony (opcjonalnie)
-
-**Props:**
-- `onClick: () => void` - funkcja wywoływana przy kliknięciu (otwiera okienko)
-- `variant?: 'primary' | 'secondary'` - wariant stylu przycisku (opcjonalnie)
-- `disabled?: boolean` - czy przycisk powinien być wyłączony
-
-### WorkerRegisterModal (Okienko z formularzem)
-Komponent okienka modalnego zawierającego formularz rejestracji pracownika.
-
-**Funkcjonalność:**
-- Zarządzanie stanem otwarcia/zamknięcia okienka
-- Wyświetlanie formularza rejestracji w okienku modalnym
-- Obsługa zamykania okienka (przycisk X, kliknięcie poza okienkiem, klawisz Escape)
-- Wyświetlanie tytułu okienka (np. "Rejestracja nowego pracownika")
-- Zarządzanie stanem formularza i koordynacja wszystkich podkomponentów
-- Obsługa wysyłania formularza do API
-- Obsługa błędów z API
-- Wyświetlanie komunikatu sukcesu po pomyślnej rejestracji
-- Zamykanie okienka po pomyślnej rejestracji
-
-**Props:**
-- `isOpen: boolean` - czy okienko jest otwarte
-- `onClose: () => void` - funkcja wywoływana przy zamykaniu okienka
-- `onWorkerRegistered?: (worker: Worker) => void` - opcjonalna funkcja callback wywoływana po pomyślnej rejestracji
-
-**State:**
-```typescript
-interface WorkerRegisterModalState {
-  login: string;
-  password: string;
-  confirmPassword: string;
-  selectedCategories: string[]; // ID wybranych kategorii
-  isManager: boolean;
-  isLoading: boolean;
-  errors: FormErrors;
-  apiError: string | null;
-}
-```
-
 ### WorkerRegisterForm (Główny komponent formularza)
-Główny komponent formularza rejestracji, który zarządza stanem formularza i koordynuje wszystkie podkomponenty.
+Główny komponent formularza rejestracji, który zarządza stanem formularza i koordynuje wszystkie podkomponenty. Jest to główny eksportowany komponent modułu.
 
 **Funkcjonalność:**
 - Zarządzanie stanem formularza (login, hasło, potwierdzenie hasła, wybrane kategorie, rola managera)
@@ -79,10 +31,26 @@ Główny komponent formularza rejestracji, który zarządza stanem formularza i 
 - Obsługa błędów z API
 - Wyświetlanie stanu ładowania podczas przetwarzania żądania
 - Resetowanie formularza po pomyślnej rejestracji
+- Wyświetlanie komunikatu sukcesu po pomyślnej rejestracji
 
 **Props:**
-- `onSubmit: (data: WorkerRegisterData) => Promise<void>` - funkcja wywoływana przy wysłaniu formularza
-- `onCancel: () => void` - funkcja wywoływana przy anulowaniu
+- `onWorkerRegistered?: (worker: Worker) => void` - opcjonalna funkcja callback wywoływana po pomyślnej rejestracji
+
+**State:**
+```typescript
+interface WorkerRegisterFormState {
+  login: string;
+  password: string;
+  confirmPassword: string;
+  selectedCategories: string[]; // ID wybranych kategorii
+  isManager: boolean;
+  isLoading: boolean;
+  errors: FormErrors;
+  apiError: string | null;
+  isSuccess: boolean;
+  registeredWorker: Worker | null;
+}
+```
 
 **Interfejsy:**
 ```typescript
@@ -110,7 +78,7 @@ Komponent pola tekstowego do wprowadzania loginu pracownika.
 - Walidacja unikalności loginu (sprawdzenie po stronie serwera)
 - Wyświetlanie komunikatów błędów walidacji
 - Placeholder z przykładowym loginem
-- Automatyczne fokusowanie przy otwarciu okienka
+- Automatyczne fokusowanie przy załadowaniu komponentu
 
 **Props:**
 - `login: string` - wartość loginu
@@ -212,18 +180,6 @@ Komponent przycisku do wysłania formularza rejestracji.
 - `isDisabled?: boolean` - czy przycisk powinien być wyłączony
 - `onClick: () => void` - funkcja wywoływana przy kliknięciu
 
-### CancelButton (Przycisk anulowania)
-Komponent przycisku do anulowania rejestracji i zamknięcia okienka.
-
-**Funkcjonalność:**
-- Wyświetlanie tekstu przycisku (np. "Anuluj")
-- Obsługa kliknięcia i wywołanie funkcji onCancel
-- Dezaktywacja przycisku podczas przetwarzania (opcjonalnie)
-
-**Props:**
-- `onClick: () => void` - funkcja wywoływana przy kliknięciu
-- `isDisabled?: boolean` - czy przycisk powinien być wyłączony (np. podczas wysyłania formularza)
-
 ### ErrorDisplay (Wyświetlanie błędów)
 Komponent do wyświetlania błędów walidacji i błędów z API.
 
@@ -255,11 +211,11 @@ Komponent wyświetlający komunikat sukcesu po pomyślnej rejestracji pracownika
 **Funkcjonalność:**
 - Wyświetlanie komunikatu sukcesu (np. "Pracownik został pomyślnie zarejestrowany")
 - Wyświetlanie informacji o zarejestrowanym pracowniku (login)
-- Automatyczne zamknięcie komunikatu po kilku sekundach (opcjonalnie)
+- Przycisk do rejestracji kolejnego pracownika (resetowanie formularza)
 
 **Props:**
 - `worker: Worker` - dane zarejestrowanego pracownika
-- `onClose?: () => void` - opcjonalna funkcja wywoływana przy zamknięciu komunikatu
+- `onRegisterAnother?: () => void` - opcjonalna funkcja wywoływana przy kliknięciu "Zarejestruj kolejnego pracownika"
 
 ### LoadingSpinner (Wskaźnik ładowania)
 Komponent wyświetlający wskaźnik ładowania podczas przetwarzania żądań.
@@ -394,35 +350,33 @@ Rejestracja nowego pracownika w systemie.
 - Backend weryfikuje poprawność formatu hasła
 - Backend zwraca odpowiedni komunikat błędu w przypadku nieprawidłowych danych
 
-## Zarządzanie stanem okienka
+## Zarządzanie stanem formularza
 
-Okienko modalne zarządza następującymi stanami:
+Formularz zarządza następującymi stanami:
 
-1. **Stan otwarcia/zamknięcia** - czy okienko jest otwarte czy zamknięte
-2. **Stan formularza** - wartości pól formularza (login, hasło, potwierdzenie hasła, wybrane kategorie, rola managera)
-3. **Stan ładowania** - informacja o trwających żądaniach API (pobieranie kategorii, rejestracja pracownika)
-4. **Błędy walidacji** - komunikaty błędów walidacji pól formularza
-5. **Błędy API** - komunikaty błędów z serwera
-6. **Komunikat sukcesu** - informacja o pomyślnej rejestracji
+1. **Stan formularza** - wartości pól formularza (login, hasło, potwierdzenie hasła, wybrane kategorie, rola managera)
+2. **Stan ładowania** - informacja o trwających żądaniach API (pobieranie kategorii, rejestracja pracownika)
+3. **Błędy walidacji** - komunikaty błędów walidacji pól formularza
+4. **Błędy API** - komunikaty błędów z serwera
+5. **Komunikat sukcesu** - informacja o pomyślnej rejestracji
+6. **Zarejestrowany pracownik** - dane zarejestrowanego pracownika (po pomyślnej rejestracji)
 
-## Obsługa zamykania okienka
+## Integracja z layoutem strony
 
-Okienko może być zamknięte na kilka sposobów:
+Moduł jest komponentem formularza, który jest używany przez komponent strony/layoutu. Komponent strony jest odpowiedzialny za:
+- Wyświetlanie tytułu strony
+- Obsługę nawigacji (przycisk powrotu, breadcrumbs)
+- Sprawdzanie autoryzacji (route guard)
+- Layout strony (header, footer, sidebar jeśli istnieją)
+- Routing i nawigację po rejestracji
 
-1. **Przycisk X** - kliknięcie przycisku zamknięcia w prawym górnym rogu okienka
-2. **Przycisk Anuluj** - kliknięcie przycisku "Anuluj" w formularzu
-3. **Kliknięcie poza okienkiem** - kliknięcie w tło (overlay) okienka
-4. **Klawisz Escape** - naciśnięcie klawisza Escape na klawiaturze
-5. **Po pomyślnej rejestracji** - automatyczne zamknięcie po pomyślnej rejestracji pracownika
 
-Przed zamknięciem okienka (jeśli są niezapisane zmiany), moduł może wyświetlić potwierdzenie (opcjonalnie).
 
 ## Uwagi implementacyjne
 
 1. **Autoryzacja:**
-   - Moduł powinien sprawdzać, czy zalogowany użytkownik ma rolę managera
-   - Jeśli użytkownik nie jest managerem, moduł nie powinien być dostępny (ukryty lub przekierowanie)
    - Wszystkie żądania do API powinny zawierać token autoryzacji managera
+   - Sprawdzanie autoryzacji i przekierowania są obsługiwane przez komponent strony/layoutu, nie przez moduł formularza
 
 2. **Bezpieczeństwo:**
    - Wszystkie dane są wysyłane przez HTTPS
@@ -436,11 +390,11 @@ Przed zamknięciem okienka (jeśli są niezapisane zmiany), moduł może wyświe
    - Pola powinny być wyraźnie oznaczone
    - Komunikaty błędów powinny być pomocne i zrozumiałe
    - Formularz powinien być responsywny (działać na urządzeniach mobilnych)
-   - Automatyczne fokusowanie na pole loginu przy otwarciu okienka
+   - Automatyczne fokusowanie na pole loginu przy załadowaniu komponentu
    - Możliwość wysłania formularza przez Enter
    - Wyświetlanie wskaźnika ładowania podczas rejestracji
-   - Wyświetlanie komunikatu sukcesu przed zamknięciem okienka
-   - Resetowanie formularza po pomyślnej rejestracji
+   - Wyświetlanie komunikatu sukcesu po pomyślnej rejestracji
+   - Resetowanie formularza po pomyślnej rejestracji (jeśli użytkownik wybierze opcję rejestracji kolejnego pracownika)
 
 4. **Obsługa błędów:**
    - Wszystkie błędy z API powinny być wyświetlane w czytelny sposób
@@ -455,9 +409,10 @@ Przed zamknięciem okienka (jeśli są niezapisane zmiany), moduł może wyświe
    - Minimalizacja liczby re-renderów
 
 6. **Integracja z routingiem:**
-   - Moduł może być dostępny jako komponent na stronie managera (np. `/manager/workers`)
-   - Moduł powinien być chroniony przed dostępem dla nieautoryzowanych użytkowników
-   - Moduł może być zintegrowany z innymi modułami managera (np. lista pracowników)
+   - Moduł jest komponentem formularza, który jest używany przez komponent strony
+   - Routing i ochrona przed nieautoryzowanym dostępem są obsługiwane przez komponent strony/layoutu
+   - Moduł może być użyty w różnych kontekstach (strona rejestracji, modal, itp.)
+   - Po pomyślnej rejestracji moduł wywołuje callback `onWorkerRegistered`, a nawigacja jest obsługiwana przez komponent strony
 
 7. **Testowanie:**
    - Moduł powinien być testowalny (mockowanie API)
@@ -471,19 +426,12 @@ Przed zamknięciem okienka (jeśli są niezapisane zmiany), moduł może wyświe
    - Właściwe etykiety dla pól formularza
    - Obsługa nawigacji klawiaturą
    - Komunikaty błędów powinny być powiązane z odpowiednimi polami
-   - Okienko modalne powinno być prawidłowo zarządzane pod kątem fokusa (focus trap)
-   - Klawisz Escape powinien zamykać okienko
+   - Formularz powinien mieć właściwą strukturę semantyczną (form, fieldset, legend)
+   - Formularz powinien być dostępny pod kątem dostępności (ARIA atrybuty)
 
-9. **Format okienka modalnego:**
-   - Okienko powinno być wyśrodkowane na ekranie
-   - Okienko powinno mieć tło (overlay) z lekkim przyciemnieniem
-   - Okienko powinno być responsywne (działać na urządzeniach mobilnych)
-   - Okienko powinno mieć animację otwierania/zamykania (opcjonalnie)
-   - Okienko powinno być dostępne pod kątem dostępności (ARIA atrybuty)
-
-10. **Resetowanie formularza:**
-    - Formularz powinien być resetowany po pomyślnej rejestracji
-    - Formularz powinien być resetowany po zamknięciu okienka (opcjonalnie)
+9. **Resetowanie formularza:**
+    - Formularz powinien być resetowany po pomyślnej rejestracji (jeśli użytkownik wybierze opcję rejestracji kolejnego pracownika)
     - Wszystkie pola powinny być wyczyszczone
     - Wszystkie błędy powinny być wyczyszczone
+    - Stan sukcesu powinien być zresetowany
 
