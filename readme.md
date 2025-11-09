@@ -71,7 +71,7 @@ Moduł nie zawiera endpointów API - endpointy HTTP są zaimplementowane w modul
 
 ## Moduł autentykacji pracowników
 Moduł serwisowy (fasada) odpowiadający za podstawową identyfikację i weryfikację tożsamości pracowników w systemie.
-Zajmuje się rejestrowaniem nowych pracowników (tworzenie kont pracowniczych z loginem i hasłem) oraz weryfikacją tożsamości (sprawdzanie poprawności loginu i hasła).
+Zajmuje się rejestrowaniem nowych pracowników (tworzenie kont pracowniczych z loginem i hasłem) - dostępne tylko dla managera - oraz weryfikacją tożsamości (sprawdzanie poprawności loginu i hasła).
 Zarządza hasłami (przechowywanie zahashowanych haseł zgodnie z najlepszymi praktykami bezpieczeństwa) oraz encjami pracowników.
 Moduł ten jest odpowiedzialny wyłącznie za autentykację (kto jest zalogowany), natomiast autoryzacja (do jakich kategorii ma dostęp) jest obsługiwana przez osobny moduł Authorization.
 Moduł nie zawiera endpointów API - endpointy HTTP są zaimplementowane w module BackendForFrontend.
@@ -86,13 +86,10 @@ Formularz do dodawania ticketa
 
 ### Moduł odpowiadania na tickety przez klientów
 Jest to w chat uruchamiany automatycznie po utworzeniu nowego ticketa przez klienta.
-Na bieżąco dostanie nowe odpowiedzi od strony pracowników (web socket).
+Na bieżąco dostanie nowe odpowiedzi od strony pracowników (Server-Sent Events poprzez Mercure).
 
 ### Moduł logowania się do aplikacji przez pracowników
 Formularz do logowania się
-
-### Moduł dodawania pracowników
-Formularz rejestrowania pracownika (login i hasło), checkboxy kategorii do których ma uprawnienia.
 
 ## Moduły pracowników po autentykacji
 
@@ -126,6 +123,10 @@ Umożliwia automatyczne dopisanie ticketów do wszystkich dni na podstawie przew
 ### Moduł ustawiania dostępności
 Pokazuje najbliższe 7 dni.
 Umożliwia ustawienie godzin w których się jest dostępnym w poszczególnych dniach.
+
+### Moduł dodawania pracowników (tylko dla managera)
+Formularz rejestrowania pracownika (login i hasło), checkboxy kategorii do których ma uprawnienia.
+Dostępny tylko dla zalogowanych pracowników z rolą managera.
 
 ### Moduł monitoringu dla kierownika
 Pokazuje w danym dniu ogólne statystyki obciążenia pracowników.
