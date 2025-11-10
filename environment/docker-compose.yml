@@ -23,8 +23,6 @@ services:
       MYSQL_DATABASE: ${DATABASE_NAME}
       MYSQL_USER: ${DATABASE_USER}
       MYSQL_PASSWORD: ${DATABASE_PASSWORD}
-      VITE_MERCURE_URL: http://mercure:3000/mercure
-      VITE_API_URL: http://localhost:${BACKEND_PORT}/api
     volumes:
       - mariadb_data:/var/lib/mysql
     ports:
@@ -39,6 +37,9 @@ services:
     working_dir: /app
     volumes:
       - ../frontend:/app
+    environment:
+      VITE_MERCURE_URL: http://mercure:3000/mercure
+      VITE_API_URL: http://localhost:${BACKEND_PORT}/api
     ports:
       - "5173:5173"
     networks:
