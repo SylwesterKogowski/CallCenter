@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Integration\Infrastructure\Persistence\Doctrine;
+namespace Tests\Integration\Modules\Clients\Infrastructure\Persistence\Doctrine;
 
 use App\Modules\Clients\Domain\ClientRepositoryInterface;
 use App\Modules\Clients\Infrastructure\Persistence\Doctrine\Entity\Client;

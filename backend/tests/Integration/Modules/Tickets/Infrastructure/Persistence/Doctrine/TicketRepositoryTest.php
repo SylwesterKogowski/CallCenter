@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Integration\Infrastructure\Persistence\Doctrine;
+namespace Tests\Integration\Modules\Tickets\Infrastructure\Persistence\Doctrine;
 
 use App\Modules\Authentication\Infrastructure\Persistence\Doctrine\Entity\Worker as WorkerEntity;
 use App\Modules\Authorization\Infrastructure\Persistence\Doctrine\Entity\WorkerCategoryAssignment;

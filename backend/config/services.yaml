@@ -60,6 +60,9 @@ services:
     App\Modules\Tickets\Domain\TicketRepositoryInterface:
         alias: App\Modules\Tickets\Infrastructure\Persistence\Doctrine\TicketRepository
         public: true
+    App\Modules\WorkerAvailability\Domain\WorkerAvailabilityRepositoryInterface:
+        alias: App\Modules\WorkerAvailability\Infrastructure\Persistence\Doctrine\WorkerAvailabilityRepository
+        public: true
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

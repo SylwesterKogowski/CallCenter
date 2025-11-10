@@ -42,6 +42,12 @@ doctrine:
                 dir: '%kernel.project_dir%/src/Modules/Clients/Infrastructure/Persistence/Doctrine/Entity'
                 prefix: 'App\Modules\Clients\Infrastructure\Persistence\Doctrine\Entity'
                 alias: Clients
+            AppWorkerAvailability:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Modules/WorkerAvailability/Infrastructure/Persistence/Doctrine/Entity'
+                prefix: 'App\Modules\WorkerAvailability\Infrastructure\Persistence\Doctrine\Entity'
+                alias: WorkerAvailability
             AppTickets:
                 type: attribute
                 is_bundle: false
