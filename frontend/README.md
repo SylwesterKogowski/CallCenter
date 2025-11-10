@@ -47,6 +47,13 @@ Following commands can be run in this frontend folder:
   ./exec.sh npm run check-styles
   ```
 
+## Testing
+Tests use [vitest](https://vitest.dev/guide/) and [React Testing Library](https://testing-library.com/docs/react-testing-library/example-intro)
+
+Run tests using this command in frontend folder:
+```bash
+./exec.sh npm run test
+```
 
 ## Production Build
 
