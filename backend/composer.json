@@ -67,10 +67,16 @@
             "phpstan analyse"
         ],
         "phpunit": [
+            "@prepare-integration-tests @no_additional_args",
             "phpunit"
         ],
         "fix-styles": [
             "php-cs-fixer fix"
+        ],
+        "prepare-integration-tests": [
+            "symfony doctrine:database:drop -e test -f",
+            "symfony doctrine:database:create -e test --if-not-exists",
+            "symfony doctrine:schema:create -e test"
         ],
         "test": [
             "@phpstan",

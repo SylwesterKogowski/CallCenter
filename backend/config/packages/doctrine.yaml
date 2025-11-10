@@ -24,6 +24,12 @@ doctrine:
                 dir: '%kernel.project_dir%/src/Entity'
                 prefix: 'App\Entity'
                 alias: App
+            AppAuthentication:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Modules/Authentication/Interface/Persistence/Doctrine/Entity'
+                prefix: 'App\Modules\Authentication\Interface\Persistence\Doctrine\Entity'
+                alias: Authentication
         controller_resolver:
             auto_mapping: false
 
@@ -32,6 +38,7 @@ when@test:
         dbal:
             # "TEST_TOKEN" is typically set by ParaTest
             dbname_suffix: '_test%env(default::TEST_TOKEN)%'
+            url: '%env(resolve:TEST_DATABASE_URL)%'
 
 when@prod:
     doctrine:
