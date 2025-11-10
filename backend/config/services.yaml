@@ -54,6 +54,9 @@ services:
     App\Modules\Authorization\Domain\AuthorizationRepositoryInterface:
         alias: App\Modules\Authorization\Infrastructure\Persistence\Doctrine\AuthorizationRepository
         public: true
+    App\Modules\Tickets\Domain\TicketRepositoryInterface:
+        alias: App\Modules\Tickets\Infrastructure\Persistence\Doctrine\TicketRepository
+        public: true
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

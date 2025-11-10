@@ -76,6 +76,9 @@
         "migrate": [
             "symfony doctrine:migrations:migrate"
         ],
+        "rollback-migration": [
+            "symfony doctrine:migrations:migrate prev"
+        ],
         "create-migration": [
             "symfony doctrine:migrations:generate"
         ],

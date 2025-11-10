@@ -36,6 +36,12 @@ doctrine:
                 dir: '%kernel.project_dir%/src/Modules/Authorization/Infrastructure/Persistence/Doctrine/Entity'
                 prefix: 'App\Modules\Authorization\Infrastructure\Persistence\Doctrine\Entity'
                 alias: Authorization
+            AppTickets:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Modules/Tickets/Infrastructure/Persistence/Doctrine/Entity'
+                prefix: 'App\Modules\Tickets\Infrastructure\Persistence\Doctrine\Entity'
+                alias: Tickets
         controller_resolver:
             auto_mapping: false
 
