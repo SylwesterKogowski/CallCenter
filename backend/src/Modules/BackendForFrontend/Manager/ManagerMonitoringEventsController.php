@@ -83,9 +83,14 @@ final class ManagerMonitoringEventsController extends AbstractJsonController
             });
 
             $response->headers->set('Content-Type', 'text/event-stream');
-            $response->headers->set('Cache-Control', 'no-cache');
+            $response->headers->set('Cache-Control', 'no-cache, no-store, must-revalidate');
+            $response->headers->set('Pragma', 'no-cache');
+            $response->headers->set('Expires', '0');
             $response->headers->set('Connection', 'keep-alive');
             $response->headers->set('X-Accel-Buffering', 'no');
+            $response->headers->set('Transfer-Encoding', 'chunked');
+            $response->setMaxAge(0);
+            $response->setSharedMaxAge(0);
 
             return $response;
         } catch (HttpAwareExceptionInterface $exception) {

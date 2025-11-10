@@ -92,16 +92,18 @@ Dokument opisuje zadania, które należy wykonać w katalogu `backend/src/Module
     - W przypadku braku uprawnień zwracaj status 403 z komunikatem `{"message": "Brak uprawnień"}`.
 
 13. [ ] **Testy i dokumentacja**
-    - Przygotuj szkic testów integracyjnych (PHPUnit) dla kluczowych kontrolerów – choćby TODO w `tests/Modules/BackendForFrontend/`.
-    - Uzupełnij niniejszy plik o status realizacji zadań (checklista) podczas implementacji.
-    - Rozważ dodanie krótkiego opisu w `backend/readme.md`, że moduł BackendForFrontend zawiera wszystkie kontrolery HTTP.
+   - Opracuj strukturę katalogów testowych w `tests/Modules/BackendForFrontend/` (np. `Auth/`, `Manager/`, `Public/`, `Worker/`) i dodaj pliki testowe z oznaczonymi metodami `@test` jako TODO.
+   - Przygotuj wspólne fixture'y / mocki usług domenowych (Authentication, Authorization, TicketService itp.) oraz helper do inicjalizacji żądań HTTP w testach.
+   - Dla każdego kontrolera dopisz listę scenariuszy testowych (walidacja, dostęp bez uprawnień, sukces) jako komentarze TODO w odpowiednich klasach testowych.
+   - Dodaj dokument `tests/Modules/BackendForFrontend/readme.md` opisujący konwencje pisania testów i sposób uruchamiania suite.
+   - Uzupełniaj bieżący plik `todo.md` o statusy realizacji podzadań oraz zanotuj w `backend/readme.md`, że moduł BackendForFrontend dostarcza warstwę HTTP i posiada dedykowany katalog testów.
 
-14. [ ] **Konfiguracja usług Symfony**
+14. [x] **Konfiguracja usług Symfony**
     - Dodaj aliasy w `services.yaml` mapujące utworzone interfejsy (`AuthenticationServiceInterface`, `AuthorizationServiceInterface`, `TicketCategoryServiceInterface`, itp.) na istniejące fasady domenowe.
     - Upewnij się, że wszystkie kontrolery w `BackendForFrontend` są autokonfigurowane jako serwisy (`autowire`, `autoconfigure`, `public: false`).
     - Skonfiguruj dostęp do sesji w kernelu (framework.session) tak, aby `AuthenticatedWorkerProvider` miał zawsze dostęp do `SessionInterface`.
 
-15. [ ] **Routing i integracja HTTP**
+15. [x] **Routing i integracja HTTP**
     - Zweryfikuj, że atrybutowe trasy kontrolerów są zarejestrowane (np. przez `controllers:` w `config/routes.yaml`).
     - Dla endpointów SSE (`/events/manager/monitoring/{managerId}`) skonfiguruj odpowiednie nagłówki cache/timeout.
     - Dodaj wpisy w `frontend/app/api/http.ts` jeśli pojawią się nowe ścieżki (np. `logout`, ewentualne helpery) i zsynchronizuj je z backendem.

@@ -10,11 +10,44 @@ services:
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+        public: false
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
     App\:
         resource: '../src/'
+        exclude:
+            - '../src/Modules/BackendForFrontend/**/Dto/'
+            - '../src/Modules/BackendForFrontend/**/Request/'
+            - '../src/Modules/BackendForFrontend/**/Response/'
+            - '../src/Modules/**/readme.md'
+            - '../src/Modules/**/todo.md'
+            - '../src/Kernel.php'
+
+    App\Modules\BackendForFrontend\:
+        resource: '../src/Modules/BackendForFrontend/'
+        public: false
+        autowire: true
+        autoconfigure: true
+        exclude:
+            - '../src/Modules/BackendForFrontend/**/Dto/'
+            - '../src/Modules/BackendForFrontend/**/Request/'
+            - '../src/Modules/BackendForFrontend/**/Response/'
+            - '../src/Modules/BackendForFrontend/**/readme.md'
+            - '../src/Modules/BackendForFrontend/todo.md'
+
+    App\Modules\Authentication\Application\AuthenticationServiceInterface: '@App\Modules\Authentication\Application\Stub\AuthenticationService'
+    App\Modules\Authorization\Application\AuthorizationServiceInterface: '@App\Modules\Authorization\Application\Stub\AuthorizationService'
+    App\Modules\TicketCategories\Application\TicketCategoryServiceInterface: '@App\Modules\TicketCategories\Application\Stub\TicketCategoryService'
+    App\Modules\Clients\Application\ClientServiceInterface: '@App\Modules\Clients\Application\Stub\ClientService'
+    App\Modules\Clients\Application\ClientSearchServiceInterface: '@App\Modules\Clients\Application\Stub\ClientSearchService'
+    App\Modules\Tickets\Application\TicketServiceInterface: '@App\Modules\Tickets\Application\Stub\TicketService'
+    App\Modules\Tickets\Application\TicketSearchServiceInterface: '@App\Modules\Tickets\Application\Stub\TicketSearchService'
+    App\Modules\Tickets\Application\TicketBacklogServiceInterface: '@App\Modules\Tickets\Application\Stub\TicketBacklogService'
+    App\Modules\WorkerAvailability\Application\WorkerAvailabilityServiceInterface: '@App\Modules\WorkerAvailability\Application\Stub\WorkerAvailabilityService'
+    App\Modules\WorkerSchedule\Application\WorkerScheduleServiceInterface: '@App\Modules\WorkerSchedule\Application\Stub\WorkerScheduleService'
+    App\Modules\BackendForFrontend\Worker\Phone\Service\WorkerPhoneServiceInterface: '@App\Modules\BackendForFrontend\Worker\Phone\Service\Stub\WorkerPhoneService'
+    App\Modules\BackendForFrontend\Manager\Service\ManagerMonitoringServiceInterface: '@App\Modules\BackendForFrontend\Manager\Service\Stub\ManagerMonitoringService'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

@@ -3,3 +3,9 @@ controllers:
         path: ../src/Controller/
         namespace: App\Controller
     type: attribute
+
+backend_for_frontend:
+    resource:
+        path: ../src/Modules/BackendForFrontend/
+        namespace: App\Modules\BackendForFrontend
+    type: attribute
