@@ -31,5 +31,3 @@ final class AuthorizationService implements AuthorizationServiceInterface
         return $this->notImplemented(__METHOD__);
     }
 }
-
-

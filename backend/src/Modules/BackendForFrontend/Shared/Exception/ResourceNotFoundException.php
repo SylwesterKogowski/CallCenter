@@ -19,4 +19,3 @@ class ResourceNotFoundException extends DomainException
         return 404;
     }
 }
-

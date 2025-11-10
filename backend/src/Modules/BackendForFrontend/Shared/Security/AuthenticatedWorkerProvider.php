@@ -82,13 +82,13 @@ class AuthenticatedWorkerProvider
             throw new AuthenticationException('Sesja jest niedostępna');
         }
 
-        $session = $request->getSession();
-
-        if (null === $session) {
+        if (!$request->hasSession()) {
             throw new AuthenticationException('Sesja nie została zainicjalizowana');
         }
+
+        /** @var SessionInterface $session */
+        $session = $request->getSession();
 
         return $session;
     }
 }
-

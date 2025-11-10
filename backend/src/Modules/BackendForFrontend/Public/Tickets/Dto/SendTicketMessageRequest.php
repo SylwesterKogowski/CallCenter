@@ -16,4 +16,3 @@ class SendTicketMessageRequest
         $this->content = trim($content);
     }
 }
-

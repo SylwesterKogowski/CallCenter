@@ -13,5 +13,3 @@ interface ClientSearchResultInterface
 
     public function getTotal(): int;
 }
-
-

@@ -20,4 +20,3 @@ interface HttpAwareExceptionInterface
      */
     public function getContext(): array;
 }
-

@@ -7,45 +7,42 @@ namespace App\Modules\WorkerAvailability\Application;
 use App\Modules\WorkerAvailability\Application\Dto\CopyAvailabilityResultInterface;
 use App\Modules\WorkerAvailability\Application\Dto\DayAvailabilityResultInterface;
 use App\Modules\WorkerAvailability\Domain\WorkerAvailabilityInterface;
-use DateTimeImmutable;
 
 interface WorkerAvailabilityServiceInterface
 {
     /**
      * @return iterable<WorkerAvailabilityInterface>
      */
-    public function getWorkerAvailabilityForWeek(string $workerId, DateTimeImmutable $weekStartDate): iterable;
+    public function getWorkerAvailabilityForWeek(string $workerId, \DateTimeImmutable $weekStartDate): iterable;
 
     /**
-     * @param iterable<array{start: DateTimeImmutable, end: DateTimeImmutable}> $timeSlots
+     * @param iterable<array{start: \DateTimeImmutable, end: \DateTimeImmutable}> $timeSlots
      */
     public function replaceWorkerAvailabilityForDay(
         string $workerId,
-        DateTimeImmutable $date,
+        \DateTimeImmutable $date,
         iterable $timeSlots,
     ): DayAvailabilityResultInterface;
 
     public function updateWorkerAvailabilitySlot(
         string $workerId,
         string $timeSlotId,
-        DateTimeImmutable $start,
-        DateTimeImmutable $end,
+        \DateTimeImmutable $start,
+        \DateTimeImmutable $end,
     ): WorkerAvailabilityInterface;
 
     public function removeWorkerAvailabilitySlot(
         string $workerId,
         string $timeSlotId,
-    ): DateTimeImmutable;
+    ): \DateTimeImmutable;
 
     /**
-     * @param DateTimeImmutable[] $targetDates
+     * @param \DateTimeImmutable[] $targetDates
      */
     public function copyWorkerAvailability(
         string $workerId,
-        DateTimeImmutable $sourceDate,
+        \DateTimeImmutable $sourceDate,
         array $targetDates,
         bool $overwrite,
     ): CopyAvailabilityResultInterface;
 }
-
-

@@ -10,9 +10,9 @@ use App\Modules\BackendForFrontend\Shared\AbstractJsonController;
 use App\Modules\BackendForFrontend\Shared\Exception\AccessDeniedException;
 use App\Modules\BackendForFrontend\Shared\Exception\AuthenticationException;
 use App\Modules\BackendForFrontend\Shared\Exception\ResourceNotFoundException;
-use App\Modules\BackendForFrontend\Shared\Security\AuthenticatedWorkerProvider;
 use App\Modules\BackendForFrontend\Shared\Security\Attribute\RequiresWorker;
 use App\Modules\BackendForFrontend\Shared\Security\AuthenticatedWorker;
+use App\Modules\BackendForFrontend\Shared\Security\AuthenticatedWorkerProvider;
 use App\Modules\BackendForFrontend\Worker\Schedule\Dto\AddTicketNoteRequest;
 use App\Modules\BackendForFrontend\Worker\Schedule\Dto\AddTicketTimeRequest;
 use App\Modules\BackendForFrontend\Worker\Schedule\Dto\UpdateTicketStatusRequest;
@@ -23,8 +23,6 @@ use App\Modules\Tickets\Domain\TicketInterface;
 use App\Modules\Tickets\Domain\TicketNoteInterface;
 use App\Modules\WorkerSchedule\Application\Dto\WorkerScheduleAssignmentInterface;
 use App\Modules\WorkerSchedule\Application\WorkerScheduleServiceInterface;
-use DateInterval;
-use DateTimeImmutable;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -116,7 +114,7 @@ final class WorkerScheduleController extends AbstractJsonController
         return $this->execute(function () {
             $worker = $this->requireWorker();
             $workerEntity = $this->getWorkerEntity($worker);
-            $today = new DateTimeImmutable('today');
+            $today = new \DateTimeImmutable('today');
 
             $stats = $this->workerScheduleService->getWorkerScheduleStatistics($worker->getId(), $today);
             $todayAssignments = $this->iterableToArray(
@@ -162,7 +160,7 @@ final class WorkerScheduleController extends AbstractJsonController
             $this->validateDto($dto);
 
             $updatedTicket = $this->ticketService->updateTicketStatus($ticket, $dto->status);
-            $updatedAt = $updatedTicket->getUpdatedAt() ?? new DateTimeImmutable();
+            $updatedAt = $updatedTicket->getUpdatedAt() ?? new \DateTimeImmutable();
 
             return [
                 'ticket' => [
@@ -202,7 +200,7 @@ final class WorkerScheduleController extends AbstractJsonController
 
             $timeSpent = $this->ticketService->getWorkerTimeSpentOnTicket($ticket, $workerEntity);
             $refreshedTicket = $this->ticketService->getTicketById($ticket->getId()) ?? $ticket;
-            $updatedAt = $refreshedTicket->getUpdatedAt() ?? new DateTimeImmutable();
+            $updatedAt = $refreshedTicket->getUpdatedAt() ?? new \DateTimeImmutable();
 
             return [
                 'ticket' => [
@@ -246,20 +244,21 @@ final class WorkerScheduleController extends AbstractJsonController
     }
 
     /**
-     * @return array{start: DateTimeImmutable, end: DateTimeImmutable}
+     * @return array{start: \DateTimeImmutable, end: \DateTimeImmutable}
      */
     private function resolveSchedulePeriod(): array
     {
-        $today = new DateTimeImmutable('today');
+        $today = new \DateTimeImmutable('today');
 
         return [
-            'start' => $today->sub(new DateInterval('P1D')),
-            'end' => $today->add(new DateInterval('P6D')),
+            'start' => $today->sub(new \DateInterval('P1D')),
+            'end' => $today->add(new \DateInterval('P6D')),
         ];
     }
 
     /**
      * @param WorkerScheduleAssignmentInterface[] $assignments
+     *
      * @return array<string, WorkerScheduleAssignmentInterface[]>
      */
     private function groupAssignmentsByDate(array $assignments): array
@@ -285,6 +284,19 @@ final class WorkerScheduleController extends AbstractJsonController
         return $grouped;
     }
 
+    /**
+     * @return array{
+     *     id: string,
+     *     title: string,
+     *     category: array{id: string, name: string, defaultResolutionTimeMinutes: int, defaultResolutionTime: int},
+     *     status: string,
+     *     timeSpent: int,
+     *     estimatedTime: int,
+     *     scheduledDate: string,
+     *     client: array{id: string, name: string, email: ?string, phone: ?string},
+     *     isActive?: true
+     * }
+     */
     private function formatScheduleTicket(
         WorkerScheduleAssignmentInterface $assignment,
         WorkerInterface $worker,
@@ -312,6 +324,11 @@ final class WorkerScheduleController extends AbstractJsonController
         return $payload;
     }
 
+    /**
+     * @param array<string, mixed> $basePayload
+     *
+     * @return array<string, mixed>
+     */
     private function enrichTicketWithDetails(
         array $basePayload,
         WorkerScheduleAssignmentInterface $assignment,
@@ -338,6 +355,8 @@ final class WorkerScheduleController extends AbstractJsonController
 
     /**
      * @param WorkerScheduleAssignmentInterface[] $assignments
+     *
+     * @return array<string, mixed>|null
      */
     private function determineActiveTicketFallback(array $assignments, WorkerInterface $worker): ?array
     {
@@ -356,6 +375,7 @@ final class WorkerScheduleController extends AbstractJsonController
 
     /**
      * @param array<string, int> $stats
+     *
      * @return array{
      *     level: string,
      *     message: string,
@@ -405,6 +425,7 @@ final class WorkerScheduleController extends AbstractJsonController
 
     /**
      * @param array<string, int> $stats
+     *
      * @return array{
      *     date: string,
      *     ticketsCount: int,
@@ -417,7 +438,7 @@ final class WorkerScheduleController extends AbstractJsonController
      */
     private function buildTodayStatsPayload(
         array $stats,
-        DateTimeImmutable $date,
+        \DateTimeImmutable $date,
         int $timeSpent,
     ): array {
         return [
@@ -505,13 +526,13 @@ final class WorkerScheduleController extends AbstractJsonController
         $categoryId = $ticket->getCategory()->getId();
 
         if (!in_array($categoryId, $worker->getCategoryIds(), true)) {
-            throw new AccessDeniedException('Brak uprawnień do obsługi ticketa', [
-                'ticketId' => $ticket->getId(),
-                'categoryId' => $categoryId,
-            ]);
+            throw new AccessDeniedException('Brak uprawnień do obsługi ticketa', ['ticketId' => $ticket->getId(), 'categoryId' => $categoryId]);
         }
     }
 
+    /**
+     * @return array{id: string, name: string, defaultResolutionTimeMinutes: int, defaultResolutionTime: int}
+     */
     private function formatCategory(TicketCategoryInterface $category): array
     {
         $defaultResolutionTime = $category->getDefaultResolutionTimeMinutes();
@@ -524,6 +545,9 @@ final class WorkerScheduleController extends AbstractJsonController
         ];
     }
 
+    /**
+     * @return array{id: string, name: string, email: ?string, phone: ?string}
+     */
     private function formatClient(ClientInterface $client): array
     {
         $parts = array_filter([$client->getFirstName(), $client->getLastName()]);
@@ -551,6 +575,9 @@ final class WorkerScheduleController extends AbstractJsonController
         return $title;
     }
 
+    /**
+     * @return array{id: string, content: string, createdAt: string, createdBy: string}
+     */
     private function formatTicketNote(TicketNoteInterface $note): array
     {
         return [
@@ -563,7 +590,9 @@ final class WorkerScheduleController extends AbstractJsonController
 
     /**
      * @template TValue
+     *
      * @param iterable<TValue> $items
+     *
      * @return array<int, TValue>
      */
     private function iterableToArray(iterable $items): array
@@ -575,5 +604,3 @@ final class WorkerScheduleController extends AbstractJsonController
         return iterator_to_array($items, false);
     }
 }
-
-

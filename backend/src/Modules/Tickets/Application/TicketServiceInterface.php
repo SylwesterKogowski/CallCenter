@@ -61,4 +61,3 @@ interface TicketServiceInterface
         bool $isPhoneCall,
     ): void;
 }
-

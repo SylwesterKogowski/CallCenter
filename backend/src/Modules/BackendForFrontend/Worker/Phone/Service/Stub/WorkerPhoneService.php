@@ -6,7 +6,6 @@ namespace App\Modules\BackendForFrontend\Worker\Phone\Service\Stub;
 
 use App\Modules\BackendForFrontend\Shared\Support\NotImplementedDomainServiceTrait;
 use App\Modules\BackendForFrontend\Worker\Phone\Service\WorkerPhoneServiceInterface;
-use DateTimeImmutable;
 
 final class WorkerPhoneService implements WorkerPhoneServiceInterface
 {
@@ -23,11 +22,9 @@ final class WorkerPhoneService implements WorkerPhoneServiceInterface
         ?string $ticketId,
         int $duration,
         ?string $notes,
-        DateTimeImmutable $startTime,
-        DateTimeImmutable $endTime,
+        \DateTimeImmutable $startTime,
+        \DateTimeImmutable $endTime,
     ): array {
         return $this->notImplemented(__METHOD__);
     }
 }
-
-

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Modules\BackendForFrontend\Worker\Clients;
 
 use App\Modules\BackendForFrontend\Shared\AbstractJsonController;
-use App\Modules\BackendForFrontend\Shared\Security\AuthenticatedWorkerProvider;
 use App\Modules\BackendForFrontend\Shared\Security\Attribute\RequiresWorker;
+use App\Modules\BackendForFrontend\Shared\Security\AuthenticatedWorkerProvider;
 use App\Modules\BackendForFrontend\Worker\Clients\Dto\SearchWorkerClientsQuery;
 use App\Modules\Clients\Application\ClientSearchServiceInterface;
 use App\Modules\Clients\Application\Dto\ClientSearchItemInterface;
@@ -107,6 +107,9 @@ final class WorkerClientsController extends AbstractJsonController
         return '' === $trimmed ? null : $trimmed;
     }
 
+    /**
+     * @return array<string, string|int|float>
+     */
     private function formatSearchItem(ClientSearchItemInterface $item): array
     {
         $client = $item->getClient();
@@ -136,5 +139,3 @@ final class WorkerClientsController extends AbstractJsonController
             ?? 'Klient';
     }
 }
-
-

@@ -11,5 +11,3 @@ interface TicketBacklogServiceInterface
 {
     public function getWorkerBacklog(string $workerId, WorkerBacklogFilters $filters): WorkerBacklogResultInterface;
 }
-
-

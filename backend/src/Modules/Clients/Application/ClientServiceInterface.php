@@ -22,4 +22,3 @@ interface ClientServiceInterface
         ?string $lastName = null,
     ): ClientInterface;
 }
-

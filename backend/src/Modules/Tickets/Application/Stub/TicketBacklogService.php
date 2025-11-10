@@ -18,5 +18,3 @@ final class TicketBacklogService implements TicketBacklogServiceInterface
         return $this->notImplemented(__METHOD__);
     }
 }
-
-

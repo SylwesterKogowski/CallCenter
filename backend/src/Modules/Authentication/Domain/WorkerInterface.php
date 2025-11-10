@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Authentication\Domain;
 
-use DateTimeImmutable;
-
 interface WorkerInterface
 {
     public function getId(): string;
@@ -14,6 +12,5 @@ interface WorkerInterface
 
     public function isManager(): bool;
 
-    public function getCreatedAt(): DateTimeImmutable;
+    public function getCreatedAt(): \DateTimeImmutable;
 }
-

@@ -54,5 +54,3 @@ final class WorkerBacklogFilters
         return $this->sort;
     }
 }
-
-

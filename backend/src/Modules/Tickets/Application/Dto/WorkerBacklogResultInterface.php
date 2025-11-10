@@ -13,5 +13,3 @@ interface WorkerBacklogResultInterface
 
     public function getTotal(): int;
 }
-
-

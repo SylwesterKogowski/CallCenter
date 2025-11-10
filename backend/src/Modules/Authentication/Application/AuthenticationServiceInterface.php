@@ -18,4 +18,3 @@ interface AuthenticationServiceInterface
 
     public function changePassword(WorkerInterface $worker, string $oldPassword, string $newPassword): void;
 }
-

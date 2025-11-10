@@ -30,4 +30,3 @@ class ValidationException extends DomainException
         return $this->context['errors'] ?? [];
     }
 }
-

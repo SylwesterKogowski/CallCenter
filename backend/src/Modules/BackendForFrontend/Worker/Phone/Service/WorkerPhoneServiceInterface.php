@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Modules\BackendForFrontend\Worker\Phone\Service;
 
-use DateTimeImmutable;
-
 interface WorkerPhoneServiceInterface
 {
     /**
@@ -16,7 +14,7 @@ interface WorkerPhoneServiceInterface
      *
      * @return array{
      *     callId: string,
-     *     startTime: DateTimeImmutable,
+     *     startTime: \DateTimeImmutable,
      *     pausedTickets: list<array{
      *         ticketId: string,
      *         previousStatus: string,
@@ -40,20 +38,20 @@ interface WorkerPhoneServiceInterface
      *         id: string,
      *         ticketId: string|null,
      *         duration: int,
-     *         startTime: DateTimeImmutable,
-     *         endTime: DateTimeImmutable
+     *         startTime: \DateTimeImmutable,
+     *         endTime: \DateTimeImmutable
      *     },
      *     ticket?: array{
      *         id: string,
      *         status: string,
      *         timeSpent: int,
-     *         scheduledDate?: DateTimeImmutable,
-     *         updatedAt: DateTimeImmutable
+     *         scheduledDate?: \DateTimeImmutable,
+     *         updatedAt: \DateTimeImmutable
      *     },
      *     previousTicket?: array{
      *         id: string,
      *         status: string,
-     *         updatedAt: DateTimeImmutable
+     *         updatedAt: \DateTimeImmutable
      *     }
      * }
      */
@@ -63,9 +61,7 @@ interface WorkerPhoneServiceInterface
         ?string $ticketId,
         int $duration,
         ?string $notes,
-        DateTimeImmutable $startTime,
-        DateTimeImmutable $endTime,
+        \DateTimeImmutable $startTime,
+        \DateTimeImmutable $endTime,
     ): array;
 }
-
-

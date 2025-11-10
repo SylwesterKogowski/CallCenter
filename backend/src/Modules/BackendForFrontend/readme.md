@@ -36,8 +36,8 @@ Wykorzystuj `Shared/` do:
 - Mapowania wyjątków na odpowiedzi HTTP.
 - Bazowych walidatorów lub traitów dzielonych między kontrolerami.
 
-Testy dla tego modułu powinny być tworzone w `tests/Modules/BackendForFrontend/`,
-z zachowaniem identycznego układu katalogów.
+Testy jednostkowe dla tego modułu znajdują się w `tests/Unit/Modules/BackendForFrontend/`
+i odwzorowują strukturę przestrzeni nazw produkcyjnych.
 
 ### TODO
 

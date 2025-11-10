@@ -16,5 +16,3 @@ interface TicketNoteInterface
 
     public function getCreatedAt(): \DateTimeInterface;
 }
-
-

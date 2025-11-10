@@ -13,5 +13,3 @@ interface TicketSearchResultInterface
 
     public function getTotal(): int;
 }
-
-

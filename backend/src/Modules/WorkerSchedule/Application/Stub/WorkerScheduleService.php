@@ -6,20 +6,18 @@ namespace App\Modules\WorkerSchedule\Application\Stub;
 
 use App\Modules\BackendForFrontend\Shared\Support\NotImplementedDomainServiceTrait;
 use App\Modules\WorkerSchedule\Application\Dto\WorkerScheduleAssignmentInterface;
-use App\Modules\WorkerSchedule\Application\Dto\WorkerSchedulePredictionInterface;
 use App\Modules\WorkerSchedule\Application\WorkerScheduleServiceInterface;
-use DateTimeImmutable;
 
 final class WorkerScheduleService implements WorkerScheduleServiceInterface
 {
     use NotImplementedDomainServiceTrait;
 
-    public function getWorkerScheduleForWeek(string $workerId, DateTimeImmutable $weekStartDate): iterable
+    public function getWorkerScheduleForWeek(string $workerId, \DateTimeImmutable $weekStartDate): iterable
     {
         return $this->notImplemented(__METHOD__);
     }
 
-    public function getPredictionsForWeek(string $workerId, DateTimeImmutable $weekStartDate): iterable
+    public function getPredictionsForWeek(string $workerId, \DateTimeImmutable $weekStartDate): iterable
     {
         return $this->notImplemented(__METHOD__);
     }
@@ -27,7 +25,7 @@ final class WorkerScheduleService implements WorkerScheduleServiceInterface
     public function assignTicketToWorker(
         string $ticketId,
         string $workerId,
-        DateTimeImmutable $scheduledDate,
+        \DateTimeImmutable $scheduledDate,
         ?string $assignedById = null,
     ): WorkerScheduleAssignmentInterface {
         return $this->notImplemented(__METHOD__);
@@ -36,14 +34,14 @@ final class WorkerScheduleService implements WorkerScheduleServiceInterface
     public function removeTicketFromSchedule(
         string $ticketId,
         string $workerId,
-        DateTimeImmutable $scheduledDate,
+        \DateTimeImmutable $scheduledDate,
     ): void {
         $this->notImplemented(__METHOD__);
     }
 
     public function autoAssignTicketsForWorker(
         string $workerId,
-        DateTimeImmutable $weekStartDate,
+        \DateTimeImmutable $weekStartDate,
         ?array $categoryIds = null,
     ): iterable {
         return $this->notImplemented(__METHOD__);
@@ -51,16 +49,14 @@ final class WorkerScheduleService implements WorkerScheduleServiceInterface
 
     public function getWorkerScheduleForPeriod(
         string $workerId,
-        DateTimeImmutable $startDate,
-        DateTimeImmutable $endDate,
+        \DateTimeImmutable $startDate,
+        \DateTimeImmutable $endDate,
     ): iterable {
         return $this->notImplemented(__METHOD__);
     }
 
-    public function getWorkerScheduleStatistics(string $workerId, DateTimeImmutable $date): array
+    public function getWorkerScheduleStatistics(string $workerId, \DateTimeImmutable $date): array
     {
         return $this->notImplemented(__METHOD__);
     }
 }
-
-

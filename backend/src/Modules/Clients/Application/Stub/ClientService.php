@@ -37,5 +37,3 @@ final class ClientService implements ClientServiceInterface
         return $this->notImplemented(__METHOD__);
     }
 }
-
-

@@ -37,5 +37,3 @@ final class AuthenticationService implements AuthenticationServiceInterface
         $this->notImplemented(__METHOD__);
     }
 }
-
-

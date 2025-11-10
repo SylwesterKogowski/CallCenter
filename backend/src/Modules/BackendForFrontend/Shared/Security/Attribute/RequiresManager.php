@@ -8,5 +8,3 @@ namespace App\Modules\BackendForFrontend\Shared\Security\Attribute;
 final class RequiresManager
 {
 }
-
-

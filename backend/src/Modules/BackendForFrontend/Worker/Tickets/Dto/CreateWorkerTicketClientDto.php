@@ -38,5 +38,3 @@ final class CreateWorkerTicketClientDto
         return null !== $this->email || null !== $this->phone;
     }
 }
-
-

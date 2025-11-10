@@ -12,5 +12,3 @@ interface ClientSearchItemInterface
 
     public function getMatchScore(): ?float;
 }
-
-

@@ -14,5 +14,3 @@ final class TicketSearchFilters
     ) {
     }
 }
-
-

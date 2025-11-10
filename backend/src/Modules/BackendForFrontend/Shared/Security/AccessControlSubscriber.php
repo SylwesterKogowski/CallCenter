@@ -61,7 +61,10 @@ final class AccessControlSubscriber implements EventSubscriberInterface
         }
     }
 
-    private function hasAttribute(\Reflector $reflector, string $attributeClass): bool
+    /**
+     * @param \ReflectionClass<object>|\ReflectionMethod $reflector
+     */
+    private function hasAttribute(\ReflectionClass|\ReflectionMethod $reflector, string $attributeClass): bool
     {
         foreach ($reflector->getAttributes($attributeClass) as $attribute) {
             if ($attribute->getName() === $attributeClass) {
@@ -81,5 +84,3 @@ final class AccessControlSubscriber implements EventSubscriberInterface
         $request->attributes->set(AuthenticatedWorkerProvider::REQUEST_ATTRIBUTE, $worker);
     }
 }
-
-

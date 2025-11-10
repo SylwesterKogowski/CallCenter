@@ -19,4 +19,3 @@ class AuthenticationException extends DomainException
         return 401;
     }
 }
-

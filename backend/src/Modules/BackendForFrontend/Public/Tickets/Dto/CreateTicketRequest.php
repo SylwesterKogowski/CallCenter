@@ -19,8 +19,7 @@ class CreateTicketRequest
         public ?string $description = null,
     ) {
         $this->categoryId = trim($categoryId);
-        $this->title = $title !== null ? trim($title) : null;
-        $this->description = $description !== null ? trim($description) : null;
+        $this->title = null !== $title ? trim($title) : null;
+        $this->description = null !== $description ? trim($description) : null;
     }
 }
-

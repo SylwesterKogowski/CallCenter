@@ -11,9 +11,8 @@ use App\Modules\BackendForFrontend\Manager\Dto\UpdateAutoAssignmentSettingsInput
 use App\Modules\BackendForFrontend\Manager\Service\ManagerMonitoringServiceInterface;
 use App\Modules\BackendForFrontend\Shared\AbstractJsonController;
 use App\Modules\BackendForFrontend\Shared\Exception\ValidationException;
-use App\Modules\BackendForFrontend\Shared\Security\AuthenticatedWorkerProvider;
 use App\Modules\BackendForFrontend\Shared\Security\Attribute\RequiresManager;
-use DateTimeImmutable;
+use App\Modules\BackendForFrontend\Shared\Security\AuthenticatedWorkerProvider;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -114,27 +113,15 @@ final class ManagerMonitoringController extends AbstractJsonController
     private function hydrateUpdateAutoAssignmentRequest(array $payload): UpdateAutoAssignmentRequest
     {
         if (!array_key_exists('enabled', $payload)) {
-            throw new ValidationException('Pole "enabled" jest wymagane', [
-                'errors' => [
-                    'enabled' => ['To pole jest wymagane'],
-                ],
-            ]);
+            throw new ValidationException('Pole "enabled" jest wymagane', ['errors' => ['enabled' => ['To pole jest wymagane']]]);
         }
 
         if (!is_bool($payload['enabled'])) {
-            throw new ValidationException('Pole "enabled" musi być typu bool', [
-                'errors' => [
-                    'enabled' => ['Oczekiwano wartości logicznej'],
-                ],
-            ]);
+            throw new ValidationException('Pole "enabled" musi być typu bool', ['errors' => ['enabled' => ['Oczekiwano wartości logicznej']]]);
         }
 
         if (!array_key_exists('settings', $payload) || !is_array($payload['settings'])) {
-            throw new ValidationException('Pole "settings" jest wymagane', [
-                'errors' => [
-                    'settings' => ['Oczekiwano obiektu ustawień'],
-                ],
-            ]);
+            throw new ValidationException('Pole "settings" jest wymagane', ['errors' => ['settings' => ['Oczekiwano obiektu ustawień']]]);
         }
 
         /** @var array<string, mixed> $settingsPayload */
@@ -223,7 +210,7 @@ final class ManagerMonitoringController extends AbstractJsonController
     /**
      * @param array{
      *     enabled: bool,
-     *     lastRun: DateTimeImmutable|null,
+     *     lastRun: \DateTimeImmutable|null,
      *     ticketsAssigned: int,
      *     settings: array{
      *         considerEfficiency: bool,
@@ -238,7 +225,7 @@ final class ManagerMonitoringController extends AbstractJsonController
     {
         return [
             'enabled' => (bool) $settings['enabled'],
-            'lastRun' => $settings['lastRun'] instanceof DateTimeImmutable
+            'lastRun' => $settings['lastRun'] instanceof \DateTimeImmutable
                 ? $settings['lastRun']->format(DATE_ATOM)
                 : null,
             'ticketsAssigned' => (int) $settings['ticketsAssigned'],
@@ -256,19 +243,11 @@ final class ManagerMonitoringController extends AbstractJsonController
     private function expectBool(array $payload, string $field): bool
     {
         if (!array_key_exists($field, $payload)) {
-            throw new ValidationException(sprintf('Pole "%s" jest wymagane', $field), [
-                'errors' => [
-                    $field => ['To pole jest wymagane'],
-                ],
-            ]);
+            throw new ValidationException(sprintf('Pole "%s" jest wymagane', $field), ['errors' => [$field => ['To pole jest wymagane']]]);
         }
 
         if (!is_bool($payload[$field])) {
-            throw new ValidationException(sprintf('Pole "%s" musi być typu bool', $field), [
-                'errors' => [
-                    $field => ['Oczekiwano wartości logicznej'],
-                ],
-            ]);
+            throw new ValidationException(sprintf('Pole "%s" musi być typu bool', $field), ['errors' => [$field => ['Oczekiwano wartości logicznej']]]);
         }
 
         return $payload[$field];
@@ -280,23 +259,13 @@ final class ManagerMonitoringController extends AbstractJsonController
     private function expectInt(array $payload, string $field): int
     {
         if (!array_key_exists($field, $payload)) {
-            throw new ValidationException(sprintf('Pole "%s" jest wymagane', $field), [
-                'errors' => [
-                    $field => ['To pole jest wymagane'],
-                ],
-            ]);
+            throw new ValidationException(sprintf('Pole "%s" jest wymagane', $field), ['errors' => [$field => ['To pole jest wymagane']]]);
         }
 
         if (!is_int($payload[$field])) {
-            throw new ValidationException(sprintf('Pole "%s" musi być liczbą całkowitą', $field), [
-                'errors' => [
-                    $field => ['Oczekiwano liczby całkowitej'],
-                ],
-            ]);
+            throw new ValidationException(sprintf('Pole "%s" musi być liczbą całkowitą', $field), ['errors' => [$field => ['Oczekiwano liczby całkowitej']]]);
         }
 
         return $payload[$field];
     }
 }
-
-

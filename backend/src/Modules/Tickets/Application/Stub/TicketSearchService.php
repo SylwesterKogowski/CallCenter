@@ -18,5 +18,3 @@ final class TicketSearchService implements TicketSearchServiceInterface
         return $this->notImplemented(__METHOD__);
     }
 }
-
-

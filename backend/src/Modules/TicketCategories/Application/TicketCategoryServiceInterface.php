@@ -20,4 +20,3 @@ interface TicketCategoryServiceInterface
      */
     public function getCategoriesByIds(array $categoryIds): array;
 }
-

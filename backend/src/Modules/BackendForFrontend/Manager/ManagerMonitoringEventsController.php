@@ -9,9 +9,8 @@ use App\Modules\BackendForFrontend\Manager\Service\ManagerMonitoringServiceInter
 use App\Modules\BackendForFrontend\Shared\AbstractJsonController;
 use App\Modules\BackendForFrontend\Shared\Exception\AccessDeniedException;
 use App\Modules\BackendForFrontend\Shared\Exception\HttpAwareExceptionInterface;
-use App\Modules\BackendForFrontend\Shared\Security\AuthenticatedWorkerProvider;
 use App\Modules\BackendForFrontend\Shared\Security\Attribute\RequiresManager;
-use DateTimeImmutable;
+use App\Modules\BackendForFrontend\Shared\Security\AuthenticatedWorkerProvider;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -62,7 +61,7 @@ final class ManagerMonitoringEventsController extends AbstractJsonController
                 $this->monitoringService->streamMonitoringEvents(
                     $manager->getId(),
                     $date,
-                    function (string $eventType, array $payload, DateTimeImmutable $timestamp): void {
+                    function (string $eventType, array $payload, \DateTimeImmutable $timestamp): void {
                         $payload['timestamp'] = $timestamp->format(DATE_ATOM);
 
                         try {
@@ -110,5 +109,3 @@ final class ManagerMonitoringEventsController extends AbstractJsonController
         }
     }
 }
-
-

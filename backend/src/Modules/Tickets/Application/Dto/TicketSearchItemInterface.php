@@ -15,5 +15,3 @@ interface TicketSearchItemInterface
 
     public function getTimeSpentMinutes(): int;
 }
-
-

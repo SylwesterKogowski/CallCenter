@@ -54,11 +54,17 @@ abstract class AbstractJsonController extends AbstractController
         }
     }
 
+    /**
+     * @param array<string, string> $headers
+     */
     protected function jsonSuccess(mixed $data, int $status = Response::HTTP_OK, array $headers = []): JsonResponse
     {
         return $this->json($data, $status, $headers);
     }
 
+    /**
+     * @param array<string, mixed> $context
+     */
     protected function jsonMessage(string $message, int $status = Response::HTTP_OK, array $context = []): JsonResponse
     {
         return $this->json(
@@ -118,4 +124,3 @@ abstract class AbstractJsonController extends AbstractController
         return $decoded;
     }
 }
-

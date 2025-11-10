@@ -34,5 +34,3 @@ final class CreateWorkerTicketRequest
         return null !== $this->clientId || null !== $this->clientData;
     }
 }
-
-

@@ -25,4 +25,3 @@ interface TicketInterface
 
     public function getUpdatedAt(): ?\DateTimeInterface;
 }
-

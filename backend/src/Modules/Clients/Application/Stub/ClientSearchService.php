@@ -17,5 +17,3 @@ final class ClientSearchService implements ClientSearchServiceInterface
         return $this->notImplemented(__METHOD__);
     }
 }
-
-

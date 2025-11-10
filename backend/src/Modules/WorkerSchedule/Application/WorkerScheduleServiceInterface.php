@@ -34,6 +34,7 @@ interface WorkerScheduleServiceInterface
 
     /**
      * @param string[]|null $categoryIds
+     *
      * @return iterable<WorkerScheduleAssignmentInterface>
      */
     public function autoAssignTicketsForWorker(
@@ -62,5 +63,3 @@ interface WorkerScheduleServiceInterface
      */
     public function getWorkerScheduleStatistics(string $workerId, \DateTimeImmutable $date): array;
 }
-
-

@@ -15,5 +15,3 @@ trait NotImplementedDomainServiceTrait
         throw new \LogicException(sprintf('Domain service method "%s" is not implemented yet.', $method));
     }
 }
-
-

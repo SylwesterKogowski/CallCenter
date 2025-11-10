@@ -9,20 +9,19 @@ use App\Modules\WorkerAvailability\Application\Dto\CopyAvailabilityResultInterfa
 use App\Modules\WorkerAvailability\Application\Dto\DayAvailabilityResultInterface;
 use App\Modules\WorkerAvailability\Application\WorkerAvailabilityServiceInterface;
 use App\Modules\WorkerAvailability\Domain\WorkerAvailabilityInterface;
-use DateTimeImmutable;
 
 final class WorkerAvailabilityService implements WorkerAvailabilityServiceInterface
 {
     use NotImplementedDomainServiceTrait;
 
-    public function getWorkerAvailabilityForWeek(string $workerId, DateTimeImmutable $weekStartDate): iterable
+    public function getWorkerAvailabilityForWeek(string $workerId, \DateTimeImmutable $weekStartDate): iterable
     {
         return $this->notImplemented(__METHOD__);
     }
 
     public function replaceWorkerAvailabilityForDay(
         string $workerId,
-        DateTimeImmutable $date,
+        \DateTimeImmutable $date,
         iterable $timeSlots,
     ): DayAvailabilityResultInterface {
         return $this->notImplemented(__METHOD__);
@@ -31,24 +30,23 @@ final class WorkerAvailabilityService implements WorkerAvailabilityServiceInterf
     public function updateWorkerAvailabilitySlot(
         string $workerId,
         string $timeSlotId,
-        DateTimeImmutable $start,
-        DateTimeImmutable $end,
+        \DateTimeImmutable $start,
+        \DateTimeImmutable $end,
     ): WorkerAvailabilityInterface {
         return $this->notImplemented(__METHOD__);
     }
 
-    public function removeWorkerAvailabilitySlot(string $workerId, string $timeSlotId): DateTimeImmutable
+    public function removeWorkerAvailabilitySlot(string $workerId, string $timeSlotId): \DateTimeImmutable
     {
         return $this->notImplemented(__METHOD__);
     }
 
     public function copyWorkerAvailability(
         string $workerId,
-        DateTimeImmutable $sourceDate,
+        \DateTimeImmutable $sourceDate,
         array $targetDates,
         bool $overwrite,
     ): CopyAvailabilityResultInterface {
         return $this->notImplemented(__METHOD__);
     }
 }
-

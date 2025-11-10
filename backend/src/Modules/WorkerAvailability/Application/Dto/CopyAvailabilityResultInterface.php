@@ -16,5 +16,3 @@ interface CopyAvailabilityResultInterface
      */
     public function getSkippedDates(): iterable;
 }
-
-

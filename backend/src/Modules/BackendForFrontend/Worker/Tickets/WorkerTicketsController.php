@@ -8,9 +8,9 @@ use App\Modules\BackendForFrontend\Shared\AbstractJsonController;
 use App\Modules\BackendForFrontend\Shared\Exception\AccessDeniedException;
 use App\Modules\BackendForFrontend\Shared\Exception\ResourceNotFoundException;
 use App\Modules\BackendForFrontend\Shared\Exception\ValidationException;
+use App\Modules\BackendForFrontend\Shared\Security\Attribute\RequiresWorker;
 use App\Modules\BackendForFrontend\Shared\Security\AuthenticatedWorker;
 use App\Modules\BackendForFrontend\Shared\Security\AuthenticatedWorkerProvider;
-use App\Modules\BackendForFrontend\Shared\Security\Attribute\RequiresWorker;
 use App\Modules\BackendForFrontend\Worker\Tickets\Dto\CreateWorkerTicketClientDto;
 use App\Modules\BackendForFrontend\Worker\Tickets\Dto\CreateWorkerTicketRequest;
 use App\Modules\BackendForFrontend\Worker\Tickets\Dto\SearchWorkerTicketsQuery;
@@ -95,10 +95,7 @@ final class WorkerTicketsController extends AbstractJsonController
             $this->validateDto($dto);
 
             if (!$dto->hasClientReference()) {
-                throw new ValidationException('Wybierz istniejącego klienta lub podaj dane nowego klienta', [
-                    'clientId' => ['Wymagane jest wskazanie klienta'],
-                    'clientData' => ['Wymagane jest wskazanie klienta'],
-                ]);
+                throw new ValidationException('Wybierz istniejącego klienta lub podaj dane nowego klienta', ['clientId' => ['Wymagane jest wskazanie klienta'], 'clientData' => ['Wymagane jest wskazanie klienta']]);
             }
 
             $this->assertCategoryAccess($worker, $dto->categoryId);
@@ -178,9 +175,7 @@ final class WorkerTicketsController extends AbstractJsonController
         }
 
         if (!in_array($categoryId, $worker->getCategoryIds(), true)) {
-            throw new AccessDeniedException('Brak uprawnień do wybranej kategorii', [
-                'categoryId' => $categoryId,
-            ]);
+            throw new AccessDeniedException('Brak uprawnień do wybranej kategorii', ['categoryId' => $categoryId]);
         }
     }
 
@@ -208,16 +203,11 @@ final class WorkerTicketsController extends AbstractJsonController
         }
 
         if (null === $clientData) {
-            throw new ValidationException('Dane klienta są wymagane', [
-                'clientData' => ['Dane klienta są wymagane'],
-            ]);
+            throw new ValidationException('Dane klienta są wymagane', ['clientData' => ['Dane klienta są wymagane']]);
         }
 
         if (!$clientData->hasContactData()) {
-            throw new ValidationException('Podaj dane kontaktowe klienta (email lub telefon)', [
-                'clientData.email' => ['Podaj email lub numer telefonu'],
-                'clientData.phone' => ['Podaj email lub numer telefonu'],
-            ]);
+            throw new ValidationException('Podaj dane kontaktowe klienta (email lub telefon)', ['clientData.email' => ['Podaj email lub numer telefonu'], 'clientData.phone' => ['Podaj email lub numer telefonu']]);
         }
 
         $matched = null;
@@ -254,6 +244,17 @@ final class WorkerTicketsController extends AbstractJsonController
         return '' === $trimmed ? null : $trimmed;
     }
 
+    /**
+     * @return array{
+     *     id: string,
+     *     title: string,
+     *     status: string,
+     *     category: array{id: string, name: string},
+     *     client: array{id: string, name: string, email: ?string, phone: ?string},
+     *     createdAt: string,
+     *     timeSpent: int
+     * }
+     */
     private function formatCreatedTicket(
         TicketInterface $ticket,
         ClientInterface $client,
@@ -278,6 +279,17 @@ final class WorkerTicketsController extends AbstractJsonController
         ];
     }
 
+    /**
+     * @return array{
+     *     id: string,
+     *     title: string,
+     *     status: string,
+     *     category: array{id: string, name: string},
+     *     client: array{id: string, name: string, email: ?string, phone: ?string},
+     *     createdAt: string,
+     *     timeSpent: int
+     * }
+     */
     private function formatSearchItem(TicketSearchItemInterface $item): array
     {
         $ticket = $item->getTicket();
@@ -390,5 +402,3 @@ final class WorkerTicketsController extends AbstractJsonController
         return $title;
     }
 }
-
-

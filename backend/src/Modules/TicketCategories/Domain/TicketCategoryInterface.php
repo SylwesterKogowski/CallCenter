@@ -14,4 +14,3 @@ interface TicketCategoryInterface
 
     public function getDefaultResolutionTimeMinutes(): int;
 }
-

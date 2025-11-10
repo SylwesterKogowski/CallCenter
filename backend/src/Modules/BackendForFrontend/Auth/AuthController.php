@@ -9,16 +9,17 @@ use App\Modules\Authorization\Application\AuthorizationServiceInterface;
 use App\Modules\BackendForFrontend\Auth\Dto\LoginRequest;
 use App\Modules\BackendForFrontend\Auth\Dto\RegisterWorkerRequest;
 use App\Modules\BackendForFrontend\Shared\AbstractJsonController;
+use App\Modules\BackendForFrontend\Shared\Exception\AccessDeniedException;
 use App\Modules\BackendForFrontend\Shared\Exception\AuthenticationException;
 use App\Modules\BackendForFrontend\Shared\Exception\ValidationException;
 use App\Modules\BackendForFrontend\Shared\Security\AuthenticatedWorkerProvider;
 use App\Modules\TicketCategories\Application\TicketCategoryServiceInterface;
-use DateTimeImmutable;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route(path: '/api/auth', name: 'backend_for_frontend_auth_')]
 class AuthController extends AbstractJsonController
@@ -42,17 +43,37 @@ class AuthController extends AbstractJsonController
     {
         return $this->execute(function () use ($request) {
             $payload = $this->getJsonBody($request);
+            $isManagerError = $this->validateIsManagerFlag($payload);
             $dto = $this->hydrateRegisterRequest($payload);
-            $this->validateDto($dto);
+
+            try {
+                $this->validateDto($dto);
+            } catch (ValidationException $exception) {
+                $errors = $exception->getErrors();
+
+                if (null !== $isManagerError) {
+                    $errors['isManager'][] = $isManagerError;
+                }
+
+                throw new ValidationException(errors: $errors);
+            }
+
+            if (null !== $isManagerError) {
+                throw new ValidationException(errors: ['isManager' => [$isManagerError]]);
+            }
+
+            if ($dto->isManager) {
+                $worker = $this->workerProvider->getAuthenticatedWorker();
+
+                if (!$worker->isManager()) {
+                    throw new AccessDeniedException();
+                }
+            }
 
             $categories = $this->ticketCategoryService->getCategoriesByIds($dto->categoryIds);
 
             if (count($categories) !== count(array_unique($dto->categoryIds))) {
-                throw new ValidationException('Niektóre kategorie nie istnieją', [
-                    'errors' => [
-                        'categoryIds' => ['Część podanych kategorii nie została odnaleziona'],
-                    ],
-                ]);
+                throw new ValidationException('Niektóre kategorie nie istnieją', ['categoryIds' => ['Część podanych kategorii nie została odnaleziona']]);
             }
 
             $worker = $this->authenticationService->registerWorker(
@@ -103,14 +124,14 @@ class AuthController extends AbstractJsonController
                 throw new AuthenticationException('Nieprawidłowy login lub hasło');
             }
 
-            $expiresAt = new DateTimeImmutable('+1 hour');
+            $expiresAt = new \DateTimeImmutable('+1 hour');
             $token = bin2hex(random_bytes(32));
 
-            $session = $request->getSession();
-
-            if (null === $session) {
+            if (!$request->hasSession()) {
                 throw new AuthenticationException('Sesja jest niedostępna');
             }
+
+            $session = $request->getSession();
 
             if (!$session->isStarted()) {
                 $session->start();
@@ -141,13 +162,13 @@ class AuthController extends AbstractJsonController
     public function logout(Request $request): JsonResponse
     {
         return $this->execute(function () use ($request) {
-            $session = $request->getSession();
-
-            if (null === $session) {
+            if (!$request->hasSession()) {
                 return [
                     'message' => 'Sesja została już zakończona',
                 ];
             }
+
+            $session = $request->getSession();
 
             if (!$session->isStarted()) {
                 $session->start();
@@ -192,5 +213,20 @@ class AuthController extends AbstractJsonController
             password: (string) ($payload['password'] ?? ''),
         );
     }
-}
 
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private function validateIsManagerFlag(array $payload): ?string
+    {
+        if (!array_key_exists('isManager', $payload)) {
+            return null;
+        }
+
+        if (!is_bool($payload['isManager'])) {
+            return 'Pole isManager musi być wartością logiczną';
+        }
+
+        return null;
+    }
+}

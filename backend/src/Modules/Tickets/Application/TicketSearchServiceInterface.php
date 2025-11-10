@@ -11,5 +11,3 @@ interface TicketSearchServiceInterface
 {
     public function searchWorkerTickets(string $workerId, TicketSearchFilters $filters): TicketSearchResultInterface;
 }
-
-

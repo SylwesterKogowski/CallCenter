@@ -91,12 +91,12 @@ Dokument opisuje zadania, które należy wykonać w katalogu `backend/src/Module
     - Dodaj middleware / atrybuty sprawdzające role (`isManager`) przed wejściem do kontrolera.
     - W przypadku braku uprawnień zwracaj status 403 z komunikatem `{"message": "Brak uprawnień"}`.
 
-13. [ ] **Testy i dokumentacja**
-   - Opracuj strukturę katalogów testowych w `tests/Modules/BackendForFrontend/` (np. `Auth/`, `Manager/`, `Public/`, `Worker/`) i dodaj pliki testowe z oznaczonymi metodami `@test` jako TODO.
-   - Przygotuj wspólne fixture'y / mocki usług domenowych (Authentication, Authorization, TicketService itp.) oraz helper do inicjalizacji żądań HTTP w testach.
-   - Dla każdego kontrolera dopisz listę scenariuszy testowych (walidacja, dostęp bez uprawnień, sukces) jako komentarze TODO w odpowiednich klasach testowych.
-   - Dodaj dokument `tests/Modules/BackendForFrontend/readme.md` opisujący konwencje pisania testów i sposób uruchamiania suite.
-   - Uzupełniaj bieżący plik `todo.md` o statusy realizacji podzadań oraz zanotuj w `backend/readme.md`, że moduł BackendForFrontend dostarcza warstwę HTTP i posiada dedykowany katalog testów.
+13. [x] **Testy i dokumentacja**
+   - Utworzono strukturę katalogów testowych w `tests/Unit/Modules/BackendForFrontend/` (m.in. `Auth/`, `Manager/`, `Public/Tickets/`, `Worker/**`) wraz z klasami testowymi zawierającymi TODO scenariuszy.
+   - Przygotowano wspólną klasę bazową `BackendForFrontendTestCase` z mockami usług domenowych, helperami żądań i fixture'ami zalogowanych pracowników.
+   - Każdy kontroler posiada listę scenariuszy testowych (walidacja, brak uprawnień, sukces) opisanych jako komentarze TODO.
+   - Dodano dokument `tests/Unit/Modules/BackendForFrontend/readme.md` z konwencjami i instrukcją uruchamiania testów.
+   - Zaktualizowano `backend/readme.md` o informację o warstwie HTTP BackendForFrontend i dedykowanym katalogu testów.
 
 14. [x] **Konfiguracja usług Symfony**
     - Dodaj aliasy w `services.yaml` mapujące utworzone interfejsy (`AuthenticationServiceInterface`, `AuthorizationServiceInterface`, `TicketCategoryServiceInterface`, itp.) na istniejące fasady domenowe.

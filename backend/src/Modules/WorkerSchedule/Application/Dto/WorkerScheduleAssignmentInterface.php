@@ -24,5 +24,3 @@ interface WorkerScheduleAssignmentInterface
 
     public function isAutoAssigned(): bool;
 }
-
-

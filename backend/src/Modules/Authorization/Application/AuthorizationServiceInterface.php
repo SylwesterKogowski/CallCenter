@@ -20,4 +20,3 @@ interface AuthorizationServiceInterface
 
     public function isManager(string $workerId): bool;
 }
-

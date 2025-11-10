@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Modules\BackendForFrontend\Manager\Service;
 
 use App\Modules\BackendForFrontend\Manager\Dto\UpdateAutoAssignmentSettingsInput;
-use DateTimeImmutable;
 
 interface ManagerMonitoringServiceInterface
 {
@@ -47,7 +46,7 @@ interface ManagerMonitoringServiceInterface
      *     }>,
      *     autoAssignmentSettings: array{
      *         enabled: bool,
-     *         lastRun: DateTimeImmutable|null,
+     *         lastRun: \DateTimeImmutable|null,
      *         ticketsAssigned: int,
      *         settings: array{
      *             considerEfficiency: bool,
@@ -57,13 +56,13 @@ interface ManagerMonitoringServiceInterface
      *     }
      * }
      */
-    public function getMonitoringData(string $managerId, DateTimeImmutable $date): array;
+    public function getMonitoringData(string $managerId, \DateTimeImmutable $date): array;
 
     /**
      * @return array{
      *     autoAssignmentSettings: array{
      *         enabled: bool,
-     *         lastRun: DateTimeImmutable|null,
+     *         lastRun: \DateTimeImmutable|null,
      *         ticketsAssigned: int,
      *         settings: array{
      *             considerEfficiency: bool,
@@ -71,7 +70,7 @@ interface ManagerMonitoringServiceInterface
      *             maxTicketsPerWorker: int
      *         }
      *     },
-     *     updatedAt: DateTimeImmutable
+     *     updatedAt: \DateTimeImmutable
      * }
      */
     public function updateAutoAssignmentSettings(
@@ -85,19 +84,17 @@ interface ManagerMonitoringServiceInterface
      *     message: string,
      *     ticketsAssigned: int,
      *     assignedTo: list<array{workerId: string, ticketsCount: int}>,
-     *     completedAt: DateTimeImmutable
+     *     completedAt: \DateTimeImmutable
      * }
      */
-    public function triggerAutoAssignment(string $managerId, DateTimeImmutable $date): array;
+    public function triggerAutoAssignment(string $managerId, \DateTimeImmutable $date): array;
 
     /**
-     * @param callable(string $eventType, array $payload, DateTimeImmutable $timestamp): void $emit
+     * @param callable(string $eventType, array<string, mixed> $payload, \DateTimeImmutable $timestamp): void $emit
      */
     public function streamMonitoringEvents(
         string $managerId,
-        DateTimeImmutable $date,
+        \DateTimeImmutable $date,
         callable $emit,
     ): void;
 }
-
-

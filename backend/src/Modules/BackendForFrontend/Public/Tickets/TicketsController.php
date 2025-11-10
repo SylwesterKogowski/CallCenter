@@ -47,10 +47,7 @@ class TicketsController extends AbstractJsonController
             $this->validateDto($dto);
 
             if (!$dto->client->hasContactData()) {
-                throw new ValidationException('Dane kontaktowe klienta są wymagane', [
-                    'client.email' => ['Podaj email lub numer telefonu'],
-                    'client.phone' => ['Podaj email lub numer telefonu'],
-                ]);
+                throw new ValidationException('Dane kontaktowe klienta są wymagane', ['client.email' => ['Podaj email lub numer telefonu'], 'client.phone' => ['Podaj email lub numer telefonu']]);
             }
 
             $category = $this->ticketCategoryService->getCategoriesByIds([$dto->categoryId])[0] ?? null;
@@ -277,4 +274,3 @@ class TicketsController extends AbstractJsonController
         return $client->getEmail() ?? $client->getPhone();
     }
 }
-

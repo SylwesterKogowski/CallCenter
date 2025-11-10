@@ -22,4 +22,3 @@ interface TicketMessageInterface
 
     public function getStatus(): ?string;
 }
-

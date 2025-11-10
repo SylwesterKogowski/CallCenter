@@ -44,4 +44,3 @@ class TicketCategoriesController extends AbstractJsonController
         });
     }
 }
-

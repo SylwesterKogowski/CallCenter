@@ -19,4 +19,3 @@ class AccessDeniedException extends DomainException
         return 403;
     }
 }
-

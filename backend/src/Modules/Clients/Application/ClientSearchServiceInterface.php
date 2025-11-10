@@ -10,5 +10,3 @@ interface ClientSearchServiceInterface
 {
     public function searchClients(string $query, int $limit): ClientSearchResultInterface;
 }
-
-

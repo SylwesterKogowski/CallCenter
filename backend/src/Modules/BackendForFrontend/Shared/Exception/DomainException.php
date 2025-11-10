@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\BackendForFrontend\Shared\Exception;
 
-use RuntimeException;
-
-abstract class DomainException extends RuntimeException implements HttpAwareExceptionInterface
+abstract class DomainException extends \RuntimeException implements HttpAwareExceptionInterface
 {
     /**
      * @param array<string, mixed> $context
@@ -35,4 +33,3 @@ abstract class DomainException extends RuntimeException implements HttpAwareExce
         return $this->context;
     }
 }
-

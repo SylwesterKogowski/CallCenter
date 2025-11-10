@@ -79,5 +79,3 @@ final class TicketService implements TicketServiceInterface
         $this->notImplemented(__METHOD__);
     }
 }
-
-

@@ -10,7 +10,7 @@ class CreateTicketClientDto
 {
     public function __construct(
         #[Assert\Length(max: 255)]
-        #[Assert\Email(mode: Assert\Email::VALIDATION_MODE_LOOSE)]
+        #[Assert\Email(mode: 'html5')]
         public ?string $email = null,
         #[Assert\Length(max: 32)]
         public ?string $phone = null,
@@ -19,10 +19,10 @@ class CreateTicketClientDto
         #[Assert\Length(max: 64)]
         public ?string $lastName = null,
     ) {
-        $this->email = $email !== null ? trim($email) : null;
-        $this->phone = $phone !== null ? trim($phone) : null;
-        $this->firstName = $firstName !== null ? trim($firstName) : null;
-        $this->lastName = $lastName !== null ? trim($lastName) : null;
+        $this->email = null !== $email ? trim($email) : null;
+        $this->phone = null !== $phone ? trim($phone) : null;
+        $this->firstName = null !== $firstName ? trim($firstName) : null;
+        $this->lastName = null !== $lastName ? trim($lastName) : null;
     }
 
     public function hasContactData(): bool
@@ -30,4 +30,3 @@ class CreateTicketClientDto
         return '' !== (string) $this->email || '' !== (string) $this->phone;
     }
 }
-

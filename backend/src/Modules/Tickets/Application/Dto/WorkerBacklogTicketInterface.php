@@ -24,5 +24,3 @@ interface WorkerBacklogTicketInterface
 
     public function getScheduledDate(): ?\DateTimeInterface;
 }
-
-

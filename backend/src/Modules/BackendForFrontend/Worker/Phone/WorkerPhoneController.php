@@ -7,14 +7,12 @@ namespace App\Modules\BackendForFrontend\Worker\Phone;
 use App\Modules\BackendForFrontend\Shared\AbstractJsonController;
 use App\Modules\BackendForFrontend\Shared\Exception\AccessDeniedException;
 use App\Modules\BackendForFrontend\Shared\Exception\ValidationException;
+use App\Modules\BackendForFrontend\Shared\Security\Attribute\RequiresWorker;
 use App\Modules\BackendForFrontend\Shared\Security\AuthenticatedWorker;
 use App\Modules\BackendForFrontend\Shared\Security\AuthenticatedWorkerProvider;
-use App\Modules\BackendForFrontend\Shared\Security\Attribute\RequiresWorker;
 use App\Modules\BackendForFrontend\Worker\Phone\Dto\EndPhoneCallRequest;
 use App\Modules\BackendForFrontend\Worker\Phone\Dto\StartPhoneCallRequest;
 use App\Modules\BackendForFrontend\Worker\Phone\Service\WorkerPhoneServiceInterface;
-use DateTimeImmutable;
-use DateTimeInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -46,9 +44,7 @@ final class WorkerPhoneController extends AbstractJsonController
             $this->validateDto($dto);
 
             if ($dto->workerId !== $worker->getId()) {
-                throw new AccessDeniedException('Brak uprawnień do rozpoczęcia połączenia', [
-                    'workerId' => $dto->workerId,
-                ]);
+                throw new AccessDeniedException('Brak uprawnień do rozpoczęcia połączenia', ['workerId' => $dto->workerId]);
             }
 
             $result = $this->phoneService->startCall($worker->getId());
@@ -71,10 +67,7 @@ final class WorkerPhoneController extends AbstractJsonController
             $endTime = $this->parseDateTime($dto->endTime, 'endTime');
 
             if ($endTime < $startTime) {
-                throw new ValidationException(
-                    'Czas zakończenia nie może być wcześniejszy niż czas rozpoczęcia',
-                    ['endTime' => ['Czas zakończenia nie może być wcześniejszy niż czas rozpoczęcia']],
-                );
+                throw new ValidationException('Czas zakończenia nie może być wcześniejszy niż czas rozpoczęcia', ['endTime' => ['Czas zakończenia nie może być wcześniejszy niż czas rozpoczęcia']]);
             }
 
             $notes = '' !== trim($dto->notes) ? $dto->notes : null;
@@ -123,13 +116,23 @@ final class WorkerPhoneController extends AbstractJsonController
     /**
      * @param array{
      *     callId: string,
-     *     startTime: DateTimeInterface|string,
+     *     startTime: \DateTimeInterface|string,
      *     pausedTickets: iterable<array{
      *         ticketId: string,
      *         previousStatus: string,
      *         newStatus: string
      *     }>
      * } $result
+     *
+     * @return array{
+     *     callId: string,
+     *     startTime: string,
+     *     pausedTickets: list<array{
+     *         ticketId: string,
+     *         previousStatus: string,
+     *         newStatus: string
+     *     }>
+     * }
      */
     private function normalizeStartCallResult(array $result): array
     {
@@ -137,9 +140,9 @@ final class WorkerPhoneController extends AbstractJsonController
 
         foreach ($result['pausedTickets'] as $ticket) {
             $pausedTickets[] = [
-                'ticketId' => (string) ($ticket['ticketId'] ?? ''),
-                'previousStatus' => (string) ($ticket['previousStatus'] ?? ''),
-                'newStatus' => (string) ($ticket['newStatus'] ?? ''),
+                'ticketId' => (string) $ticket['ticketId'],
+                'previousStatus' => (string) $ticket['previousStatus'],
+                'newStatus' => (string) $ticket['newStatus'],
             ];
         }
 
@@ -156,22 +159,44 @@ final class WorkerPhoneController extends AbstractJsonController
      *         id: string,
      *         ticketId: string|null,
      *         duration: int,
-     *         startTime: DateTimeInterface|string,
-     *         endTime: DateTimeInterface|string
+     *         startTime: \DateTimeInterface|string,
+     *         endTime: \DateTimeInterface|string
      *     },
      *     ticket?: array{
      *         id: string,
      *         status: string,
      *         timeSpent: int,
-     *         scheduledDate?: DateTimeInterface|string|null,
-     *         updatedAt: DateTimeInterface|string
+     *         scheduledDate?: \DateTimeInterface|string|null,
+     *         updatedAt: \DateTimeInterface|string
      *     },
      *     previousTicket?: array{
      *         id: string,
      *         status: string,
-     *         updatedAt: DateTimeInterface|string
+     *         updatedAt: \DateTimeInterface|string
      *     }
      * } $result
+     *
+     * @return array{
+     *     call: array{
+     *         id: string,
+     *         ticketId: string|null,
+     *         duration: int,
+     *         startTime: string,
+     *         endTime: string
+     *     },
+     *     ticket?: array{
+     *         id: string,
+     *         status: string,
+     *         timeSpent: int,
+     *         updatedAt: string,
+     *         scheduledDate?: string
+     *     },
+     *     previousTicket?: array{
+     *         id: string,
+     *         status: string,
+     *         updatedAt: string
+     *     }
+     * }
      */
     private function normalizeEndCallResult(array $result): array
     {
@@ -197,7 +222,7 @@ final class WorkerPhoneController extends AbstractJsonController
                 'updatedAt' => $this->formatDateTime($ticket['updatedAt']),
             ];
 
-            if (isset($ticket['scheduledDate']) && null !== $ticket['scheduledDate']) {
+            if (isset($ticket['scheduledDate'])) {
                 $response['ticket']['scheduledDate'] = $this->formatDate(
                     $ticket['scheduledDate'],
                 );
@@ -219,7 +244,7 @@ final class WorkerPhoneController extends AbstractJsonController
 
     private function formatDateTime(mixed $value): string
     {
-        if ($value instanceof DateTimeInterface) {
+        if ($value instanceof \DateTimeInterface) {
             return $value->format(DATE_ATOM);
         }
 
@@ -228,27 +253,24 @@ final class WorkerPhoneController extends AbstractJsonController
 
     private function formatDate(mixed $value): string
     {
-        if ($value instanceof DateTimeInterface) {
+        if ($value instanceof \DateTimeInterface) {
             return $value->format('Y-m-d');
         }
 
         return (string) $value;
     }
 
-    private function parseDateTime(string $value, string $field): DateTimeImmutable
+    private function parseDateTime(string $value, string $field): \DateTimeImmutable
     {
-        $date = DateTimeImmutable::createFromFormat(DATE_ATOM, $value);
-        $errors = DateTimeImmutable::getLastErrors();
-        $hasErrors = false !== $errors && (
-            ($errors['warning_count'] ?? 0) > 0
-            || ($errors['error_count'] ?? 0) > 0
+        $date = \DateTimeImmutable::createFromFormat(DATE_ATOM, $value);
+        $errors = \DateTimeImmutable::getLastErrors();
+        $hasErrors = is_array($errors) && (
+            $errors['warning_count'] > 0
+            || $errors['error_count'] > 0
         );
 
         if (false === $date || $hasErrors) {
-            throw new ValidationException(
-                sprintf('Pole "%s" musi być w formacie ISO 8601 (DATE_ATOM)', $field),
-                [$field => ['Nieprawidłowy format daty']],
-            );
+            throw new ValidationException(sprintf('Pole "%s" musi być w formacie ISO 8601 (DATE_ATOM)', $field), [$field => ['Nieprawidłowy format daty']]);
         }
 
         return $date;
@@ -262,10 +284,7 @@ final class WorkerPhoneController extends AbstractJsonController
     private function normalizeDuration(mixed $value): int
     {
         if (null === $value) {
-            throw new ValidationException(
-                'Czas trwania jest wymagany',
-                ['duration' => ['Czas trwania jest wymagany']],
-            );
+            throw new ValidationException('Czas trwania jest wymagany', ['duration' => ['Czas trwania jest wymagany']]);
         }
 
         if (is_int($value)) {
@@ -273,10 +292,7 @@ final class WorkerPhoneController extends AbstractJsonController
         }
 
         if (!is_numeric($value)) {
-            throw new ValidationException(
-                'Czas trwania musi być liczbą',
-                ['duration' => ['Czas trwania musi być liczbą całkowitą lub zmiennoprzecinkową']],
-            );
+            throw new ValidationException('Czas trwania musi być liczbą', ['duration' => ['Czas trwania musi być liczbą całkowitą lub zmiennoprzecinkową']]);
         }
 
         return (int) round((float) $value);
@@ -291,14 +307,9 @@ final class WorkerPhoneController extends AbstractJsonController
         $trimmed = trim($ticketId);
 
         if ('' === $trimmed) {
-            throw new ValidationException(
-                'Identyfikator ticketa nie może być pusty',
-                ['ticketId' => ['Identyfikator ticketa nie może być pusty']],
-            );
+            throw new ValidationException('Identyfikator ticketa nie może być pusty', ['ticketId' => ['Identyfikator ticketa nie może być pusty']]);
         }
 
         return $trimmed;
     }
 }
-
-

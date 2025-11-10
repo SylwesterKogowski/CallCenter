@@ -14,5 +14,3 @@ interface WorkerSchedulePredictionInterface
 
     public function getEfficiency(): float;
 }
-
-

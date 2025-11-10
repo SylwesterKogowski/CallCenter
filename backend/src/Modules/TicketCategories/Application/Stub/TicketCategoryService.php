@@ -21,5 +21,3 @@ final class TicketCategoryService implements TicketCategoryServiceInterface
         return $this->notImplemented(__METHOD__);
     }
 }
-
-

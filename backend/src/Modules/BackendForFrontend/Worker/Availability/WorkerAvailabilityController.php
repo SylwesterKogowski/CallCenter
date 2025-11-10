@@ -6,9 +6,9 @@ namespace App\Modules\BackendForFrontend\Worker\Availability;
 
 use App\Modules\BackendForFrontend\Shared\AbstractJsonController;
 use App\Modules\BackendForFrontend\Shared\Exception\ValidationException;
-use App\Modules\BackendForFrontend\Shared\Security\AuthenticatedWorkerProvider;
 use App\Modules\BackendForFrontend\Shared\Security\Attribute\RequiresWorker;
 use App\Modules\BackendForFrontend\Shared\Security\AuthenticatedWorker;
+use App\Modules\BackendForFrontend\Shared\Security\AuthenticatedWorkerProvider;
 use App\Modules\BackendForFrontend\Worker\Availability\Dto\CopyWorkerAvailabilityRequest;
 use App\Modules\BackendForFrontend\Worker\Availability\Dto\SaveWorkerAvailabilityRequest;
 use App\Modules\BackendForFrontend\Worker\Availability\Dto\TimeSlotPayload;
@@ -17,8 +17,6 @@ use App\Modules\WorkerAvailability\Application\Dto\CopyAvailabilityResultInterfa
 use App\Modules\WorkerAvailability\Application\Dto\DayAvailabilityResultInterface;
 use App\Modules\WorkerAvailability\Application\WorkerAvailabilityServiceInterface;
 use App\Modules\WorkerAvailability\Domain\WorkerAvailabilityInterface;
-use DateInterval;
-use DateTimeImmutable;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -176,14 +174,12 @@ final class WorkerAvailabilityController extends AbstractJsonController
             $targetDates = array_values(
                 array_filter(
                     $targetDates,
-                    static fn (DateTimeImmutable $date): bool => $date->format('Y-m-d') !== $sourceDateKey,
+                    static fn (\DateTimeImmutable $date): bool => $date->format('Y-m-d') !== $sourceDateKey,
                 ),
             );
 
             if ([] === $targetDates) {
-                throw new ValidationException('Brak prawidłowych dat docelowych', [
-                    'targetDates' => ['Wybierz co najmniej jedną datę docelową inną niż data źródłowa'],
-                ]);
+                throw new ValidationException('Brak prawidłowych dat docelowych', ['targetDates' => ['Wybierz co najmniej jedną datę docelową inną niż data źródłowa']]);
             }
 
             $result = $this->workerAvailabilityService->copyWorkerAvailability(
@@ -253,9 +249,10 @@ final class WorkerAvailabilityController extends AbstractJsonController
 
     /**
      * @param TimeSlotPayload[]|UpdateWorkerTimeSlotRequest[] $timeSlotDtos
-     * @return array<int, array{start: DateTimeImmutable, end: DateTimeImmutable}>
+     *
+     * @return array<int, array{start: \DateTimeImmutable, end: \DateTimeImmutable}>
      */
-    private function buildTimeSlots(DateTimeImmutable $date, array $timeSlotDtos): array
+    private function buildTimeSlots(\DateTimeImmutable $date, array $timeSlotDtos): array
     {
         $errors = [];
         $parsed = [];
@@ -309,10 +306,7 @@ final class WorkerAvailabilityController extends AbstractJsonController
         }
 
         if ($overlapDetected) {
-            throw new ValidationException(
-                'Przedziały czasowe nie mogą się nakładać',
-                ['timeSlots' => ['Przedziały czasowe nie mogą się nakładać']],
-            );
+            throw new ValidationException('Przedziały czasowe nie mogą się nakładać', ['timeSlots' => ['Przedziały czasowe nie mogą się nakładać']]);
         }
 
         return array_map(
@@ -326,8 +320,10 @@ final class WorkerAvailabilityController extends AbstractJsonController
 
     /**
      * @param array<string, array<int, WorkerAvailabilityInterface>> $grouped
+     *
+     * @return array{date: string, timeSlots: list<array{id: string, startTime: string, endTime: string}>, totalHours: float|int}
      */
-    private function buildDayPayload(array $grouped, DateTimeImmutable $date): array
+    private function buildDayPayload(array $grouped, \DateTimeImmutable $date): array
     {
         $dateKey = $date->format('Y-m-d');
         $slots = $grouped[$dateKey] ?? [];
@@ -360,9 +356,10 @@ final class WorkerAvailabilityController extends AbstractJsonController
 
     /**
      * @param iterable<WorkerAvailabilityInterface> $slots
+     *
      * @return array<int, array{date: string, timeSlots: array<int, array{id: string, startTime: string, endTime: string}>, totalHours: float}>
      */
-    private function buildWeeklyAvailabilityPayload(iterable $slots, DateTimeImmutable $startDate): array
+    private function buildWeeklyAvailabilityPayload(iterable $slots, \DateTimeImmutable $startDate): array
     {
         $grouped = [];
 
@@ -376,12 +373,15 @@ final class WorkerAvailabilityController extends AbstractJsonController
 
         for ($i = 0; $i < 7; ++$i) {
             $days[] = $this->buildDayPayload($grouped, $current);
-            $current = $current->add(new DateInterval('P1D'));
+            $current = $current->add(new \DateInterval('P1D'));
         }
 
         return $days;
     }
 
+    /**
+     * @return array{date: string, timeSlots: list<array{id: string, startTime: string, endTime: string}>, totalHours: float|int, updatedAt: string}
+     */
     private function buildDayAvailabilityPayload(DayAvailabilityResultInterface $result): array
     {
         $grouped = [
@@ -394,6 +394,9 @@ final class WorkerAvailabilityController extends AbstractJsonController
         return $payload;
     }
 
+    /**
+     * @return array{copied: list<array{date: string, timeSlots: list<array{id: string, startTime: string, endTime: string}>, totalHours: float|int, updatedAt: string}>, skipped: list<string>}
+     */
     private function buildCopyAvailabilityPayload(CopyAvailabilityResultInterface $result): array
     {
         $copied = [];
@@ -403,7 +406,7 @@ final class WorkerAvailabilityController extends AbstractJsonController
         }
 
         $skipped = array_map(
-            static fn (DateTimeImmutable $date): string => $date->format('Y-m-d'),
+            static fn (\DateTimeImmutable $date): string => $date->format('Y-m-d'),
             iterator_to_array($result->getSkippedDates()),
         );
 
@@ -413,6 +416,9 @@ final class WorkerAvailabilityController extends AbstractJsonController
         ];
     }
 
+    /**
+     * @return array{id: string, startTime: string, endTime: string}
+     */
     private function buildTimeSlotPayload(WorkerAvailabilityInterface $slot): array
     {
         return [
@@ -430,14 +436,14 @@ final class WorkerAvailabilityController extends AbstractJsonController
         string $time,
         string $field,
         array &$errors,
-    ): ?DateTimeImmutable {
-        $dateTime = DateTimeImmutable::createFromFormat('Y-m-d H:i', sprintf('%s %s', $date, $time));
+    ): ?\DateTimeImmutable {
+        $dateTime = \DateTimeImmutable::createFromFormat('Y-m-d H:i', sprintf('%s %s', $date, $time));
 
-        $dateTimeErrors = DateTimeImmutable::getLastErrors();
-        $hasErrors = false !== $dateTimeErrors
+        $dateTimeErrors = \DateTimeImmutable::getLastErrors();
+        $hasErrors = is_array($dateTimeErrors)
             && (
-                ($dateTimeErrors['warning_count'] ?? 0) > 0
-                || ($dateTimeErrors['error_count'] ?? 0) > 0
+                $dateTimeErrors['warning_count'] > 0
+                || $dateTimeErrors['error_count'] > 0
             );
 
         if (false === $dateTime || $hasErrors) {
@@ -451,32 +457,31 @@ final class WorkerAvailabilityController extends AbstractJsonController
 
     /**
      * @param string[] $targetDates
-     * @return DateTimeImmutable[]
+     *
+     * @return \DateTimeImmutable[]
      */
     private function parseTargetDates(array $targetDates): array
     {
         $uniqueTargets = array_values(array_unique($targetDates));
 
         return array_map(
-            fn (string $target): DateTimeImmutable => $this->parseDate($target, 'targetDates'),
+            fn (string $target): \DateTimeImmutable => $this->parseDate($target, 'targetDates'),
             $uniqueTargets,
         );
     }
 
-    private function parseDate(string $value, string $field): DateTimeImmutable
+    private function parseDate(string $value, string $field): \DateTimeImmutable
     {
-        $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
-        $errors = DateTimeImmutable::getLastErrors();
-        $hasErrors = false !== $errors
+        $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+        $errors = \DateTimeImmutable::getLastErrors();
+        $hasErrors = is_array($errors)
             && (
-                ($errors['warning_count'] ?? 0) > 0
-                || ($errors['error_count'] ?? 0) > 0
+                $errors['warning_count'] > 0
+                || $errors['error_count'] > 0
             );
 
         if (false === $date || $hasErrors) {
-            throw new ValidationException('Nieprawidłowa data', [
-                $field => ['Data musi być w formacie YYYY-MM-DD'],
-            ]);
+            throw new ValidationException('Nieprawidłowa data', [$field => ['Data musi być w formacie YYYY-MM-DD']]);
         }
 
         return $date;
@@ -487,10 +492,8 @@ final class WorkerAvailabilityController extends AbstractJsonController
         return $this->workerProvider->getAuthenticatedWorker();
     }
 
-    private function today(): DateTimeImmutable
+    private function today(): \DateTimeImmutable
     {
-        return new DateTimeImmutable('today');
+        return new \DateTimeImmutable('today');
     }
 }
-
-

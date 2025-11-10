@@ -7,9 +7,9 @@ namespace App\Modules\BackendForFrontend\Worker\Planning;
 use App\Modules\BackendForFrontend\Shared\AbstractJsonController;
 use App\Modules\BackendForFrontend\Shared\Exception\AccessDeniedException;
 use App\Modules\BackendForFrontend\Shared\Exception\ValidationException;
-use App\Modules\BackendForFrontend\Shared\Security\AuthenticatedWorkerProvider;
 use App\Modules\BackendForFrontend\Shared\Security\Attribute\RequiresWorker;
 use App\Modules\BackendForFrontend\Shared\Security\AuthenticatedWorker;
+use App\Modules\BackendForFrontend\Shared\Security\AuthenticatedWorkerProvider;
 use App\Modules\BackendForFrontend\Worker\Planning\Dto\AssignTicketRequest;
 use App\Modules\BackendForFrontend\Worker\Planning\Dto\AutoAssignRequest;
 use App\Modules\Clients\Domain\ClientInterface;
@@ -24,8 +24,6 @@ use App\Modules\WorkerAvailability\Domain\WorkerAvailabilityInterface;
 use App\Modules\WorkerSchedule\Application\Dto\WorkerScheduleAssignmentInterface;
 use App\Modules\WorkerSchedule\Application\Dto\WorkerSchedulePredictionInterface;
 use App\Modules\WorkerSchedule\Application\WorkerScheduleServiceInterface;
-use DateInterval;
-use DateTimeImmutable;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -238,28 +236,26 @@ final class WorkerPlanningController extends AbstractJsonController
         return $this->workerProvider->getAuthenticatedWorker();
     }
 
-    private function resolveWeekStartDate(mixed $value): DateTimeImmutable
+    private function resolveWeekStartDate(mixed $value): \DateTimeImmutable
     {
         if (is_string($value) && '' !== $value) {
             return $this->parseDate($value, 'startDate');
         }
 
-        return new DateTimeImmutable('today');
+        return new \DateTimeImmutable('today');
     }
 
-    private function parseDate(string $value, string $field): DateTimeImmutable
+    private function parseDate(string $value, string $field): \DateTimeImmutable
     {
-        $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
-        $errors = DateTimeImmutable::getLastErrors();
-        $hasErrors = false !== $errors && (
-            ($errors['warning_count'] ?? 0) > 0
-            || ($errors['error_count'] ?? 0) > 0
+        $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+        $errors = \DateTimeImmutable::getLastErrors();
+        $hasErrors = is_array($errors) && (
+            $errors['warning_count'] > 0
+            || $errors['error_count'] > 0
         );
 
         if (false === $date || $hasErrors) {
-            throw new ValidationException('Nieprawidłowa data', [
-                $field => ['Data musi być w formacie YYYY-MM-DD'],
-            ]);
+            throw new ValidationException('Nieprawidłowa data', [$field => ['Data musi być w formacie YYYY-MM-DD']]);
         }
 
         return $date;
@@ -293,7 +289,8 @@ final class WorkerPlanningController extends AbstractJsonController
 
     /**
      * @param iterable<WorkerScheduleAssignmentInterface> $assignments
-     * @param iterable<WorkerAvailabilityInterface> $availability
+     * @param iterable<WorkerAvailabilityInterface>       $availability
+     *
      * @return array<int, array{
      *     date: string,
      *     isAvailable: bool,
@@ -311,7 +308,7 @@ final class WorkerPlanningController extends AbstractJsonController
     private function buildWeekSchedulePayload(
         iterable $assignments,
         iterable $availability,
-        DateTimeImmutable $weekStart,
+        \DateTimeImmutable $weekStart,
     ): array {
         $groupedAssignments = $this->groupAssignmentsByDate($assignments);
         $availabilityByDate = $this->groupAvailabilityByDate($availability);
@@ -346,7 +343,7 @@ final class WorkerPlanningController extends AbstractJsonController
                 'totalEstimatedTime' => $totalEstimated,
             ];
 
-            $current = $current->add(new DateInterval('P1D'));
+            $current = $current->add(new \DateInterval('P1D'));
         }
 
         return $days;
@@ -354,6 +351,7 @@ final class WorkerPlanningController extends AbstractJsonController
 
     /**
      * @param iterable<WorkerScheduleAssignmentInterface> $assignments
+     *
      * @return array<string, WorkerScheduleAssignmentInterface[]>
      */
     private function groupAssignmentsByDate(iterable $assignments): array
@@ -370,6 +368,7 @@ final class WorkerPlanningController extends AbstractJsonController
 
     /**
      * @param iterable<WorkerAvailabilityInterface> $availability
+     *
      * @return array<string, WorkerAvailabilityInterface[]>
      */
     private function groupAvailabilityByDate(iterable $availability): array
@@ -386,6 +385,7 @@ final class WorkerPlanningController extends AbstractJsonController
 
     /**
      * @param iterable<WorkerSchedulePredictionInterface> $predictions
+     *
      * @return array<int, array{
      *     date: string,
      *     predictedTicketCount: int,
@@ -409,6 +409,9 @@ final class WorkerPlanningController extends AbstractJsonController
         return $payload;
     }
 
+    /**
+     * @return array{ticketId: string, date: string, assignedAt: string}
+     */
     private function formatAssignmentSummary(WorkerScheduleAssignmentInterface $assignment): array
     {
         return [
@@ -418,6 +421,15 @@ final class WorkerPlanningController extends AbstractJsonController
         ];
     }
 
+    /**
+     * @return array{
+     *     id: string,
+     *     title: string,
+     *     category: array{id: string, name: string, defaultResolutionTimeMinutes: int, defaultResolutionTime: int},
+     *     estimatedTime: int,
+     *     priority: string
+     * }
+     */
     private function formatScheduledTicket(WorkerScheduleAssignmentInterface $assignment): array
     {
         $ticket = $assignment->getTicket();
@@ -432,6 +444,9 @@ final class WorkerPlanningController extends AbstractJsonController
         ];
     }
 
+    /**
+     * @return array{id: string, name: string, defaultResolutionTimeMinutes: int, defaultResolutionTime: int}
+     */
     private function formatCategory(TicketCategoryInterface $category): array
     {
         $defaultResolutionTime = $category->getDefaultResolutionTimeMinutes();
@@ -455,6 +470,19 @@ final class WorkerPlanningController extends AbstractJsonController
         return $title;
     }
 
+    /**
+     * @return array{tickets: list<array{
+     *     id: string,
+     *     title: string,
+     *     category: array{id: string, name: string, defaultResolutionTimeMinutes: int, defaultResolutionTime: int},
+     *     status: string,
+     *     priority: string,
+     *     client: array{id: string, name: string, email: ?string, phone: ?string},
+     *     estimatedTime: int,
+     *     createdAt: string,
+     *     scheduledDate: ?string
+     * }>, total: int}
+     */
     private function formatBacklogResult(WorkerBacklogResultInterface $result): array
     {
         $tickets = [];
@@ -469,6 +497,19 @@ final class WorkerPlanningController extends AbstractJsonController
         ];
     }
 
+    /**
+     * @return array{
+     *     id: string,
+     *     title: string,
+     *     category: array{id: string, name: string, defaultResolutionTimeMinutes: int, defaultResolutionTime: int},
+     *     status: string,
+     *     priority: string,
+     *     client: array{id: string, name: string, email: ?string, phone: ?string},
+     *     estimatedTime: int,
+     *     createdAt: string,
+     *     scheduledDate: ?string
+     * }
+     */
     private function formatBacklogTicket(WorkerBacklogTicketInterface $item): array
     {
         $ticket = $item->getTicket();
@@ -519,9 +560,7 @@ final class WorkerPlanningController extends AbstractJsonController
         $missing = array_diff($categories, $available);
 
         if ([] !== $missing) {
-            throw new AccessDeniedException('Brak uprawnień do wybranych kategorii', [
-                'categories' => array_values($missing),
-            ]);
+            throw new AccessDeniedException('Brak uprawnień do wybranych kategorii', ['categories' => array_values($missing)]);
         }
     }
 
@@ -555,6 +594,7 @@ final class WorkerPlanningController extends AbstractJsonController
 
     /**
      * @param string[] $categories
+     *
      * @return string[]
      */
     private function normalizeCategories(array $categories): array
@@ -567,7 +607,9 @@ final class WorkerPlanningController extends AbstractJsonController
 
     /**
      * @template TValue
+     *
      * @param iterable<TValue> $items
+     *
      * @return array<int, TValue>
      */
     private function iterableToArray(iterable $items): array
@@ -579,5 +621,3 @@ final class WorkerPlanningController extends AbstractJsonController
         return iterator_to_array($items, false);
     }
 }
-
-

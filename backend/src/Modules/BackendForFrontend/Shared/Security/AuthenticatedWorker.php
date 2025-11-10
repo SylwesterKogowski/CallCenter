@@ -40,4 +40,3 @@ final class AuthenticatedWorker
         return $this->categoryIds;
     }
 }
-
