@@ -3,7 +3,6 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 if (!API_BASE_URL) {
-  // eslint-disable-next-line no-console
   console.warn(
     "[api] Brak zmiennej środowiskowej VITE_API_URL. Żądania prawdopodobnie zakończą się niepowodzeniem.",
   );

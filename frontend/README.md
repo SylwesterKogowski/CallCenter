@@ -27,6 +27,7 @@ Frontend for the call center scheduling platform. Agents log in to review their 
 - `exec.sh` — helper for running npm commands inside the frontend container
 
 ## Development
+Following commands can be run in this frontend folder:
 
 - Install dependencies:
 
@@ -39,6 +40,13 @@ Frontend for the call center scheduling platform. Agents log in to review their 
   ```bash
   ./exec.sh npm run dev
   ```
+
+- Check styles
+
+  ```bash
+  ./exec.sh npm run check-styles
+  ```
+
 
 ## Production Build
 
