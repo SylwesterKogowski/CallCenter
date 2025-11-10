@@ -7,7 +7,6 @@ namespace Tests\Unit\Modules\BackendForFrontend\Worker\Phone;
 use App\Modules\BackendForFrontend\Shared\Exception\AuthenticationException;
 use App\Modules\BackendForFrontend\Shared\Security\AuthenticatedWorkerProvider;
 use App\Modules\BackendForFrontend\Worker\Phone\WorkerPhoneController;
-use DateTimeImmutable;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Tests\Unit\Modules\BackendForFrontend\Shared\BackendForFrontendTestCase;
@@ -56,7 +55,7 @@ final class WorkerPhoneControllerTest extends BackendForFrontendTestCase
             ->with('worker-id')
             ->willReturn([
                 'callId' => 'call-123',
-                'startTime' => new DateTimeImmutable('2024-07-01T09:00:00+00:00'),
+                'startTime' => new \DateTimeImmutable('2024-07-01T09:00:00+00:00'),
                 'pausedTickets' => [],
             ]);
 
@@ -86,7 +85,7 @@ final class WorkerPhoneControllerTest extends BackendForFrontendTestCase
             ->with('worker-id')
             ->willReturn([
                 'callId' => 'call-456',
-                'startTime' => new DateTimeImmutable('2024-07-02T11:15:00+00:00'),
+                'startTime' => new \DateTimeImmutable('2024-07-02T11:15:00+00:00'),
                 'pausedTickets' => [
                     [
                         'ticketId' => 'ticket-1',
@@ -180,11 +179,11 @@ final class WorkerPhoneControllerTest extends BackendForFrontendTestCase
             $this->createAuthenticatedWorkerFixture(false),
         );
 
-        $callStart = new DateTimeImmutable('2024-07-03T08:00:00+00:00');
-        $callEnd = new DateTimeImmutable('2024-07-03T08:20:00+00:00');
-        $ticketUpdated = new DateTimeImmutable('2024-07-03T09:00:00+00:00');
-        $previousUpdated = new DateTimeImmutable('2024-07-02T17:30:00+00:00');
-        $scheduledDate = new DateTimeImmutable('2024-07-04');
+        $callStart = new \DateTimeImmutable('2024-07-03T08:00:00+00:00');
+        $callEnd = new \DateTimeImmutable('2024-07-03T08:20:00+00:00');
+        $ticketUpdated = new \DateTimeImmutable('2024-07-03T09:00:00+00:00');
+        $previousUpdated = new \DateTimeImmutable('2024-07-02T17:30:00+00:00');
+        $scheduledDate = new \DateTimeImmutable('2024-07-04');
 
         $this->workerPhoneService
             ->expects(self::once())
@@ -195,8 +194,8 @@ final class WorkerPhoneControllerTest extends BackendForFrontendTestCase
                 'ticket-456',
                 320,
                 null,
-                self::callback(static fn (DateTimeImmutable $start): bool => '2024-07-03T08:00:00+00:00' === $start->format(DATE_ATOM)),
-                self::callback(static fn (DateTimeImmutable $end): bool => '2024-07-03T08:20:00+00:00' === $end->format(DATE_ATOM)),
+                self::callback(static fn (\DateTimeImmutable $start): bool => '2024-07-03T08:00:00+00:00' === $start->format(DATE_ATOM)),
+                self::callback(static fn (\DateTimeImmutable $end): bool => '2024-07-03T08:20:00+00:00' === $end->format(DATE_ATOM)),
             )
             ->willReturn([
                 'call' => [

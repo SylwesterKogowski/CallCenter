@@ -18,7 +18,6 @@ use App\Modules\Tickets\Domain\TicketInterface;
 use App\Modules\WorkerAvailability\Domain\WorkerAvailabilityInterface;
 use App\Modules\WorkerSchedule\Application\Dto\WorkerScheduleAssignmentInterface;
 use App\Modules\WorkerSchedule\Application\Dto\WorkerSchedulePredictionInterface;
-use DateTimeImmutable;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Tests\Unit\Modules\BackendForFrontend\Shared\BackendForFrontendTestCase;
@@ -81,8 +80,8 @@ final class WorkerPlanningControllerTest extends BackendForFrontendTestCase
             'getCategory' => $ticket->getCategory(),
             'getPriority' => 'high',
             'getEstimatedTimeMinutes' => 90,
-            'getCreatedAt' => new DateTimeImmutable('2024-06-10T09:15:00+00:00'),
-            'getScheduledDate' => new DateTimeImmutable('2024-06-11'),
+            'getCreatedAt' => new \DateTimeImmutable('2024-06-10T09:15:00+00:00'),
+            'getScheduledDate' => new \DateTimeImmutable('2024-06-11'),
         ]);
 
         $result = $this->createMock(WorkerBacklogResultInterface::class);
@@ -188,28 +187,28 @@ final class WorkerPlanningControllerTest extends BackendForFrontendTestCase
 
         $assignmentMonday = $this->createConfiguredMock(WorkerScheduleAssignmentInterface::class, [
             'getTicket' => $assignmentTicket,
-            'getScheduledDate' => new DateTimeImmutable('2024-06-10'),
-            'getAssignedAt' => new DateTimeImmutable('2024-06-09T10:00:00+00:00'),
+            'getScheduledDate' => new \DateTimeImmutable('2024-06-10'),
+            'getAssignedAt' => new \DateTimeImmutable('2024-06-09T10:00:00+00:00'),
             'getEstimatedTimeMinutes' => 120,
             'getPriority' => 'high',
         ]);
 
         $assignmentTuesday = $this->createConfiguredMock(WorkerScheduleAssignmentInterface::class, [
             'getTicket' => $assignmentTicket,
-            'getScheduledDate' => new DateTimeImmutable('2024-06-11'),
-            'getAssignedAt' => new DateTimeImmutable('2024-06-09T11:00:00+00:00'),
+            'getScheduledDate' => new \DateTimeImmutable('2024-06-11'),
+            'getAssignedAt' => new \DateTimeImmutable('2024-06-09T11:00:00+00:00'),
             'getEstimatedTimeMinutes' => 60,
             'getPriority' => null,
         ]);
 
         $slotMorning = $this->createConfiguredMock(WorkerAvailabilityInterface::class, [
-            'getStartDatetime' => new DateTimeImmutable('2024-06-10T09:00:00+00:00'),
-            'getEndDatetime' => new DateTimeImmutable('2024-06-10T12:00:00+00:00'),
+            'getStartDatetime' => new \DateTimeImmutable('2024-06-10T09:00:00+00:00'),
+            'getEndDatetime' => new \DateTimeImmutable('2024-06-10T12:00:00+00:00'),
         ]);
 
         $slotAfternoon = $this->createConfiguredMock(WorkerAvailabilityInterface::class, [
-            'getStartDatetime' => new DateTimeImmutable('2024-06-11T13:00:00+00:00'),
-            'getEndDatetime' => new DateTimeImmutable('2024-06-11T16:00:00+00:00'),
+            'getStartDatetime' => new \DateTimeImmutable('2024-06-11T13:00:00+00:00'),
+            'getEndDatetime' => new \DateTimeImmutable('2024-06-11T16:00:00+00:00'),
         ]);
 
         $this->workerScheduleService
@@ -217,7 +216,7 @@ final class WorkerPlanningControllerTest extends BackendForFrontendTestCase
             ->method('getWorkerScheduleForWeek')
             ->with(
                 'worker-id',
-                self::callback(static fn (DateTimeImmutable $date): bool => '2024-06-10' === $date->format('Y-m-d')),
+                self::callback(static fn (\DateTimeImmutable $date): bool => '2024-06-10' === $date->format('Y-m-d')),
             )
             ->willReturn([$assignmentMonday, $assignmentTuesday]);
 
@@ -226,7 +225,7 @@ final class WorkerPlanningControllerTest extends BackendForFrontendTestCase
             ->method('getWorkerAvailabilityForWeek')
             ->with(
                 'worker-id',
-                self::callback(static fn (DateTimeImmutable $date): bool => '2024-06-10' === $date->format('Y-m-d')),
+                self::callback(static fn (\DateTimeImmutable $date): bool => '2024-06-10' === $date->format('Y-m-d')),
             )
             ->willReturn([$slotMorning, $slotAfternoon]);
 
@@ -269,14 +268,14 @@ final class WorkerPlanningControllerTest extends BackendForFrontendTestCase
         $provider = $this->stubAuthenticatedWorkerProvider($worker);
 
         $predictionMonday = $this->createConfiguredMock(WorkerSchedulePredictionInterface::class, [
-            'getDate' => new DateTimeImmutable('2024-06-10'),
+            'getDate' => new \DateTimeImmutable('2024-06-10'),
             'getPredictedTicketCount' => 5,
             'getAvailableTimeMinutes' => 300,
             'getEfficiency' => 0.85,
         ]);
 
         $predictionTuesday = $this->createConfiguredMock(WorkerSchedulePredictionInterface::class, [
-            'getDate' => new DateTimeImmutable('2024-06-11'),
+            'getDate' => new \DateTimeImmutable('2024-06-11'),
             'getPredictedTicketCount' => 3,
             'getAvailableTimeMinutes' => 240,
             'getEfficiency' => 0.9,
@@ -287,7 +286,7 @@ final class WorkerPlanningControllerTest extends BackendForFrontendTestCase
             ->method('getPredictionsForWeek')
             ->with(
                 'worker-id',
-                self::callback(static fn (DateTimeImmutable $date): bool => '2024-06-10' === $date->format('Y-m-d')),
+                self::callback(static fn (\DateTimeImmutable $date): bool => '2024-06-10' === $date->format('Y-m-d')),
             )
             ->willReturn([$predictionMonday, $predictionTuesday]);
 
@@ -364,8 +363,8 @@ final class WorkerPlanningControllerTest extends BackendForFrontendTestCase
             'getTicket' => $this->createConfiguredMock(TicketInterface::class, [
                 'getId' => 'ticket-123',
             ]),
-            'getScheduledDate' => new DateTimeImmutable('2024-06-12'),
-            'getAssignedAt' => new DateTimeImmutable('2024-06-09T12:34:56+00:00'),
+            'getScheduledDate' => new \DateTimeImmutable('2024-06-12'),
+            'getAssignedAt' => new \DateTimeImmutable('2024-06-09T12:34:56+00:00'),
         ]);
 
         $this->workerScheduleService
@@ -374,7 +373,7 @@ final class WorkerPlanningControllerTest extends BackendForFrontendTestCase
             ->with(
                 '550e8400-e29b-41d4-a716-446655440000',
                 'worker-id',
-                self::callback(static fn (DateTimeImmutable $date): bool => '2024-06-12' === $date->format('Y-m-d')),
+                self::callback(static fn (\DateTimeImmutable $date): bool => '2024-06-12' === $date->format('Y-m-d')),
                 'worker-id',
             )
             ->willReturn($assignment);
@@ -448,7 +447,7 @@ final class WorkerPlanningControllerTest extends BackendForFrontendTestCase
             ->with(
                 '550e8400-e29b-41d4-a716-446655440000',
                 'worker-id',
-                self::callback(static fn (DateTimeImmutable $date): bool => '2024-06-13' === $date->format('Y-m-d')),
+                self::callback(static fn (\DateTimeImmutable $date): bool => '2024-06-13' === $date->format('Y-m-d')),
             );
 
         $this->createClientWithMocks($provider);
@@ -514,16 +513,16 @@ final class WorkerPlanningControllerTest extends BackendForFrontendTestCase
             'getTicket' => $this->createConfiguredMock(TicketInterface::class, [
                 'getId' => 'ticket-a',
             ]),
-            'getScheduledDate' => new DateTimeImmutable('2024-06-10'),
-            'getAssignedAt' => new DateTimeImmutable('2024-06-07T10:00:00+00:00'),
+            'getScheduledDate' => new \DateTimeImmutable('2024-06-10'),
+            'getAssignedAt' => new \DateTimeImmutable('2024-06-07T10:00:00+00:00'),
         ]);
 
         $assignmentTwo = $this->createConfiguredMock(WorkerScheduleAssignmentInterface::class, [
             'getTicket' => $this->createConfiguredMock(TicketInterface::class, [
                 'getId' => 'ticket-b',
             ]),
-            'getScheduledDate' => new DateTimeImmutable('2024-06-11'),
-            'getAssignedAt' => new DateTimeImmutable('2024-06-07T11:00:00+00:00'),
+            'getScheduledDate' => new \DateTimeImmutable('2024-06-11'),
+            'getAssignedAt' => new \DateTimeImmutable('2024-06-07T11:00:00+00:00'),
         ]);
 
         $this->workerScheduleService
@@ -531,7 +530,7 @@ final class WorkerPlanningControllerTest extends BackendForFrontendTestCase
             ->method('autoAssignTicketsForWorker')
             ->with(
                 'worker-id',
-                self::callback(static fn (DateTimeImmutable $date): bool => '2024-06-10' === $date->format('Y-m-d')),
+                self::callback(static fn (\DateTimeImmutable $date): bool => '2024-06-10' === $date->format('Y-m-d')),
                 self::callback(static function (?array $categories): bool {
                     self::assertSame(['cat-1', 'cat-2'], $categories);
 

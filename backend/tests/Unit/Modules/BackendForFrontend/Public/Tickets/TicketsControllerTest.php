@@ -9,9 +9,9 @@ use App\Modules\Clients\Domain\ClientInterface;
 use App\Modules\TicketCategories\Domain\TicketCategoryInterface;
 use App\Modules\Tickets\Domain\TicketInterface;
 use App\Modules\Tickets\Domain\TicketMessageInterface;
-use Tests\Unit\Modules\BackendForFrontend\Shared\BackendForFrontendTestCase;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Uid\Uuid;
+use Tests\Unit\Modules\BackendForFrontend\Shared\BackendForFrontendTestCase;
 
 final class TicketsControllerTest extends BackendForFrontendTestCase
 {

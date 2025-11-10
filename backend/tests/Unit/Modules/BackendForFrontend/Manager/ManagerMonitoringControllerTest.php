@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\BackendForFrontend\Manager;
 
-use App\Modules\BackendForFrontend\Manager\ManagerMonitoringController;
 use App\Modules\BackendForFrontend\Manager\Dto\UpdateAutoAssignmentSettingsInput;
+use App\Modules\BackendForFrontend\Manager\ManagerMonitoringController;
 use Symfony\Component\HttpFoundation\Response;
 use Tests\Unit\Modules\BackendForFrontend\Shared\BackendForFrontendTestCase;
 
