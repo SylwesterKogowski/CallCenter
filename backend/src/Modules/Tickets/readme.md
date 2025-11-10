@@ -30,6 +30,7 @@ Główny serwis ticketów, udostępniający metody:
 - `updateTicketStatus(Ticket $ticket, string $status): Ticket` - zmiana statusu ticketa
 - `startTicketWork(Ticket $ticket, Worker $worker): TicketRegisteredTime` - rozpoczęcie obsługi ticketa przez pracownika (ustawienie statusu na 'w toku' i rozpoczęcie rejestracji czasu)
 - `stopTicketWork(Ticket $ticket, Worker $worker): TicketRegisteredTime` - zakończenie obsługi ticketa przez pracownika (zakończenie rejestracji czasu)
+- `registerManualTimeEntry(Ticket $ticket, Worker $worker, int $minutes, bool $isPhoneCall): void` - ręczne dopisanie czasu pracy lub rozmowy do ticketa (np. korekta połączenia telefonicznego)
 - `addTicketNote(Ticket $ticket, Worker $worker, string $note): TicketNote` - dodanie notatki do ticketa
 - `getTicketRegisteredTime(Ticket $ticket): array` - pobranie zarejestrowanego czasu pracy nad ticketem (wszystkie wpisy czasu pracy)
 - `getTicketNotes(Ticket $ticket): array` - pobranie wszystkich notatek przypisanych do ticketa
@@ -38,6 +39,20 @@ Główny serwis ticketów, udostępniający metody:
 - `getTicketsInProgress(Worker $worker): array` - pobranie wszystkich ticketów w toku dla danego pracownika
 - `getTotalTimeSpentOnTicket(Ticket $ticket): int` - pobranie całkowitego czasu spędzonego na tickecie w minutach
 - `getWorkerTimeSpentOnTicket(Ticket $ticket, Worker $worker): int` - pobranie czasu spędzonego przez konkretnego pracownika na tickecie w minutach
+
+### TicketBacklogService
+
+### TicketSearchService _(nowy interfejs na potrzeby BackendForFrontend)_
+
+Interfejs `TicketSearchServiceInterface` służy do wyszukiwania ticketów w kontekście pracownika.
+BFF wykorzystuje go w endpointzie `/api/worker/tickets/search`, oczekując, że implementacja:
+
+- uwzględni uprawnienia pracownika (dostępne kategorie, rola managera),
+- zwróci liczbę znalezionych ticketów wraz z informacją o czasie spędzonym przez pracownika (`timeSpent`),
+- pozwoli filtrować po statusie, pojedynczej kategorii, frazie tekstowej i kontrolować limit wyników (domyślnie 20, maksymalnie 100),
+- zwróci metadane `total` do paginacji po stronie frontendowej.
+
+> TODO: dostarczyć implementację `TicketSearchServiceInterface`, aby warstwa BFF mogła opierać się na rzeczywistych danych wyszukiwania.
 
 ## Domenowa warstwa (Entities)
 
@@ -285,6 +300,7 @@ INSERT INTO ticket_notes (id, ticket_id, worker_id, content, created_at) VALUES
     - Gdy pracownik odbiera telefon, moduł Tickets tworzy nowy wpis w TicketRegisteredTime z `is_phone_call = true`
     - Po zakończeniu połączenia, czas jest rejestrowany do wybranego/nowego ticketa
     - Nowy ticket utworzony podczas rozmowy jest automatycznie dodawany do grafika bieżącego dnia z statusem 'in_progress'
+   - TODO: przygotować usługę domenową wykorzystywaną przez `WorkerPhoneServiceInterface`, która obsłuży rozpoczęcie i zakończenie połączenia (zamykanie aktywnych wpisów czasu oraz odtwarzanie statusów ticketów)
 
 12. **Historia i audyt:**
     - Wszystkie zmiany statusu ticketa powinny być logowane (można rozważyć osobne logi zmian)

@@ -10,6 +10,7 @@ use App\Modules\BackendForFrontend\Shared\AbstractJsonController;
 use App\Modules\BackendForFrontend\Shared\Exception\AccessDeniedException;
 use App\Modules\BackendForFrontend\Shared\Exception\HttpAwareExceptionInterface;
 use App\Modules\BackendForFrontend\Shared\Security\AuthenticatedWorkerProvider;
+use App\Modules\BackendForFrontend\Shared\Security\Attribute\RequiresManager;
 use DateTimeImmutable;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
@@ -18,6 +19,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
+#[RequiresManager]
 #[Route(name: 'backend_for_frontend_manager_events_')]
 final class ManagerMonitoringEventsController extends AbstractJsonController
 {

@@ -30,6 +30,19 @@ Główny serwis klientów, udostępniający metody:
 - `isClientAnonymous(Client $client): bool` - sprawdzenie, czy klient jest anonimowy (brak pełnych danych)
 - `getClientTickets(Client $client): array` - pobranie wszystkich ticketów przypisanych do klienta (relacja z modułem Tickets)
 
+### ClientSearchService _(nowy interfejs na potrzeby BackendForFrontend)_
+
+Warstwa BFF korzysta z interfejsu `ClientSearchServiceInterface`, który powinien umożliwić wyszukiwanie
+klientów po dowolnej frazie (imię/nazwisko/email/telefon) z limitem wyników oraz opcjonalną wartością
+`matchScore` do sortowania wyników. Implementacja powinna:
+
+- uwzględniać anonimizację danych zgodnie z polityką prywatności,
+- respektować limit wyników przekazywany przez BFF (domyślnie 10, maksymalnie 100),
+- być zoptymalizowana pod kątem szybkiego wyszukiwania (np. indeksy FULLTEXT, trigramy, cache).
+
+> TODO: zaprojektować i dostarczyć implementację `ClientSearchServiceInterface`, aby endpoint
+> `/api/worker/clients/search` zwracał rzeczywiste dane.
+
 ## Domenowa warstwa (Entities)
 
 ### Client (Klient)

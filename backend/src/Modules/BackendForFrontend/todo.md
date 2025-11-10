@@ -8,6 +8,8 @@ Dokument opisuje zadania, które należy wykonać w katalogu `backend/src/Module
 - Wszystkie endpointy, które mają zostać wystawione, są zmapowane w `frontend/app/api/http.ts` (`apiPaths`) i są używane przez hooki TanStack Query w `frontend/app/api/**`.
 - Szczegółowe wymagania interfejsów użytkownika i oczekiwanych kontraktów znajdują się w `frontend/app/modules/**/readme.md` (np. `worker-phone-receive`, `worker-availability`, `worker-schedule`, `manager-monitoring`, `unauthenticated/ticket-add`, `unauthenticated/ticket-chat`).
 - Backend działa w Symfony – zachowaj konwencję namespace’ów `App\Modules\BackendForFrontend\...` oraz wykorzystaj atrybuty routingu Symfony.
+- Jeśli trzeba będzie coś zmienić w modułach backendowych lub front-endowych, oznacz to w odpowiednich plikach readme.md w katalogach tych modułów.
+- Jeśli będą potrzebne jakieś interfejsy lub DTO - stwórz je.
 
 ## Zadania (wykonuj w podanej kolejności)
 
@@ -44,7 +46,7 @@ Dokument opisuje zadania, które należy wykonać w katalogu `backend/src/Module
 5. [x] **Kontrolery kategorii (`TicketCategories`)**
    - `GET /api/ticket-categories`: Wystaw listę kategorii na podstawie `TicketCategoryService::getAllCategories()`, transformując na format używany przez `frontend/app/api/ticket-categories.ts`.
 
-6. [ ] **Kontrolery ticketów publicznych (`Public/Tickets`)**
+6. [x] **Kontrolery ticketów publicznych (`Public/Tickets`)**
    - `POST /api/tickets`: Obsłuż formularz zgłoszenia (moduł `unauthenticated/ticket-add`). Logika:
      - Znajdź/utwórz klienta przez `ClientService` (obsługa klientów anonimowych).
      - Utwórz ticket poprzez `TicketService::createTicket`.
@@ -52,14 +54,14 @@ Dokument opisuje zadania, które należy wykonać w katalogu `backend/src/Module
    - `GET /api/tickets/{ticketId}`: Zwróć szczegóły ticketa (klient, kategoria, status) – wykorzystaj `TicketService::getTicketById`.
    - `POST /api/tickets/{ticketId}/messages`: Dodaj wiadomość do ticketa (np. czat z klientem). Zaplanuj serwis (jeśli brak) w module Tickets i zwróć `message`.
 
-7. [ ] **Kontrolery obszaru pracownika – dostępności (`Worker/Availability`)**
+7. [x] **Kontrolery obszaru pracownika – dostępności (`Worker/Availability`)**
    - `GET /api/worker/availability`: Zwróć najnowszą dostępność pracownika (7 dni) z `WorkerAvailabilityService::getWorkerAvailabilityForWeek`.
    - `POST /api/worker/availability/{date}`: Zapisz sloty dostępności dla dnia – użyj `addWorkerAvailability` / `updateWorkerAvailability` zależnie od istniejących wpisów.
    - `PUT /api/worker/availability/{date}/time-slots/{id}` i `DELETE ...`: Obsłuż modyfikację i usuwanie slotów.
    - `POST /api/worker/availability/copy`: Skopiuj dostępności na inne dni, respektując flagę `overwrite`. Zwróć listę `copied` i `skipped`.
    - Zapewnij walidację formatów czasu (`HH:mm`) oraz logikę, że slot nie przekracza jednego dnia (zgodnie z wymaganiami modułu WorkerAvailability).
 
-8. [ ] **Kontrolery obszaru pracownika – planowanie (`Worker/Planning`)**
+8. [x] **Kontrolery obszaru pracownika – planowanie (`Worker/Planning`)**
    - `GET /api/worker/tickets/backlog`: Zwróć backlog ticketów możliwych do zaplanowania, filtrując po kategoriach i uprawnieniach pracownika.
    - `GET /api/worker/schedule/week`: Zwróć zaplanowany tydzień (`WorkerScheduleService::getWorkerScheduleForWeek`), łącząc z informacją o dostępności.
    - `GET /api/worker/schedule/predictions`: Zwróć prognozy (`WorkerScheduleService::calculatePredictedTicketCount` + dane o dostępności i efektywności).
@@ -67,30 +69,24 @@ Dokument opisuje zadania, które należy wykonać w katalogu `backend/src/Module
    - `POST /api/worker/schedule/auto-assign`: Uruchom auto-przydział dla konkretnego pracownika (opcjonalnie filtr kategorii).
    - Dbaj o spójność odpowiedzi z hookami w `frontend/app/api/worker/planning.ts` i readme modułów `worker/ticket-planning`.
 
-9. [ ] **Kontrolery obszaru pracownika – bieżący grafik i status (`Worker/Schedule`)**
+9. [x] **Kontrolery obszaru pracownika – bieżący grafik i status (`Worker/Schedule`)**
    - `GET /api/worker/schedule`: Zwróć bieżący grafik (ostatnie dni + aktywny ticket). Dane potrzebne w module `worker-schedule` frontendowym.
    - `GET /api/worker/work-status`: Oblicz status obciążenia dziennego (`WorkerScheduleService::getWorkerScheduleStatistics`, `TicketsService` do sum czasu).
    - `POST /api/worker/tickets/{ticketId}/status`: Aktualizacja statusu ticketa (wykorzystaj `TicketService::updateTicketStatus` oraz walidację uprawnień).
-   - `POST /api/worker/tickets/{ticketId}/time`: Dodawanie czasu pracy lub rozmowy (`TicketService::startTicketWork` / `stopTicketWork` lub dedykowana metoda), aktualizacja `timeSpent`.
+   - `POST /api/worker/tickets/{ticketId}/time`: Dodawanie czasu pracy lub rozmowy (dedykowana metoda serwisu do rejestracji czasu), aktualizacja `timeSpent`.
    - `POST /api/worker/tickets/{ticketId}/notes`: Dodawanie notatek (deleguj do `TicketService::addTicketNote`).
 
-10. [ ] **Kontrolery obszaru pracownika – obsługa telefonu (`Worker/Phone`)**
-    - `POST /api/worker/phone/receive`: Zarejestruj rozpoczęcie rozmowy:
-      - Zakończ aktywne wpisy czasu `TicketRegisteredTime` i zmień statusy na `waiting`.
-      - Utwórz kontekst rozmowy (np. encja `PhoneCall` lub użyj istniejącego mechanizmu w module Tickets).
-      - Zwróć `callId`, `startTime`, `pausedTickets`.
-    - `POST /api/worker/phone/end`: Zakończ rozmowę:
-      - Zapisz czas połączenia do ticketa (lub fallback do poprzedniego aktywnego).
-      - Dodaj ticket do grafika bieżącego dnia (`WorkerScheduleService::assignTicketToWorker`).
-      - Przywróć wcześniejsze tickety, jeśli wymagane.
-    - Zapewnij spójność z opisanym przepływem w `frontend/app/modules/worker/worker-phone-receive/readme.md`.
+10. [x] **Kontrolery obszaru pracownika – obsługa telefonu (`Worker/Phone`)**
+   - Endpointy `POST /api/worker/phone/receive` oraz `POST /api/worker/phone/end` są dostępne w `WorkerPhoneController`.
+   - Wspierają je klasy `StartPhoneCallRequest`, `EndPhoneCallRequest` oraz serwis kontraktowy `WorkerPhoneServiceInterface` odpowiedzialny za integrację z fasadami domenowymi.
+   - TODO: dostarczyć implementację serwisu w module domenowym (np. Tickets/WorkerSchedule) tak, aby obsłużyć zamykanie wpisów czasu i rejestrację połączeń telefonicznych zgodnie z wymaganiami modułu frontendowego.
 
-11. [ ] **Kontrolery obszaru pracownika – ticket i klient helpery (`Worker/Tickets`, `Worker/Clients`)**
+11. [x] **Kontrolery obszaru pracownika – ticket i klient helpery (`Worker/Tickets`, `Worker/Clients`)**
     - `GET /api/worker/tickets/search`: Udostępnij wyszukiwanie ticketów z filtrami (status, kategoria, zapytanie). Uwzględnij uprawnienia z `AuthorizationService`.
     - `POST /api/worker/tickets`: Tworzenie ticketa wewnątrz przepływu rozmowy (re-use logiki z publicznego endpointu, ale z dodatkowym kontekstem pracownika).
     - `GET /api/worker/clients/search`: Wyszukiwanie klientów (email, telefon) z `ClientService`.
 
-12. [ ] **Walidacja i autoryzacja**
+12. [x] **Walidacja i autoryzacja**
     - Każdy endpoint musi potwierdzać, że zalogowany pracownik ma dostęp do kategorii / roli wymaganej przez operację (np. tylko manager może używać `/api/manager/**`).
     - Dodaj middleware / atrybuty sprawdzające role (`isManager`) przed wejściem do kontrolera.
     - W przypadku braku uprawnień zwracaj status 403 z komunikatem `{"message": "Brak uprawnień"}`.

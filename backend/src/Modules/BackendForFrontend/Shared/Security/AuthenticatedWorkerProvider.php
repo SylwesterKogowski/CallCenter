@@ -13,6 +13,7 @@ use Symfony\Component\HttpFoundation\Session\SessionInterface;
 class AuthenticatedWorkerProvider
 {
     public const SESSION_KEY = 'worker_id';
+    public const REQUEST_ATTRIBUTE = '_bff_authenticated_worker';
 
     public function __construct(
         private RequestStack $requestStack,
@@ -23,6 +24,16 @@ class AuthenticatedWorkerProvider
 
     public function getAuthenticatedWorker(): AuthenticatedWorker
     {
+        $request = $this->requestStack->getCurrentRequest();
+
+        if (null !== $request) {
+            $cachedWorker = $request->attributes->get(self::REQUEST_ATTRIBUTE);
+
+            if ($cachedWorker instanceof AuthenticatedWorker) {
+                return $cachedWorker;
+            }
+        }
+
         $session = $this->getSession();
         $workerId = $session->get(self::SESSION_KEY);
 
@@ -39,12 +50,18 @@ class AuthenticatedWorkerProvider
         $categories = $this->authorizationService->getAssignedCategoryIds($workerId);
         $isManager = $this->authorizationService->isManager($workerId);
 
-        return new AuthenticatedWorker(
+        $worker = new AuthenticatedWorker(
             id: $worker->getId(),
             login: $worker->getLogin(),
             isManager: $isManager,
             categoryIds: $categories,
         );
+
+        if (null !== $request) {
+            $request->attributes->set(self::REQUEST_ATTRIBUTE, $worker);
+        }
+
+        return $worker;
     }
 
     public function startSession(string $workerId): void

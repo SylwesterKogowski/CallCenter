@@ -12,6 +12,7 @@ use App\Modules\BackendForFrontend\Manager\Service\ManagerMonitoringServiceInter
 use App\Modules\BackendForFrontend\Shared\AbstractJsonController;
 use App\Modules\BackendForFrontend\Shared\Exception\ValidationException;
 use App\Modules\BackendForFrontend\Shared\Security\AuthenticatedWorkerProvider;
+use App\Modules\BackendForFrontend\Shared\Security\Attribute\RequiresManager;
 use DateTimeImmutable;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -20,6 +21,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
+#[RequiresManager]
 #[Route(path: '/api/manager', name: 'backend_for_frontend_manager_')]
 final class ManagerMonitoringController extends AbstractJsonController
 {

@@ -42,4 +42,5 @@ z zachowaniem identycznego układu katalogów.
 ### TODO
 
 - [ ] Zweryfikować, czy endpoint `POST /api/auth/logout` powinien dodatkowo unieważniać tokeny sesyjne przechowywane poza PHP (np. Redis), jeśli taka infrastruktura zostanie dodana.
+- [ ] Zintegrować `WorkerPhoneServiceInterface` z implementacją domenową rejestrującą rozmowy telefoniczne (Tickets / WorkerSchedule), aby zakończyć aktywne wpisy czasu i automatycznie przypisywać tickety do grafika.
 
