@@ -1,11 +1,16 @@
 import type { Route } from "./+types/home";
-import { Welcome } from "../welcome/welcome";
+
+import { LandingPage } from "../pages/unauthenticated/landing-page";
 
 export const meta: Route.MetaFunction = () => [
-  { title: "New React Router App" },
-  { name: "description", content: "Welcome to React Router!" },
+  { title: "Call Center | Zglos problem lub zaloguj sie" },
+  {
+    name: "description",
+    content:
+      "Utworz nowe zgloszenie dla naszego zespolu wsparcia lub zaloguj sie jako pracownik, aby zarzadzac ticketami klientow.",
+  },
 ];
 
 export default function Home() {
-  return <Welcome />;
+  return <LandingPage />;
 }
