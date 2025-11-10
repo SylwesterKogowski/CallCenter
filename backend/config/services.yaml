@@ -63,6 +63,9 @@ services:
     App\Modules\WorkerAvailability\Domain\WorkerAvailabilityRepositoryInterface:
         alias: App\Modules\WorkerAvailability\Infrastructure\Persistence\Doctrine\WorkerAvailabilityRepository
         public: true
+    App\Modules\WorkerSchedule\Domain\WorkerScheduleRepositoryInterface:
+        alias: App\Modules\WorkerSchedule\Infrastructure\Persistence\Doctrine\WorkerScheduleRepository
+        public: true
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
