@@ -6,15 +6,17 @@ namespace App\Modules\Authorization\Domain;
 
 final class WorkerCategoryAssignment
 {
-    private bool $revoked = false;
+    private bool $revoked;
 
-    private ?\DateTimeImmutable $revokedAt = null;
+    private ?\DateTimeImmutable $revokedAt;
 
     private function __construct(
-        private string $workerId,
-        private string $categoryId,
+        private readonly string $workerId,
+        private readonly string $categoryId,
         private \DateTimeImmutable $assignedAt,
-        private ?string $assignedById = null,
+        private ?string $assignedById,
+        bool $revoked,
+        ?\DateTimeImmutable $revokedAt,
     ) {
         if ('' === $workerId) {
             throw new \InvalidArgumentException('Worker id cannot be empty.');
@@ -23,6 +25,9 @@ final class WorkerCategoryAssignment
         if ('' === $categoryId) {
             throw new \InvalidArgumentException('Category id cannot be empty.');
         }
+
+        $this->revoked = $revoked;
+        $this->revokedAt = $revokedAt;
     }
 
     public static function assign(
@@ -36,6 +41,8 @@ final class WorkerCategoryAssignment
             $categoryId,
             $assignedAt ?? new \DateTimeImmutable(),
             $assignedById,
+            false,
+            null,
         );
     }
 
@@ -44,8 +51,10 @@ final class WorkerCategoryAssignment
         string $categoryId,
         \DateTimeImmutable $assignedAt,
         ?string $assignedById = null,
+        bool $revoked = false,
+        ?\DateTimeImmutable $revokedAt = null,
     ): self {
-        return new self($workerId, $categoryId, $assignedAt, $assignedById);
+        return new self($workerId, $categoryId, $assignedAt, $assignedById, $revoked, $revokedAt);
     }
 
     public function getWorkerId(): string
@@ -86,5 +95,21 @@ final class WorkerCategoryAssignment
     public function getRevokedAt(): ?\DateTimeImmutable
     {
         return $this->revokedAt;
+    }
+
+    public function reactivate(): void
+    {
+        $this->revoked = false;
+        $this->revokedAt = null;
+    }
+
+    public function withAssignedAt(\DateTimeImmutable $assignedAt): void
+    {
+        $this->assignedAt = $assignedAt;
+    }
+
+    public function withAssignedById(?string $assignedById): void
+    {
+        $this->assignedById = $assignedById;
     }
 }

@@ -11,8 +11,12 @@ final class AuthorizationService implements AuthorizationServiceInterface
 {
     use NotImplementedDomainServiceTrait;
 
-    public function assignCategoriesToWorker(string $workerId, array $categoryIds): void
-    {
+    public function assignCategoriesToWorker(
+        string $workerId,
+        array $categoryIds,
+        ?string $assignedById = null,
+        ?\DateTimeImmutable $assignedAt = null,
+    ): void {
         $this->notImplemented(__METHOD__);
     }
 
@@ -21,12 +25,27 @@ final class AuthorizationService implements AuthorizationServiceInterface
         return $this->notImplemented(__METHOD__);
     }
 
-    public function setManagerRole(string $workerId): void
+    public function getWorkerPermissions(string $workerId): array
+    {
+        return $this->notImplemented(__METHOD__);
+    }
+
+    public function removeCategoryFromWorker(string $workerId, string $categoryId): void
+    {
+        $this->notImplemented(__METHOD__);
+    }
+
+    public function setManagerRole(string $workerId, bool $isManager = true): void
     {
         $this->notImplemented(__METHOD__);
     }
 
     public function isManager(string $workerId): bool
+    {
+        return $this->notImplemented(__METHOD__);
+    }
+
+    public function canWorkerAccessCategory(string $workerId, string $categoryId): bool
     {
         return $this->notImplemented(__METHOD__);
     }

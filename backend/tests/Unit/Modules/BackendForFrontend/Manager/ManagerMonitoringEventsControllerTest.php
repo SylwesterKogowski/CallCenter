@@ -13,4 +13,9 @@ final class ManagerMonitoringEventsControllerTest extends BackendForFrontendTest
     // TODO: assert that monitoring SSE endpoint validates date query parameter
     // TODO: assert that monitoring SSE endpoint streams events with required headers on success
     // TODO: assert that JSON encoding errors fallback gracefully when debug mode disabled
+
+    public function testMonitoringEventsControllerHasPendingCoverage(): void
+    {
+        self::markTestIncomplete('Monitoring events controller tests not implemented yet.');
+    }
 }

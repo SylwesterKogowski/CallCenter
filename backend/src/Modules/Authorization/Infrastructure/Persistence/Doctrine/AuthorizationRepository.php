@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Modules\Authorization\Infrastructure\Persistence\Doctrine;
 
 use App\Modules\Authorization\Domain\AuthorizationRepositoryInterface;
+use App\Modules\Authorization\Domain\WorkerCategoryAssignment as DomainWorkerCategoryAssignment;
+use App\Modules\Authorization\Domain\WorkerPermissions;
+use App\Modules\Authorization\Domain\WorkerRole as DomainWorkerRole;
 use App\Modules\Authorization\Infrastructure\Persistence\Doctrine\Entity\WorkerCategoryAssignment;
 use App\Modules\Authorization\Infrastructure\Persistence\Doctrine\Entity\WorkerRole;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ObjectRepository;
-use Symfony\Component\Uid\Uuid;
 
 /**
  * Persists worker authorization data (category assignments and roles) using Doctrine.
@@ -29,98 +31,128 @@ final class AuthorizationRepository implements AuthorizationRepositoryInterface
         $this->workerRoleRepository = $this->entityManager->getRepository(WorkerRole::class);
     }
 
-    public function assignCategoriesToWorker(string $workerId, array $categoryIds, ?string $assignedById = null): void
+    public function loadPermissions(string $workerId): WorkerPermissions
     {
-        $normalizedIds = $this->normalizeCategoryIds($categoryIds);
+        /** @var WorkerCategoryAssignment[] $assignmentEntities */
+        $assignmentEntities = $this->categoryAssignmentRepository->findBy(['workerId' => $workerId]);
 
-        /** @var WorkerCategoryAssignment[] $existingAssignments */
-        $existingAssignments = $this->categoryAssignmentRepository->findBy(['workerId' => $workerId]);
+        $assignments = array_map(
+            fn (WorkerCategoryAssignment $entity): DomainWorkerCategoryAssignment => $this->mapToDomainAssignment($entity),
+            $assignmentEntities,
+        );
 
-        $existingByCategoryId = [];
-        foreach ($existingAssignments as $assignment) {
-            $existingByCategoryId[$assignment->getCategoryId()] = $assignment;
-        }
+        $roleEntity = $this->workerRoleRepository->findOneBy(['workerId' => $workerId]);
+        $role = $roleEntity instanceof WorkerRole ? $this->mapToDomainRole($roleEntity) : null;
 
-        foreach ($normalizedIds as $categoryId) {
-            if (isset($existingByCategoryId[$categoryId])) {
-                unset($existingByCategoryId[$categoryId]);
-                continue;
-            }
+        return WorkerPermissions::reconstitute($workerId, $assignments, $role);
+    }
 
-            $assignment = new WorkerCategoryAssignment(
-                $workerId,
-                $categoryId,
-                new \DateTimeImmutable(),
-                $assignedById,
-            );
-
-            $this->entityManager->persist($assignment);
-        }
-
-        foreach ($existingByCategoryId as $assignment) {
-            $this->entityManager->remove($assignment);
-        }
-
+    public function savePermissions(WorkerPermissions $permissions): void
+    {
+        $this->synchronizeAssignments($permissions);
+        $this->synchronizeRole($permissions);
         $this->entityManager->flush();
     }
 
-    public function getAssignedCategoryIds(string $workerId): array
+    private function mapToDomainAssignment(WorkerCategoryAssignment $entity): DomainWorkerCategoryAssignment
     {
-        /** @var WorkerCategoryAssignment[] $assignments */
-        $assignments = $this->categoryAssignmentRepository->findBy(['workerId' => $workerId]);
-
-        $categoryIds = [];
-        foreach ($assignments as $assignment) {
-            $categoryIds[] = $assignment->getCategoryId();
-        }
-
-        return $categoryIds;
+        return DomainWorkerCategoryAssignment::reconstitute(
+            $entity->getWorkerId(),
+            $entity->getCategoryId(),
+            $entity->getAssignedAt(),
+            $entity->getAssignedById(),
+        );
     }
 
-    public function setManagerRole(string $workerId, bool $isManager = true): void
+    private function mapToDomainRole(WorkerRole $entity): DomainWorkerRole
     {
-        $role = $this->workerRoleRepository->findOneBy(['workerId' => $workerId]);
+        $updatedAt = $entity->getUpdatedAt();
+        $updatedAtImmutable = null;
 
-        if (!$role instanceof WorkerRole) {
-            if (!$isManager) {
-                return;
+        if ($updatedAt instanceof \DateTimeImmutable) {
+            $updatedAtImmutable = $updatedAt;
+        } elseif ($updatedAt instanceof \DateTimeInterface) {
+            $updatedAtImmutable = \DateTimeImmutable::createFromInterface($updatedAt);
+        }
+
+        return DomainWorkerRole::reconstitute(
+            $entity->getId(),
+            $entity->getWorkerId(),
+            $entity->isManager(),
+            $updatedAtImmutable,
+        );
+    }
+
+    private function synchronizeAssignments(WorkerPermissions $permissions): void
+    {
+        $workerId = $permissions->getWorkerId();
+
+        /** @var WorkerCategoryAssignment[] $existingEntities */
+        $existingEntities = $this->categoryAssignmentRepository->findBy(['workerId' => $workerId]);
+        $existingByCategory = [];
+
+        foreach ($existingEntities as $entity) {
+            $existingByCategory[$entity->getCategoryId()] = $entity;
+        }
+
+        foreach ($permissions->getAssignments() as $assignment) {
+            $categoryId = $assignment->getCategoryId();
+
+            if (isset($existingByCategory[$categoryId])) {
+                $entity = $existingByCategory[$categoryId];
+                $entity->setAssignedAt($assignment->getAssignedAt());
+                $entity->setAssignedById($assignment->getAssignedById());
+                unset($existingByCategory[$categoryId]);
+                continue;
             }
 
-            $role = new WorkerRole(Uuid::v7()->toRfc4122(), $workerId, true);
-            $this->entityManager->persist($role);
-            $this->entityManager->flush();
+            $entity = new WorkerCategoryAssignment(
+                $assignment->getWorkerId(),
+                $categoryId,
+                $assignment->getAssignedAt(),
+                $assignment->getAssignedById(),
+            );
+
+            $this->entityManager->persist($entity);
+        }
+
+        foreach ($existingByCategory as $entity) {
+            $this->entityManager->remove($entity);
+        }
+    }
+
+    private function synchronizeRole(WorkerPermissions $permissions): void
+    {
+        $workerId = $permissions->getWorkerId();
+        $domainRole = $permissions->getRole();
+
+        $roleEntity = $this->workerRoleRepository->findOneBy(['workerId' => $workerId]);
+
+        if (null === $domainRole) {
+            if ($roleEntity instanceof WorkerRole) {
+                $this->entityManager->remove($roleEntity);
+            }
 
             return;
         }
 
-        $role->setIsManager($isManager);
+        if (!$roleEntity instanceof WorkerRole) {
+            $roleEntity = new WorkerRole(
+                $domainRole->getId(),
+                $domainRole->getWorkerId(),
+                $domainRole->isManager(),
+            );
 
-        $this->entityManager->flush();
-    }
+            if (null !== $domainRole->getUpdatedAt()) {
+                $roleEntity->setUpdatedAt($domainRole->getUpdatedAt());
+            }
 
-    public function isManager(string $workerId): bool
-    {
-        $role = $this->workerRoleRepository->findOneBy(['workerId' => $workerId]);
+            $this->entityManager->persist($roleEntity);
 
-        if (!$role instanceof WorkerRole) {
-            return false;
+            return;
         }
 
-        return $role->isManager();
-    }
-
-    /**
-     * @param string[] $categoryIds
-     *
-     * @return string[]
-     */
-    private function normalizeCategoryIds(array $categoryIds): array
-    {
-        $filtered = array_filter(
-            array_map('strval', $categoryIds),
-            static fn (string $value): bool => '' !== trim($value),
-        );
-
-        return array_values(array_unique($filtered));
+        $roleEntity->setIsManager($domainRole->isManager());
+        $roleEntity->setUpdatedAt($domainRole->getUpdatedAt());
     }
 }

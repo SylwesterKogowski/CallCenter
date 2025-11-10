@@ -25,12 +25,18 @@ final class WorkerRole
 
     public static function create(string $workerId, bool $isManager = false): self
     {
-        return new self(
+        $role = new self(
             Uuid::v7()->toRfc4122(),
             $workerId,
             $isManager,
             null,
         );
+
+        if ($isManager) {
+            $role->touch();
+        }
+
+        return $role;
     }
 
     public static function reconstitute(
@@ -55,6 +61,17 @@ final class WorkerRole
     public function isManager(): bool
     {
         return $this->isManager;
+    }
+
+    public function setManager(bool $isManager): void
+    {
+        if ($isManager) {
+            $this->promoteToManager();
+
+            return;
+        }
+
+        $this->demoteFromManager();
     }
 
     public function promoteToManager(): void

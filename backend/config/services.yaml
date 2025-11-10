@@ -37,7 +37,7 @@ services:
             - '../src/Modules/BackendForFrontend/todo.md'
 
     App\Modules\Authentication\Application\AuthenticationServiceInterface: '@App\Modules\Authentication\Application\AuthenticationService'
-    App\Modules\Authorization\Application\AuthorizationServiceInterface: '@App\Modules\Authorization\Application\Stub\AuthorizationService'
+    App\Modules\Authorization\Application\AuthorizationServiceInterface: '@App\Modules\Authorization\Application\AuthorizationService'
     App\Modules\TicketCategories\Application\TicketCategoryServiceInterface: '@App\Modules\TicketCategories\Application\Stub\TicketCategoryService'
     App\Modules\Clients\Application\ClientServiceInterface: '@App\Modules\Clients\Application\Stub\ClientService'
     App\Modules\Clients\Application\ClientSearchServiceInterface: '@App\Modules\Clients\Application\Stub\ClientSearchService'

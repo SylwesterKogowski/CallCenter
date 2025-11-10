@@ -42,35 +42,47 @@ final class AuthorizationRepositoryTest extends KernelTestCase
         $workerId = Uuid::v7()->toRfc4122();
         $this->createWorkerFixture($workerId, 'john.doe');
 
-        $this->repository->assignCategoriesToWorker(
-            $workerId,
+        $permissions = $this->repository->loadPermissions($workerId);
+        self::assertSame([], $permissions->getCategoryIds());
+        self::assertFalse($permissions->isManager());
+
+        $initialAssignedAt = new \DateTimeImmutable('2025-01-01 12:00:00');
+        $permissions->synchronizeCategories(
             ['category-a', 'category-b', 'category-a', ''],
+            null,
+            $initialAssignedAt,
         );
+        $permissions->setManagerRole(true);
 
-        $assignedCategories = $this->repository->getAssignedCategoryIds($workerId);
-        self::assertEqualsCanonicalizing(['category-a', 'category-b'], $assignedCategories);
+        $this->repository->savePermissions($permissions);
 
-        $this->repository->assignCategoriesToWorker(
-            $workerId,
+        $reloaded = $this->repository->loadPermissions($workerId);
+        self::assertEqualsCanonicalizing(['category-a', 'category-b'], $reloaded->getCategoryIds());
+        self::assertTrue($reloaded->isManager());
+
+        $assignmentsByCategory = $this->indexAssignmentsByCategory($reloaded);
+        self::assertArrayHasKey('category-a', $assignmentsByCategory);
+        self::assertArrayHasKey('category-b', $assignmentsByCategory);
+        self::assertEquals($initialAssignedAt, $assignmentsByCategory['category-a']->getAssignedAt());
+        self::assertEquals($initialAssignedAt, $assignmentsByCategory['category-b']->getAssignedAt());
+
+        $updateAssignedAt = new \DateTimeImmutable('2025-02-01 09:00:00');
+        $reloaded->synchronizeCategories(
             ['category-b', 'category-c'],
+            null,
+            $updateAssignedAt,
         );
+        $reloaded->setManagerRole(false);
 
-        $assignedCategories = $this->repository->getAssignedCategoryIds($workerId);
-        self::assertEqualsCanonicalizing(['category-b', 'category-c'], $assignedCategories);
-    }
+        $this->repository->savePermissions($reloaded);
 
-    public function testSetManagerRoleCreatesAndUpdatesRole(): void
-    {
-        $workerId = Uuid::v7()->toRfc4122();
-        $this->createWorkerFixture($workerId, 'manager.doe');
+        $afterUpdate = $this->repository->loadPermissions($workerId);
+        self::assertEqualsCanonicalizing(['category-b', 'category-c'], $afterUpdate->getCategoryIds());
+        self::assertFalse($afterUpdate->isManager());
 
-        self::assertFalse($this->repository->isManager($workerId));
-
-        $this->repository->setManagerRole($workerId, true);
-        self::assertTrue($this->repository->isManager($workerId));
-
-        $this->repository->setManagerRole($workerId, false);
-        self::assertFalse($this->repository->isManager($workerId));
+        $afterAssignments = $this->indexAssignmentsByCategory($afterUpdate);
+        self::assertEquals($initialAssignedAt, $afterAssignments['category-b']->getAssignedAt());
+        self::assertEquals($updateAssignedAt, $afterAssignments['category-c']->getAssignedAt());
     }
 
     protected function tearDown(): void
@@ -95,5 +107,16 @@ final class AuthorizationRepositoryTest extends KernelTestCase
         $this->entityManager->persist($worker);
         $this->entityManager->flush();
         $this->entityManager->clear();
+    }
+
+    private function indexAssignmentsByCategory(\App\Modules\Authorization\Domain\WorkerPermissions $permissions): array
+    {
+        $indexed = [];
+
+        foreach ($permissions->getAssignments() as $assignment) {
+            $indexed[$assignment->getCategoryId()] = $assignment;
+        }
+
+        return $indexed;
     }
 }
