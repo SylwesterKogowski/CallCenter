@@ -39,7 +39,7 @@ services:
       - ../frontend:/app
     environment:
       VITE_MERCURE_URL: http://mercure:3000/mercure
-      VITE_API_URL: http://localhost:${BACKEND_PORT}/api
+      VITE_API_URL: http://localhost:${BACKEND_PORT}
     ports:
       - "5173:5173"
     networks:
