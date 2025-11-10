@@ -6,10 +6,10 @@ namespace Tests\Unit\Modules\BackendForFrontend\Shared;
 
 use App\Modules\Authentication\Application\AuthenticationServiceInterface;
 use App\Modules\Authorization\Application\AuthorizationServiceInterface;
-use App\Modules\BackendForFrontend\Manager\Service\ManagerMonitoringServiceInterface;
 use App\Modules\BackendForFrontend\Shared\Security\AuthenticatedWorker;
 use App\Modules\BackendForFrontend\Shared\Security\AuthenticatedWorkerProvider;
 use App\Modules\BackendForFrontend\Worker\Phone\Service\WorkerPhoneServiceInterface;
+use App\Modules\BackendForFrontend\Manager\Service\ManagerMonitoringServiceInterface;
 use App\Modules\Clients\Application\ClientSearchServiceInterface;
 use App\Modules\Clients\Application\ClientServiceInterface;
 use App\Modules\TicketCategories\Application\TicketCategoryServiceInterface;
@@ -19,9 +19,9 @@ use App\Modules\Tickets\Application\TicketServiceInterface;
 use App\Modules\WorkerAvailability\Application\WorkerAvailabilityServiceInterface;
 use App\Modules\WorkerSchedule\Application\WorkerScheduleServiceInterface;
 use PHPUnit\Framework\MockObject\MockObject;
-use Symfony\Bundle\FrameworkBundle\KernelBrowser;
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 
 abstract class BackendForFrontendTestCase extends WebTestCase
 {
@@ -127,7 +127,7 @@ abstract class BackendForFrontendTestCase extends WebTestCase
 
     protected function createAuthenticatedWorkerFixture(
         bool $isManager = false,
-        array $categoryIds = ['category-1'],
+        array $categoryIds = ['category-1']
     ): AuthenticatedWorker {
         return new AuthenticatedWorker('worker-id', 'worker-login', $isManager, $categoryIds);
     }
@@ -138,7 +138,7 @@ abstract class BackendForFrontendTestCase extends WebTestCase
     }
 
     protected function stubAuthenticatedWorkerProvider(
-        ?AuthenticatedWorker $worker = null,
+        ?AuthenticatedWorker $worker = null
     ): AuthenticatedWorkerProvider {
         $provider = $this->createMock(AuthenticatedWorkerProvider::class);
         $provider
@@ -174,7 +174,7 @@ abstract class BackendForFrontendTestCase extends WebTestCase
 
     protected function createClientWithMocks(?AuthenticatedWorkerProvider $provider = null): KernelBrowser
     {
-        $client = static::createClient();
+        $client = static::createClient(['debug' => false]);
         $this->registerMockServices();
 
         if (null !== $provider) {
