@@ -27,9 +27,15 @@ doctrine:
             AppAuthentication:
                 type: attribute
                 is_bundle: false
-                dir: '%kernel.project_dir%/src/Modules/Authentication/Interface/Persistence/Doctrine/Entity'
-                prefix: 'App\Modules\Authentication\Interface\Persistence\Doctrine\Entity'
+                dir: '%kernel.project_dir%/src/Modules/Authentication/Infrastructure/Persistence/Doctrine/Entity'
+                prefix: 'App\Modules\Authentication\Infrastructure\Persistence\Doctrine\Entity'
                 alias: Authentication
+            AppAuthorization:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Modules/Authorization/Infrastructure/Persistence/Doctrine/Entity'
+                prefix: 'App\Modules\Authorization\Infrastructure\Persistence\Doctrine\Entity'
+                alias: Authorization
         controller_resolver:
             auto_mapping: false
 

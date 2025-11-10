@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Authentication\Interface\Persistence\Doctrine\Entity;
+namespace App\Modules\Authentication\Infrastructure\Persistence\Doctrine\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 

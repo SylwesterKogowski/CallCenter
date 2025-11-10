@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Authentication\Interface\Persistence\Doctrine;
+namespace App\Modules\Authentication\Infrastructure\Persistence\Doctrine;
 
 use App\Modules\Authentication\Domain\Worker;
 use App\Modules\Authentication\Domain\WorkerInterface;
 use App\Modules\Authentication\Domain\WorkerRepositoryInterface;
-use App\Modules\Authentication\Interface\Persistence\Doctrine\Entity\Worker as WorkerEntity;
+use App\Modules\Authentication\Infrastructure\Persistence\Doctrine\Entity\Worker as WorkerEntity;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ObjectRepository;
 

@@ -4,7 +4,7 @@
     "minimum-stability": "stable",
     "prefer-stable": true,
     "require": {
-        "php": ">=8.2",
+        "php": ">=8.4",
         "ext-ctype": "*",
         "ext-iconv": "*",
         "carbonphp/carbon-doctrine-types": "^2.1",
@@ -73,14 +73,20 @@
         "fix-styles": [
             "php-cs-fixer fix"
         ],
+        "migrate": [
+            "symfony doctrine:migrations:migrate"
+        ],
+        "create-migration": [
+            "symfony doctrine:migrations:generate"
+        ],
         "prepare-integration-tests": [
             "symfony doctrine:database:drop -e test -f",
             "symfony doctrine:database:create -e test --if-not-exists",
             "symfony doctrine:schema:create -e test"
         ],
         "test": [
-            "@phpstan",
-            "@phpunit"
+            "@phpstan @no_additional_args",
+            "@phpunit @additional_args"
         ]
     },
     "conflict": {

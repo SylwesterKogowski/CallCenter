@@ -49,7 +49,10 @@ services:
     App\Modules\BackendForFrontend\Worker\Phone\Service\WorkerPhoneServiceInterface: '@App\Modules\BackendForFrontend\Worker\Phone\Service\Stub\WorkerPhoneService'
     App\Modules\BackendForFrontend\Manager\Service\ManagerMonitoringServiceInterface: '@App\Modules\BackendForFrontend\Manager\Service\Stub\ManagerMonitoringService'
     App\Modules\Authentication\Domain\WorkerRepositoryInterface:
-        alias: App\Modules\Authentication\Interface\Persistence\Doctrine\WorkerRepository
+        alias: App\Modules\Authentication\Infrastructure\Persistence\Doctrine\WorkerRepository
+        public: true
+    App\Modules\Authorization\Domain\AuthorizationRepositoryInterface:
+        alias: App\Modules\Authorization\Infrastructure\Persistence\Doctrine\AuthorizationRepository
         public: true
 
     # add more service definitions when explicit configuration is needed

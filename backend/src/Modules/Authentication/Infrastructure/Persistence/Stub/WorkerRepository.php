@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Authentication\Interface\Persistence\Stub;
+namespace App\Modules\Authentication\Infrastructure\Persistence\Stub;
 
 use App\Modules\Authentication\Domain\WorkerInterface;
 use App\Modules\Authentication\Domain\WorkerRepositoryInterface;
