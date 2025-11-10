@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Modules\Authentication\Infrastructure\Persistence;
 
+use App\Modules\Authentication\Domain\Worker;
+use App\Modules\Authentication\Domain\WorkerInterface;
 use App\Modules\Authentication\Domain\WorkerRepositoryInterface;
-use App\Modules\Authentication\Interface\Persistence\Doctrine\Entity\Worker;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
-use Symfony\Component\Uid\Uuid;
 
 final class WorkerRepositoryTest extends KernelTestCase
 {
@@ -36,36 +36,30 @@ final class WorkerRepositoryTest extends KernelTestCase
 
     public function testSavePersistsWorkerAndAllowsFetchByIdAndLogin(): void
     {
-        $worker = new Worker(
-            Uuid::v4()->toRfc4122(),
-            'john.doe',
-            password_hash('secret123', PASSWORD_BCRYPT),
-        );
+        $worker = Worker::register('john.doe', 'secret123');
 
         $this->repository->save($worker);
         $this->entityManager->clear();
 
         $loadedById = $this->repository->findById($worker->getId());
         self::assertNotNull($loadedById);
+        self::assertInstanceOf(WorkerInterface::class, $loadedById);
         self::assertSame('john.doe', $loadedById->getLogin());
+        self::assertTrue($loadedById->verifyPassword('secret123'));
 
         $loadedByLogin = $this->repository->findByLogin('john.doe');
         self::assertNotNull($loadedByLogin);
         self::assertSame($worker->getId(), $loadedByLogin->getId());
+        self::assertTrue($loadedByLogin->verifyPassword('secret123'));
     }
 
     public function testUpdatePersistsStateChanges(): void
     {
-        $worker = new Worker(
-            Uuid::v4()->toRfc4122(),
-            'jane.doe',
-            password_hash('initial123', PASSWORD_BCRYPT),
-        );
+        $worker = Worker::register('jane.doe', 'initial123');
 
         $this->repository->save($worker);
 
-        $newHash = password_hash('newPassword!', PASSWORD_BCRYPT);
-        $worker->changePasswordHash($newHash);
+        $worker->changePassword('initial123', 'newPassword!');
         $worker->promoteToManager();
 
         $this->repository->update($worker);
@@ -74,9 +68,9 @@ final class WorkerRepositoryTest extends KernelTestCase
         $reloaded = $this->repository->findByLogin('jane.doe');
 
         self::assertNotNull($reloaded);
-        self::assertInstanceOf(Worker::class, $reloaded);
+        self::assertInstanceOf(WorkerInterface::class, $reloaded);
         self::assertTrue($reloaded->isManager());
-        self::assertSame($newHash, $reloaded->getPasswordHash());
+        self::assertTrue($reloaded->verifyPassword('newPassword!'));
         self::assertNotNull($reloaded->getUpdatedAt());
     }
 
@@ -91,4 +85,3 @@ final class WorkerRepositoryTest extends KernelTestCase
         static::ensureKernelShutdown();
     }
 }
-

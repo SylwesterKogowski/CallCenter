@@ -14,4 +14,3 @@ interface WorkerRepositoryInterface
 
     public function update(WorkerInterface $worker): void;
 }
-

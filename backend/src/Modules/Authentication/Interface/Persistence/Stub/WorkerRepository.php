@@ -32,4 +32,3 @@ final class WorkerRepository implements WorkerRepositoryInterface
         $this->notImplemented(__METHOD__);
     }
 }
-

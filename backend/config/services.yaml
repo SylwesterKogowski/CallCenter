@@ -36,7 +36,7 @@ services:
             - '../src/Modules/BackendForFrontend/**/readme.md'
             - '../src/Modules/BackendForFrontend/todo.md'
 
-    App\Modules\Authentication\Application\AuthenticationServiceInterface: '@App\Modules\Authentication\Application\Stub\AuthenticationService'
+    App\Modules\Authentication\Application\AuthenticationServiceInterface: '@App\Modules\Authentication\Application\AuthenticationService'
     App\Modules\Authorization\Application\AuthorizationServiceInterface: '@App\Modules\Authorization\Application\Stub\AuthorizationService'
     App\Modules\TicketCategories\Application\TicketCategoryServiceInterface: '@App\Modules\TicketCategories\Application\Stub\TicketCategoryService'
     App\Modules\Clients\Application\ClientServiceInterface: '@App\Modules\Clients\Application\Stub\ClientService'
