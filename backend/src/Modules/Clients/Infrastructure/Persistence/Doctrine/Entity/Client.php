@@ -94,6 +94,22 @@ class Client implements ClientInterface
         return $this->lastName;
     }
 
+    public function getFullName(): ?string
+    {
+        $parts = array_filter([$this->firstName, $this->lastName]);
+
+        if ([] === $parts) {
+            return null;
+        }
+
+        return implode(' ', $parts);
+    }
+
+    public function hasContactData(): bool
+    {
+        return null !== $this->email || null !== $this->phone;
+    }
+
     public function isAnonymous(): bool
     {
         return $this->isAnonymous;
@@ -160,10 +176,9 @@ class Client implements ClientInterface
 
     private function shouldBeAnonymous(): bool
     {
-        $hasContact = null !== $this->email || null !== $this->phone;
         $hasFullName = null !== $this->firstName && null !== $this->lastName;
 
-        return !$hasContact || !$hasFullName;
+        return !$this->hasContactData() || !$hasFullName;
     }
 
     private function normalizeString(?string $value): ?string
@@ -181,7 +196,13 @@ class Client implements ClientInterface
             return null;
         }
 
-        return mb_strtolower($normalized);
+        $normalized = mb_strtolower($normalized);
+
+        if (false === filter_var($normalized, FILTER_VALIDATE_EMAIL)) {
+            throw new \InvalidArgumentException(sprintf('Invalid email address "%s".', $value));
+        }
+
+        return $normalized;
     }
 
     private function normalizePhone(?string $value): ?string
@@ -192,7 +213,13 @@ class Client implements ClientInterface
             return null;
         }
 
-        return preg_replace('/\s+/', '', $normalized);
+        $digitsOnly = preg_replace('/\s+/', '', $normalized);
+
+        if (!preg_match('/^\+?[0-9]{7,15}$/', $digitsOnly)) {
+            throw new \InvalidArgumentException(sprintf('Invalid phone number "%s".', $value));
+        }
+
+        return $digitsOnly;
     }
 
     private function normalizeName(?string $value): ?string
@@ -201,6 +228,16 @@ class Client implements ClientInterface
 
         if (null === $normalized) {
             return null;
+        }
+
+        $length = mb_strlen($normalized);
+
+        if ($length < 2 || $length > 100) {
+            throw new \InvalidArgumentException('Client name parts must be between 2 and 100 characters.');
+        }
+
+        if (!preg_match('/^[\p{L}\s\'-]+$/u', $normalized)) {
+            throw new \InvalidArgumentException('Client name can only contain letters, spaces, apostrophes and hyphens.');
         }
 
         return mb_convert_case($normalized, MB_CASE_TITLE, 'UTF-8');

@@ -36,4 +36,34 @@ final class ClientService implements ClientServiceInterface
     ): ClientInterface {
         return $this->notImplemented(__METHOD__);
     }
+
+    public function updateClient(
+        ClientInterface $client,
+        ?string $email = null,
+        ?string $phone = null,
+        ?string $firstName = null,
+        ?string $lastName = null,
+    ): ClientInterface {
+        return $this->notImplemented(__METHOD__);
+    }
+
+    public function identifyClient(
+        ClientInterface $client,
+        string $email,
+        ?string $phone = null,
+        ?string $firstName = null,
+        ?string $lastName = null,
+    ): ClientInterface {
+        return $this->notImplemented(__METHOD__);
+    }
+
+    public function isClientAnonymous(ClientInterface $client): bool
+    {
+        return $this->notImplemented(__METHOD__);
+    }
+
+    public function getClientTickets(ClientInterface $client): array
+    {
+        return $this->notImplemented(__METHOD__);
+    }
 }
