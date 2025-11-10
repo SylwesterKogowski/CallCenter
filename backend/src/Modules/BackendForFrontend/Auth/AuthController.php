@@ -21,6 +21,9 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
+/**
+ * Test w {@see \Tests\Unit\Modules\BackendForFrontend\Auth\AuthControllerTest}.
+ */
 #[Route(path: '/api/auth', name: 'backend_for_frontend_auth_')]
 class AuthController extends AbstractJsonController
 {

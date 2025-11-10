@@ -38,7 +38,7 @@ services:
 
     App\Modules\Authentication\Application\AuthenticationServiceInterface: '@App\Modules\Authentication\Application\AuthenticationService'
     App\Modules\Authorization\Application\AuthorizationServiceInterface: '@App\Modules\Authorization\Application\AuthorizationService'
-    App\Modules\TicketCategories\Application\TicketCategoryServiceInterface: '@App\Modules\TicketCategories\Application\Stub\TicketCategoryService'
+    App\Modules\TicketCategories\Application\TicketCategoryServiceInterface: '@App\Modules\TicketCategories\Application\TicketCategoryService'
     App\Modules\Clients\Application\ClientServiceInterface: '@App\Modules\Clients\Application\Stub\ClientService'
     App\Modules\Clients\Application\ClientSearchServiceInterface: '@App\Modules\Clients\Application\Stub\ClientSearchService'
     App\Modules\Tickets\Application\TicketServiceInterface: '@App\Modules\Tickets\Application\Stub\TicketService'
