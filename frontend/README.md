@@ -1,87 +1,49 @@
-# Welcome to React Router!
 
-A modern, production-ready template for building full-stack React applications using React Router.
+## Overview
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
+Frontend for the call center scheduling platform. Agents log in to review their schedules, track active tickets, receive phone calls and collaborate with managers. Customers can open new tickets and follow conversations in real time. The app talks to the Symfony backend and listens to Server-Sent Events to stay in sync.
 
-## Features
+## Tech Stack
 
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
+- React 18 with TypeScript [link](https://react.dev/reference/react)
+- React Router for routing [link](https://reactrouter.com/start/framework/routing)
+- TailwindCSS for styling [link](https://tailwindcss.com/docs/styling-with-utility-classes)
+- `@tanstack/react-query` for data fetching, caching and background updates [link](https://tanstack.com/query/latest/docs/framework/react/quick-start)
+- Vite for tooling and dev server
 
-## Getting Started
+## Key Features
 
-### Installation
+- Authentication flows for workers and managers
+- Worker dashboards for schedules, phone handling, ticket planning and availability
+- Manager monitoring with live metrics and controls
+- Customer-facing ticket creation and chat with SSE updates
+- Shared UI components and layouts optimized for call center workflows
 
-Install the dependencies:
+## Project Structure
 
-```bash
-npm install
-```
+- `app/modules/*` — feature modules grouped by persona (unauthenticated, worker, manager)
+- `app/pages/*` — page-level routes and layouts
+- `app/shared/*` — shared UI, hooks and utilities
+- `exec.sh` — helper for running npm commands inside the frontend container
 
-### Development
+## Development
 
-Start the development server with HMR:
+- Install dependencies:
 
-```bash
-npm run dev
-```
+  ```bash
+  ./exec.sh npm install
+  ```
 
-Your application will be available at `http://localhost:5173`.
+- Start local dev server (HMR enabled at `http://localhost:5173`):
 
-## Building for Production
+  ```bash
+  ./exec.sh npm run dev
+  ```
 
-Create a production build:
+## Production Build
 
-```bash
-npm run build
-```
-
-## Deployment
-
-### Docker Deployment
-
-To build and run using Docker:
+Generate an optimized bundle:
 
 ```bash
-docker build -t my-app .
-
-# Run the container
-docker run -p 3000:3000 my-app
+./exec.sh npm run build
 ```
-
-The containerized application can be deployed to any platform that supports Docker, including:
-
-- AWS ECS
-- Google Cloud Run
-- Azure Container Apps
-- Digital Ocean App Platform
-- Fly.io
-- Railway
-
-### DIY Deployment
-
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
-
-Make sure to deploy the output of `npm run build`
-
-```
-├── package.json
-├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
-├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
-```
-
-## Styling
-
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
-
----
-
-Built with ❤️ using React Router.

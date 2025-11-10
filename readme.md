@@ -21,7 +21,7 @@ Tzn. jeśli pracownik nad czymś pracuje i zadzwoni telefon i nie ma innego woln
 
 
 # Moduły aplikacji na backendzie
-Backend w Symfony, PHP. DB w MySQL.
+Backend w Symfony, PHP. DB w MySQL. Server-sent events poprzez Mercure, Mercure Hub.
 Do dat użyjemy Carbon.
 Zakładamy możliwość stworzenia rozproszonego systemu w przyszłości.
 
