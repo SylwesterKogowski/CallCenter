@@ -1,4 +1,5 @@
 // Plik odpowiedzialny za hooki obsługujące bieżący grafik pracownika oraz jego status pracy.
+// Powiązany kontroler backendu: [WorkerScheduleController](../../../../backend/src/Modules/BackendForFrontend/Worker/Schedule/WorkerScheduleController.php)
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 

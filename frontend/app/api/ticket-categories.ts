@@ -1,4 +1,5 @@
 // Plik odpowiedzialny za hook pobierający listę kategorii/ kolejek ticketów.
+// Powiązany kontroler backendu: [TicketCategoriesController](../../../backend/src/Modules/BackendForFrontend/TicketCategories/TicketCategoriesController.php)
 
 import { useQuery } from "@tanstack/react-query";
 

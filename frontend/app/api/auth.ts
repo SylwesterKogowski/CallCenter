@@ -1,4 +1,5 @@
 // Plik odpowiedzialny za hooki mutacji autoryzacyjnych (rejestracja i logowanie pracowników).
+// Powiązany kontroler backendu: [AuthController](../../../backend/src/Modules/BackendForFrontend/Auth/AuthController.php)
 
 import { useMutation } from "@tanstack/react-query";
 

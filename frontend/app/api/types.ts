@@ -1,4 +1,4 @@
-// Plik odpowiedzialny za wspólne typy domenowe używane w hakach API.
+// Plik odpowiedzialny za wspólne typy domenowe używane w hookach API.
 
 export type TicketStatus =
   | "waiting"

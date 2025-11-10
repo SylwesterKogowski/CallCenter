@@ -1,4 +1,5 @@
 // Plik odpowiedzialny za hooki TanStack Query obsługujące panel monitoringu menedżera.
+// Powiązany kontroler backendu: [ManagerMonitoringController](../../../backend/src/Modules/BackendForFrontend/Manager/ManagerMonitoringController.php)
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 

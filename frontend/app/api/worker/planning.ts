@@ -1,4 +1,5 @@
 // Plik odpowiedzialny za hooki planowania ticketów przez pracownika (backlog, grafik tygodniowy, auto-przydział).
+// Powiązany kontroler backendu: [WorkerPlanningController](../../../../backend/src/Modules/BackendForFrontend/Worker/Planning/WorkerPlanningController.php)
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 

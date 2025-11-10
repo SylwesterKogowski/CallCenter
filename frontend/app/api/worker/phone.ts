@@ -1,4 +1,8 @@
 // Plik odpowiedzialny za hooki obsługujące przepływ „odbieram telefon” po stronie pracownika.
+// Powiązane kontrolery backendu:
+// - [WorkerPhoneController](../../../../backend/src/Modules/BackendForFrontend/Worker/Phone/WorkerPhoneController.php)
+// - [WorkerTicketsController](../../../../backend/src/Modules/BackendForFrontend/Worker/Tickets/WorkerTicketsController.php)
+// - [WorkerClientsController](../../../../backend/src/Modules/BackendForFrontend/Worker/Clients/WorkerClientsController.php)
 
 import { useMutation, useQuery } from "@tanstack/react-query";
 

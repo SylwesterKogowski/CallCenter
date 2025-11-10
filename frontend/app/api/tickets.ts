@@ -1,4 +1,5 @@
 // Plik odpowiedzialny za hooki do obsługi ticketów klientów (tworzenie, szczegóły, wiadomości).
+// Powiązany kontroler backendu: [TicketsController](../../../backend/src/Modules/BackendForFrontend/Public/Tickets/TicketsController.php)
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 

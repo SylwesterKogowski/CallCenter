@@ -1,4 +1,5 @@
 // Plik odpowiedzialny za hooki obsługujące dostępności pracownika (pobieranie, modyfikacje, kopiowanie).
+// Powiązany kontroler backendu: [WorkerAvailabilityController](../../../../backend/src/Modules/BackendForFrontend/Worker/Availability/WorkerAvailabilityController.php)
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
