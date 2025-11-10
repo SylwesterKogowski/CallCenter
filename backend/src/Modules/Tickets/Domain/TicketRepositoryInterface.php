@@ -67,4 +67,36 @@ interface TicketRepositoryInterface
      * @return TicketInterface[]
      */
     public function getWorkerBacklog(string $workerId, array $filters): array;
+
+    /**
+     * @return TicketInterface[]
+     */
+    public function findTicketsByClient(string $clientId, ?string $status = null): array;
+
+    /**
+     * @return TicketInterface[]
+     */
+    public function findTicketsByCategory(string $categoryId, ?string $status = null): array;
+
+    /**
+     * @return TicketInterface[]
+     */
+    public function findTicketsByWorker(string $workerId, ?string $status = null): array;
+
+    /**
+     * @return TicketInterface[]
+     */
+    public function findTicketsInProgressByWorker(string $workerId): array;
+
+    public function getTotalTimeSpentOnTicket(string $ticketId): int;
+
+    /**
+     * @return TicketInterface[]
+     */
+    public function findClosedTicketsByWorkerAndCategory(
+        string $workerId,
+        string $categoryId,
+        ?\DateTimeImmutable $fromDate = null,
+        ?\DateTimeImmutable $toDate = null,
+    ): array;
 }

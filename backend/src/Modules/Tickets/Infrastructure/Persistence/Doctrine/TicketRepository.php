@@ -241,6 +241,146 @@ final class TicketRepository implements TicketRepositoryInterface
         return $tickets;
     }
 
+    public function findTicketsByClient(string $clientId, ?string $status = null): array
+    {
+        $qb = $this->entityManager->createQueryBuilder();
+        $qb
+            ->select('t')
+            ->from(Ticket::class, 't')
+            ->where('t.clientId = :clientId')
+            ->orderBy('t.createdAt', 'DESC')
+            ->setParameter('clientId', $clientId);
+
+        if (null !== $status) {
+            $qb
+                ->andWhere('t.status = :status')
+                ->setParameter('status', $status);
+        }
+
+        /** @var TicketInterface[] $tickets */
+        $tickets = $qb->getQuery()->getResult();
+
+        return $tickets;
+    }
+
+    public function findTicketsByCategory(string $categoryId, ?string $status = null): array
+    {
+        $qb = $this->entityManager->createQueryBuilder();
+        $qb
+            ->select('t')
+            ->from(Ticket::class, 't')
+            ->where('t.categoryId = :categoryId')
+            ->orderBy('t.createdAt', 'DESC')
+            ->setParameter('categoryId', $categoryId);
+
+        if (null !== $status) {
+            $qb
+                ->andWhere('t.status = :status')
+                ->setParameter('status', $status);
+        }
+
+        /** @var TicketInterface[] $tickets */
+        $tickets = $qb->getQuery()->getResult();
+
+        return $tickets;
+    }
+
+    public function findTicketsByWorker(string $workerId, ?string $status = null): array
+    {
+        $qb = $this->entityManager->createQueryBuilder();
+        $qb
+            ->select('DISTINCT t')
+            ->from(Ticket::class, 't')
+            ->innerJoin('t.registeredTimes', 'rt')
+            ->where('rt.workerId = :workerId')
+            ->orderBy('t.createdAt', 'DESC')
+            ->setParameter('workerId', $workerId);
+
+        if (null !== $status) {
+            $qb
+                ->andWhere('t.status = :status')
+                ->setParameter('status', $status);
+        }
+
+        /** @var TicketInterface[] $tickets */
+        $tickets = $qb->getQuery()->getResult();
+
+        return $tickets;
+    }
+
+    public function findTicketsInProgressByWorker(string $workerId): array
+    {
+        $qb = $this->entityManager->createQueryBuilder();
+        $qb
+            ->select('DISTINCT t')
+            ->from(Ticket::class, 't')
+            ->innerJoin('t.registeredTimes', 'rt')
+            ->where('rt.workerId = :workerId')
+            ->andWhere('t.status = :status')
+            ->andWhere('rt.endedAt IS NULL')
+            ->orderBy('t.createdAt', 'ASC')
+            ->setParameter('workerId', $workerId)
+            ->setParameter('status', TicketInterface::STATUS_IN_PROGRESS);
+
+        /** @var TicketInterface[] $tickets */
+        $tickets = $qb->getQuery()->getResult();
+
+        return $tickets;
+    }
+
+    public function getTotalTimeSpentOnTicket(string $ticketId): int
+    {
+        $qb = $this->entityManager->createQueryBuilder();
+        $qb
+            ->select('COALESCE(SUM(rt.durationMinutes), 0)')
+            ->from(TicketRegisteredTime::class, 'rt')
+            ->where('IDENTITY(rt.ticket) = :ticketId')
+            ->setParameter('ticketId', $ticketId);
+
+        try {
+            return (int) $qb->getQuery()->getSingleScalarResult();
+        } catch (NoResultException|NonUniqueResultException) {
+            return 0;
+        }
+    }
+
+    public function findClosedTicketsByWorkerAndCategory(
+        string $workerId,
+        string $categoryId,
+        ?\DateTimeImmutable $fromDate = null,
+        ?\DateTimeImmutable $toDate = null,
+    ): array {
+        $qb = $this->entityManager->createQueryBuilder();
+        $qb
+            ->select('DISTINCT t')
+            ->from(Ticket::class, 't')
+            ->innerJoin('t.registeredTimes', 'rt')
+            ->where('rt.workerId = :workerId')
+            ->andWhere('t.categoryId = :categoryId')
+            ->andWhere('t.status = :status')
+            ->orderBy('t.closedAt', 'DESC')
+            ->setParameter('workerId', $workerId)
+            ->setParameter('categoryId', $categoryId)
+            ->setParameter('status', TicketInterface::STATUS_CLOSED);
+
+        if (null !== $fromDate) {
+            $qb
+                ->andWhere('t.closedAt >= :fromDate')
+                ->setParameter('fromDate', $fromDate);
+        }
+
+        if (null !== $toDate) {
+            $qb
+                ->andWhere('t.closedAt <= :toDate')
+                ->setParameter('toDate', $toDate);
+        }
+
+        /** @var TicketInterface[] $tickets */
+        $tickets = $qb->getQuery()->getResult();
+
+        return $tickets;
+    }
+
     /**
      * @param array{
      *     status?: string|null,

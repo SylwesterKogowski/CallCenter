@@ -10,6 +10,7 @@ use App\Modules\TicketCategories\Domain\TicketCategoryInterface;
 use App\Modules\Tickets\Domain\TicketInterface;
 use App\Modules\Tickets\Domain\TicketMessageInterface;
 use App\Modules\Tickets\Domain\TicketNoteInterface;
+use App\Modules\Tickets\Domain\TicketRegisteredTimeInterface;
 
 interface TicketServiceInterface
 {
@@ -27,6 +28,21 @@ interface TicketServiceInterface
      * @return TicketMessageInterface[]
      */
     public function getTicketMessages(TicketInterface $ticket): array;
+
+    /**
+     * @return TicketInterface[]
+     */
+    public function getTicketsByClient(ClientInterface $client, ?string $status = null): array;
+
+    /**
+     * @return TicketInterface[]
+     */
+    public function getTicketsByCategory(TicketCategoryInterface $category, ?string $status = null): array;
+
+    /**
+     * @return TicketInterface[]
+     */
+    public function getTicketsByWorker(WorkerInterface $worker, ?string $status = null): array;
 
     public function addMessageToTicket(
         TicketInterface $ticket,
@@ -49,10 +65,21 @@ interface TicketServiceInterface
      */
     public function getTicketNotes(TicketInterface $ticket): array;
 
+    /**
+     * @return TicketRegisteredTimeInterface[]
+     */
+    public function getTicketRegisteredTime(TicketInterface $ticket): array;
+
     public function getWorkerTimeSpentOnTicket(
         TicketInterface $ticket,
         WorkerInterface $worker,
     ): int;
+
+    public function getTotalTimeSpentOnTicket(TicketInterface $ticket): int;
+
+    public function startTicketWork(TicketInterface $ticket, WorkerInterface $worker): TicketRegisteredTimeInterface;
+
+    public function stopTicketWork(TicketInterface $ticket, WorkerInterface $worker): TicketRegisteredTimeInterface;
 
     public function registerManualTimeEntry(
         TicketInterface $ticket,
@@ -60,4 +87,22 @@ interface TicketServiceInterface
         int $minutes,
         bool $isPhoneCall,
     ): void;
+
+    public function closeTicket(
+        TicketInterface $ticket,
+        WorkerInterface $worker,
+        ?\DateTimeImmutable $closedAt = null,
+    ): TicketInterface;
+
+    /**
+     * @return TicketInterface[]
+     */
+    public function getTicketsInProgress(WorkerInterface $worker): array;
+
+    public function calculateWorkerEfficiency(
+        WorkerInterface $worker,
+        TicketCategoryInterface $category,
+        ?\DateTimeImmutable $fromDate = null,
+        ?\DateTimeImmutable $toDate = null,
+    ): float;
 }

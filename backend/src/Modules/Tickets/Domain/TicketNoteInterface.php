@@ -15,4 +15,8 @@ interface TicketNoteInterface
     public function getContent(): string;
 
     public function getCreatedAt(): \DateTimeInterface;
+
+    public function updateContent(string $content): void;
+
+    public function getFormattedCreatedAt(string $format = 'Y-m-d H:i'): string;
 }

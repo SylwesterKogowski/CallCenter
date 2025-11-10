@@ -19,4 +19,10 @@ interface TicketRegisteredTimeInterface
     public function getDurationMinutes(): ?int;
 
     public function isPhoneCall(): bool;
+
+    public function markAsPhoneCall(): void;
+
+    public function end(\DateTimeImmutable $endedAt, ?int $durationMinutes = null): void;
+
+    public function isActive(): bool;
 }

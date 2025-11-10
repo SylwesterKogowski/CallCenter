@@ -94,12 +94,18 @@ class TicketRegisteredTime implements TicketRegisteredTimeInterface
 
     public function end(\DateTimeImmutable $endedAt, ?int $durationMinutes = null): void
     {
+        if (null !== $this->endedAt) {
+            throw new \LogicException('Work session already ended.');
+        }
+
         if ($endedAt < $this->startedAt) {
             throw new \InvalidArgumentException('Ended at cannot be earlier than started at.');
         }
 
         $this->endedAt = $endedAt;
-        $this->durationMinutes = $durationMinutes ?? (int) round(($endedAt->getTimestamp() - $this->startedAt->getTimestamp()) / 60);
+        $calculated = (int) round(($endedAt->getTimestamp() - $this->startedAt->getTimestamp()) / 60);
+
+        $this->durationMinutes = $durationMinutes ?? max($calculated, 0);
     }
 
     public function getDurationMinutes(): ?int
@@ -115,5 +121,10 @@ class TicketRegisteredTime implements TicketRegisteredTimeInterface
     public function markAsPhoneCall(): void
     {
         $this->isPhoneCall = true;
+    }
+
+    public function isActive(): bool
+    {
+        return null === $this->endedAt;
     }
 }

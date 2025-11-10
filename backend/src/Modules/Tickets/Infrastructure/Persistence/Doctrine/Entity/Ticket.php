@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Modules\Tickets\Infrastructure\Persistence\Doctrine\Entity;
 
+use App\Modules\Authentication\Domain\WorkerInterface;
 use App\Modules\Clients\Domain\ClientInterface;
 use App\Modules\TicketCategories\Domain\TicketCategoryInterface;
+use App\Modules\Tickets\Domain\Exception\InvalidTicketStatusException;
+use App\Modules\Tickets\Domain\Exception\TicketAlreadyClosedException;
 use App\Modules\Tickets\Domain\TicketInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -20,6 +23,13 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Index(name: 'idx_ticket_closed_at', columns: ['closed_at'])]
 class Ticket implements TicketInterface
 {
+    private const ALLOWED_STATUSES = [
+        self::STATUS_CLOSED,
+        self::STATUS_AWAITING_RESPONSE,
+        self::STATUS_AWAITING_CUSTOMER,
+        self::STATUS_IN_PROGRESS,
+    ];
+
     #[ORM\Id]
     #[ORM\Column(type: 'guid')]
     private string $id;
@@ -103,6 +113,7 @@ class Ticket implements TicketInterface
         $this->id = $id;
         $this->applyClientSnapshot($client);
         $this->applyCategorySnapshot($category);
+        $this->assertValidStatus($status);
         $this->status = $status;
         $this->title = $title;
         $this->description = $description;
@@ -143,21 +154,9 @@ class Ticket implements TicketInterface
         return $this->title;
     }
 
-    public function setTitle(?string $title): void
-    {
-        $this->title = $title;
-        $this->touch();
-    }
-
     public function getDescription(): ?string
     {
         return $this->description;
-    }
-
-    public function setDescription(?string $description): void
-    {
-        $this->description = $description;
-        $this->touch();
     }
 
     public function getStatus(): string
@@ -165,8 +164,22 @@ class Ticket implements TicketInterface
         return $this->status;
     }
 
-    public function setStatus(string $status): void
+    public function changeStatus(string $status): void
     {
+        $this->assertValidStatus($status);
+
+        if ($this->isClosed() && self::STATUS_CLOSED !== $status) {
+            throw TicketAlreadyClosedException::create();
+        }
+
+        if ($this->status === $status) {
+            return;
+        }
+
+        if (self::STATUS_CLOSED === $status) {
+            throw TicketAlreadyClosedException::create();
+        }
+
         $this->status = $status;
         $this->touch();
     }
@@ -186,19 +199,9 @@ class Ticket implements TicketInterface
         return $this->closedAt;
     }
 
-    public function setClosedAt(?\DateTimeImmutable $closedAt): void
-    {
-        $this->closedAt = $closedAt;
-    }
-
-    public function getClosedById(): ?string
+    public function getClosedByWorkerId(): ?string
     {
         return $this->closedById;
-    }
-
-    public function setClosedById(?string $closedById): void
-    {
-        $this->closedById = $closedById;
     }
 
     /**
@@ -239,6 +242,61 @@ class Ticket implements TicketInterface
         return $this->registeredTimes;
     }
 
+    public function close(WorkerInterface $worker, ?\DateTimeImmutable $closedAt = null): void
+    {
+        if ($this->isClosed()) {
+            throw TicketAlreadyClosedException::create();
+        }
+
+        $this->assertNoActiveRegisteredTimes();
+
+        $this->status = self::STATUS_CLOSED;
+        $this->closedAt = $closedAt ?? new \DateTimeImmutable();
+        $this->closedById = $worker->getId();
+
+        $this->touch();
+    }
+
+    public function isClosed(): bool
+    {
+        return self::STATUS_CLOSED === $this->status;
+    }
+
+    public function isInProgress(): bool
+    {
+        return self::STATUS_IN_PROGRESS === $this->status;
+    }
+
+    public function isAwaitingResponse(): bool
+    {
+        return self::STATUS_AWAITING_RESPONSE === $this->status;
+    }
+
+    public function isAwaitingCustomer(): bool
+    {
+        return self::STATUS_AWAITING_CUSTOMER === $this->status;
+    }
+
+    public function updateDescription(?string $description): void
+    {
+        if ($this->description === $description) {
+            return;
+        }
+
+        $this->description = $description;
+        $this->touch();
+    }
+
+    public function updateTitle(?string $title): void
+    {
+        if ($this->title === $title) {
+            return;
+        }
+
+        $this->title = $title;
+        $this->touch();
+    }
+
     public function addRegisteredTime(TicketRegisteredTime $registeredTime): void
     {
         if (!$this->registeredTimes->contains($registeredTime)) {
@@ -273,6 +331,22 @@ class Ticket implements TicketInterface
         $this->categoryName = $category->getName();
         $this->categoryDescription = $category->getDescription();
         $this->categoryDefaultResolutionMinutes = $category->getDefaultResolutionTimeMinutes();
+    }
+
+    private function assertValidStatus(string $status): void
+    {
+        if (!in_array($status, self::ALLOWED_STATUSES, true)) {
+            throw InvalidTicketStatusException::forStatus($status);
+        }
+    }
+
+    private function assertNoActiveRegisteredTimes(): void
+    {
+        foreach ($this->registeredTimes as $registeredTime) {
+            if ($registeredTime->isActive()) {
+                throw new \LogicException('Cannot close ticket with active registered time entries.');
+            }
+        }
     }
 
     private function touch(): void

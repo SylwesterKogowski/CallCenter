@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Tickets\Infrastructure\Persistence\Doctrine\Entity;
 
+use App\Modules\Tickets\Domain\Exception\InvalidTicketNoteContentException;
 use App\Modules\Tickets\Domain\TicketNoteInterface;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -46,10 +47,16 @@ class TicketNote implements TicketNoteInterface
             throw new \InvalidArgumentException('Worker id cannot be empty.');
         }
 
+        $normalizedContent = trim($content);
+
+        if ('' === $normalizedContent) {
+            throw InvalidTicketNoteContentException::create();
+        }
+
         $this->id = $id;
         $this->ticket = $ticket;
         $this->workerId = $workerId;
-        $this->content = $content;
+        $this->content = $normalizedContent;
         $this->createdAt = $createdAt ?? new \DateTimeImmutable();
         $ticket->addNote($this);
     }
@@ -82,5 +89,25 @@ class TicketNote implements TicketNoteInterface
     public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    public function updateContent(string $content): void
+    {
+        $normalizedContent = trim($content);
+
+        if ('' === $normalizedContent) {
+            throw InvalidTicketNoteContentException::create();
+        }
+
+        if ($this->content === $normalizedContent) {
+            return;
+        }
+
+        $this->content = $normalizedContent;
+    }
+
+    public function getFormattedCreatedAt(string $format = 'Y-m-d H:i'): string
+    {
+        return $this->createdAt->format($format);
     }
 }
