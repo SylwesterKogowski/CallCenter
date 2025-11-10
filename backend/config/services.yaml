@@ -48,6 +48,9 @@ services:
     App\Modules\WorkerSchedule\Application\WorkerScheduleServiceInterface: '@App\Modules\WorkerSchedule\Application\Stub\WorkerScheduleService'
     App\Modules\BackendForFrontend\Worker\Phone\Service\WorkerPhoneServiceInterface: '@App\Modules\BackendForFrontend\Worker\Phone\Service\Stub\WorkerPhoneService'
     App\Modules\BackendForFrontend\Manager\Service\ManagerMonitoringServiceInterface: '@App\Modules\BackendForFrontend\Manager\Service\Stub\ManagerMonitoringService'
+    App\Modules\Clients\Domain\ClientRepositoryInterface:
+        alias: App\Modules\Clients\Infrastructure\Persistence\Doctrine\ClientRepository
+        public: true
     App\Modules\Authentication\Domain\WorkerRepositoryInterface:
         alias: App\Modules\Authentication\Infrastructure\Persistence\Doctrine\WorkerRepository
         public: true
