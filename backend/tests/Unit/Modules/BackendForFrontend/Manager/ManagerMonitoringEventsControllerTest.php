@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\BackendForFrontend\Manager;
 
-use App\Modules\BackendForFrontend\Manager\ManagerMonitoringEventsController;
 use Tests\Unit\Modules\BackendForFrontend\Shared\BackendForFrontendTestCase;
 
 final class ManagerMonitoringEventsControllerTest extends BackendForFrontendTestCase

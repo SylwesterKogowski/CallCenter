@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\BackendForFrontend\Worker\Phone;
 
-use App\Modules\BackendForFrontend\Worker\Phone\WorkerPhoneController;
 use Tests\Unit\Modules\BackendForFrontend\Shared\BackendForFrontendTestCase;
 
 final class WorkerPhoneControllerTest extends BackendForFrontendTestCase

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\BackendForFrontend\Worker\Schedule;
 
-use App\Modules\BackendForFrontend\Worker\Schedule\WorkerScheduleController;
 use Tests\Unit\Modules\BackendForFrontend\Shared\BackendForFrontendTestCase;
 
 final class WorkerScheduleControllerTest extends BackendForFrontendTestCase

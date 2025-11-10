@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\BackendForFrontend\Auth;
 
+use App\Modules\Authentication\Domain\WorkerInterface;
 use App\Modules\BackendForFrontend\Shared\Security\AuthenticatedWorkerProvider;
 use App\Modules\TicketCategories\Domain\TicketCategoryInterface;
-use App\Modules\Authentication\Domain\WorkerInterface;
-use Tests\Unit\Modules\BackendForFrontend\Shared\BackendForFrontendTestCase;
 use Symfony\Component\HttpFoundation\Response;
+use Tests\Unit\Modules\BackendForFrontend\Shared\BackendForFrontendTestCase;
 
 final class AuthControllerTest extends BackendForFrontendTestCase
 {

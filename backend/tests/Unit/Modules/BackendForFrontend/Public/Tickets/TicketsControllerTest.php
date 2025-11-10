@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\BackendForFrontend\Public\Tickets;
 
-use App\Modules\BackendForFrontend\Public\Tickets\TicketsController;
 use Tests\Unit\Modules\BackendForFrontend\Shared\BackendForFrontendTestCase;
 
 final class TicketsControllerTest extends BackendForFrontendTestCase

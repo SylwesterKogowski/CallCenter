@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\BackendForFrontend\Worker\Clients;
 
-use App\Modules\BackendForFrontend\Worker\Clients\WorkerClientsController;
 use Tests\Unit\Modules\BackendForFrontend\Shared\BackendForFrontendTestCase;
 
 final class WorkerClientsControllerTest extends BackendForFrontendTestCase

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\BackendForFrontend\Worker\Availability;
 
-use App\Modules\BackendForFrontend\Worker\Availability\WorkerAvailabilityController;
 use Tests\Unit\Modules\BackendForFrontend\Shared\BackendForFrontendTestCase;
 
 final class WorkerAvailabilityControllerTest extends BackendForFrontendTestCase

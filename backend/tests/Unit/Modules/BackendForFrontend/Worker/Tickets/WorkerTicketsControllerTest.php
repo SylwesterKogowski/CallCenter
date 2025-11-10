@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\BackendForFrontend\Worker\Tickets;
 
-use App\Modules\BackendForFrontend\Worker\Tickets\WorkerTicketsController;
 use Tests\Unit\Modules\BackendForFrontend\Shared\BackendForFrontendTestCase;
 
 final class WorkerTicketsControllerTest extends BackendForFrontendTestCase
