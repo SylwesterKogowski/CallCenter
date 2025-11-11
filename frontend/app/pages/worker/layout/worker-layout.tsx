@@ -12,13 +12,11 @@ import {
 import type { WorkerSession } from "~/modules/unauthenticated/worker-login/types";
 
 import { Header } from "./components/header";
-import {
-  NavigationSidebar,
-  type MenuItem,
-} from "./components/navigation-sidebar";
+import { NavigationSidebar } from "./components/navigation-sidebar";
 import { NavigationTopBar } from "./components/navigation-top-bar";
 import { PhoneReceiveModal } from "~/modules/worker/worker-phone-receive/components/PhoneReceiveModal";
 import type { WorkerSummary } from "./types";
+import { MENU_ITEMS } from "./menu-items";
 
 export interface WorkerLayoutProps {
   children?: React.ReactNode;
@@ -40,36 +38,6 @@ type WorkerLayoutAction =
   | { type: "sidebar-open" }
   | { type: "sidebar-close" }
   | { type: "sidebar-toggle" };
-
-const MENU_ITEMS: MenuItem[] = [
-  {
-    label: "Grafik",
-    path: "/worker",
-    icon: "🗓️",
-  },
-  {
-    label: "Planowanie",
-    path: "/worker/planning",
-    icon: "🗂️",
-  },
-  {
-    label: "Dostępność",
-    path: "/worker/availability",
-    icon: "⏰",
-  },
-  {
-    label: "Monitoring",
-    path: "/worker/monitoring",
-    icon: "📊",
-    requiresManager: true,
-  },
-  {
-    label: "Dodaj pracownika",
-    path: "/worker/register",
-    icon: "➕",
-    requiresManager: true,
-  },
-];
 
 const isSessionExpired = (expiresAt: string | null | undefined): boolean => {
   if (!expiresAt) {
@@ -237,7 +205,6 @@ export const WorkerLayout: React.FC<WorkerLayoutProps> = ({ children }) => {
   const scheduleQuery = useWorkerScheduleQuery({
     enabled: Boolean(state.worker),
     staleTime: 60_000,
-    suspense: false,
   });
 
   const previousActiveTicket = React.useMemo<WorkerTicket | null>(() => {
@@ -288,7 +255,7 @@ export const WorkerLayout: React.FC<WorkerLayoutProps> = ({ children }) => {
   }, []);
 
   const mainContent = children ?? <Outlet />;
-  const isAuthenticated = Boolean(state.worker);
+  const worker = state.worker;
 
   if (state.isCheckingSession) {
     return (
@@ -300,7 +267,7 @@ export const WorkerLayout: React.FC<WorkerLayoutProps> = ({ children }) => {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!worker) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 text-center dark:bg-slate-950">
         <div className="max-w-md rounded-xl border border-slate-200 bg-white px-6 py-8 shadow dark:border-slate-800 dark:bg-slate-900">
@@ -336,7 +303,7 @@ export const WorkerLayout: React.FC<WorkerLayoutProps> = ({ children }) => {
       <NavigationSidebar
         items={MENU_ITEMS}
         currentPath={location.pathname}
-        isManager={state.worker.isManager}
+        isManager={worker.isManager}
         onNavigate={handleNavigate}
         onLogout={handleLogout}
         isOpen={state.isSidebarOpen}
@@ -345,7 +312,7 @@ export const WorkerLayout: React.FC<WorkerLayoutProps> = ({ children }) => {
 
       <div className="flex min-h-screen flex-1 flex-col">
         <Header
-          worker={state.worker}
+          worker={worker}
           onPhoneReceive={handlePhoneReceiveOpen}
           isPhoneReceiveDisabled={
             state.isPhoneReceiveOpen || logoutMutation.isPending
@@ -359,7 +326,7 @@ export const WorkerLayout: React.FC<WorkerLayoutProps> = ({ children }) => {
               <NavigationTopBar
                 items={MENU_ITEMS}
                 currentPath={location.pathname}
-                isManager={state.worker.isManager}
+                isManager={worker.isManager}
                 onNavigate={handleNavigate}
               />
             </div>
@@ -399,7 +366,7 @@ export const WorkerLayout: React.FC<WorkerLayoutProps> = ({ children }) => {
       <PhoneReceiveModal
         isOpen={state.isPhoneReceiveOpen}
         onClose={handlePhoneReceiveClose}
-        workerId={state.worker.id}
+        workerId={worker.id}
         previousActiveTicket={previousActiveTicket}
       />
     </div>

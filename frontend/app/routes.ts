@@ -5,6 +5,7 @@ export default [
     layout("routes/worker.tsx",[
         ...prefix("worker",[
             index("pages/worker/schedule/schedule-page.tsx"),
+            route("planning", "pages/worker/planning/planning-page.tsx"),
             route("availability", "pages/worker/availability/availability-page.tsx"),
         ]),
     ]),
