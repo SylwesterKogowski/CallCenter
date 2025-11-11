@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { subscribeToMercure, type MercurePayload } from "~/services/mercureClient";
+import { subscribeToMercure, type MercurePayload } from "~/api/SSE/mercureClient";
 
 export type MonitoringEventType =
   | "worker_stats_updated"
@@ -39,12 +39,13 @@ const isSupportedMonitoringType = (value: string): value is MonitoringEventType 
   SUPPORTED_EVENT_TYPES.includes(value as MonitoringEventType);
 
 const buildManagerTopic = (managerId: string, selectedDate: string): string => {
-  if (!selectedDate) {
-    return `manager/monitoring/${managerId}`;
-  }
+  // if (!selectedDate) {
+  //   return `manager/monitoring/${managerId}`;
+  // }
 
-  const encodedDate = encodeURIComponent(selectedDate);
-  return `manager/monitoring/${managerId}?date=${encodedDate}`;
+  // const encodedDate = encodeURIComponent(selectedDate);
+  // return `manager/monitoring/${managerId}?date=${encodedDate}`;
+  return `manager/monitoring`;
 };
 
 export const ManagerMonitoringSSEConnection: React.FC<

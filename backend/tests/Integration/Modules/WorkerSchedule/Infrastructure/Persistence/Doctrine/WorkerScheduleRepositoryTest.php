@@ -206,6 +206,35 @@ final class WorkerScheduleRepositoryTest extends KernelTestCase
         self::assertNull($missing);
     }
 
+    public function testFetchAssignmentsForDateReturnsRawRows(): void
+    {
+        $worker = $this->createWorker('worker.schedule.raw');
+        $ticket = $this->createTicket('customer.raw@example.com');
+        $scheduledDate = (new \DateTimeImmutable('+1 day'))->setTime(0, 0);
+
+        $assignment = new WorkerSchedule(
+            Uuid::v7()->toRfc4122(),
+            $worker->getId(),
+            $ticket->getId(),
+            $scheduledDate,
+            priority: 3,
+        );
+
+        $this->repository->save($assignment);
+        $this->entityManager->clear();
+
+        $rows = $this->repository->fetchAssignmentsForDate($scheduledDate);
+
+        self::assertCount(1, $rows);
+        $row = $rows[0];
+
+        self::assertSame($worker->getId(), $row['worker_id']);
+        self::assertSame($ticket->getId(), $row['ticket_id']);
+        self::assertSame($worker->getLogin(), $row['worker_login']);
+        self::assertArrayHasKey('category_default_resolution_minutes', $row);
+        self::assertArrayHasKey('status', $row);
+    }
+
     public function testRemoveDeletesAssignment(): void
     {
         $worker = $this->createWorker('worker.schedule.remove');

@@ -377,6 +377,13 @@ final class WorkerScheduleService implements WorkerScheduleServiceInterface
         ];
     }
 
+    public function fetchAssignmentsForDate(\DateTimeImmutable $date): array
+    {
+        $normalizedDate = $this->normalizeDate($date);
+
+        return $this->repository->fetchAssignmentsForDate($normalizedDate);
+    }
+
     /**
      * @param WorkerScheduleAssignmentInterface[] $assignments
      *

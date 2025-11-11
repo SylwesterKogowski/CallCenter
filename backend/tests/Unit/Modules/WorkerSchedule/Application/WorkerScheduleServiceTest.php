@@ -401,6 +401,25 @@ final class WorkerScheduleServiceTest extends TestCase
         self::assertSame(8, $first->getPredictedTicketCount());
     }
 
+    public function testFetchAssignmentsForDateDelegatesToRepositoryAndNormalizesDate(): void
+    {
+        $date = new \DateTimeImmutable('2024-07-10T14:35:00+00:00');
+        $expectedDate = $date->setTime(0, 0);
+        $expected = [['worker_id' => 'worker-raw', 'ticket_id' => 'ticket-raw']];
+
+        $this->repository
+            ->expects(self::once())
+            ->method('fetchAssignmentsForDate')
+            ->with(self::callback(static function (\DateTimeImmutable $argument) use ($expectedDate): bool {
+                return $argument->format('Y-m-d H:i:s') === $expectedDate->format('Y-m-d H:i:s');
+            }))
+            ->willReturn($expected);
+
+        $result = $this->service->fetchAssignmentsForDate($date);
+
+        self::assertSame($expected, $result);
+    }
+
     private function createTicket(
         string $ticketId,
         TicketCategoryInterface $category,

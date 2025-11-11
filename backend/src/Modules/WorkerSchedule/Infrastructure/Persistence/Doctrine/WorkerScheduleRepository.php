@@ -115,6 +115,32 @@ final class WorkerScheduleRepository implements WorkerScheduleRepositoryInterfac
         return $schedule;
     }
 
+    public function fetchAssignmentsForDate(\DateTimeImmutable $date): array
+    {
+        $connection = $this->entityManager->getConnection();
+        $sql = <<<SQL
+SELECT
+    ws.worker_id,
+    ws.ticket_id,
+    t.status,
+    t.category_id,
+    t.category_name,
+    t.category_default_resolution_minutes,
+    t.created_at,
+    t.closed_at,
+    COALESCE(w.login, ws.worker_id) AS worker_login
+FROM worker_schedule ws
+LEFT JOIN workers w ON w.id = ws.worker_id
+LEFT JOIN tickets t ON t.id = ws.ticket_id
+WHERE ws.scheduled_date = :date
+ORDER BY w.login ASC, t.category_name ASC
+SQL;
+
+        return $connection->fetchAllAssociative($sql, [
+            'date' => $date->format('Y-m-d'),
+        ]);
+    }
+
     public function save(WorkerScheduleInterface $assignment): void
     {
         $entity = $this->assertEntity($assignment);

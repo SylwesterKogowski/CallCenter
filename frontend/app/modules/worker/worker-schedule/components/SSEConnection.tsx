@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { subscribeToMercure, type MercurePayload } from "~/services/mercureClient";
+import { subscribeToMercure, type MercurePayload } from "~/api/SSE/mercureClient";
 
 export type ScheduleEventType =
   | "ticket_added"

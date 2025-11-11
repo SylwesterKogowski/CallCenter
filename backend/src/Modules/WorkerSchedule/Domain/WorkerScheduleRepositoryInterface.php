@@ -33,6 +33,11 @@ interface WorkerScheduleRepositoryInterface
         \DateTimeImmutable $date,
     ): ?WorkerScheduleInterface;
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function fetchAssignmentsForDate(\DateTimeImmutable $date): array;
+
     public function save(WorkerScheduleInterface $assignment): void;
 
     public function remove(WorkerScheduleInterface $assignment): void;

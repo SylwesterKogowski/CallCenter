@@ -62,4 +62,9 @@ interface WorkerScheduleServiceInterface
      * }
      */
     public function getWorkerScheduleStatistics(string $workerId, \DateTimeImmutable $date): array;
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function fetchAssignmentsForDate(\DateTimeImmutable $date): array;
 }
