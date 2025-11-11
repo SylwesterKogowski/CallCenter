@@ -53,14 +53,14 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   return (
     <form className="space-y-3" onSubmit={handleSubmit} noValidate>
       <label className="block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="chat-message">
-        Wiadomosc dla zespolu wsparcia
+        Wiadomość dla zespołu wsparcia
       </label>
 
       <textarea
         id="chat-message"
         ref={textAreaRef}
         className="min-h-[120px] w-full resize-y rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900 shadow-sm transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:cursor-not-allowed disabled:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-emerald-400 dark:focus:ring-emerald-800"
-        placeholder={placeholder ?? "Napisz tutaj, aby kontynuowac rozmowe..."}
+        placeholder={placeholder ?? "Napisz tutaj, aby kontynuować rozmowę..."}
         value={value}
         onChange={(event) => setValue(event.target.value)}
         onKeyDown={handleKeyDown}
@@ -68,12 +68,16 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         maxLength={maxLength}
         aria-invalid={Boolean(error)}
         aria-describedby={error ? "chat-message-error" : undefined}
-        aria-label="Pole wprowadzania wiadomosci"
+        aria-label="Pole wprowadzania wiadomości"
       />
 
       <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-        <span>{remainingCharacters >= 0 ? `Pozostalo ${remainingCharacters} znakow` : "Brak pozostalych znakow"}</span>
-        <span>Enter wysyla wiadomosc, Shift+Enter dodaje nowa linie</span>
+        <span>
+          {remainingCharacters >= 0
+            ? `Pozostało ${remainingCharacters} znaków`
+            : "Brak pozostałych znaków"}
+        </span>
+        <span>Enter wysyła wiadomość, Shift+Enter dodaje nową linię</span>
       </div>
 
       {error ? (
@@ -93,7 +97,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-emerald-700 focus:outline-none focus-visible:ring focus-visible:ring-emerald-300 disabled:cursor-not-allowed disabled:bg-emerald-400"
           disabled={isLoading || isDisabled}
         >
-          {isLoading ? "Wysylanie..." : "Wyslij wiadomosc"}
+          {isLoading ? "Wysyłanie..." : "Wyślij wiadomość"}
         </button>
       </div>
     </form>

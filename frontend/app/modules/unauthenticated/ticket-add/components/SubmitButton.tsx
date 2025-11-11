@@ -11,7 +11,7 @@ export const SubmitButton: React.FC<SubmitButtonProps> = ({
   isDisabled,
   children,
 }) => {
-  const label = isLoading ? "Wysylamy dane..." : children ?? "Utworz ticket";
+  const label = isLoading ? "Wysyłamy dane..." : children ?? "Utwórz ticket";
 
   return (
     <button

@@ -12,11 +12,11 @@ export const validateLogin = (login: string): string | undefined => {
   }
 
   if (login.length > 255) {
-    return "Login moze miec maksymalnie 255 znakow.";
+    return "Login może mieć maksymalnie 255 znaków.";
   }
 
   if (!LOGIN_REGEX.test(login)) {
-    return "Login moze zawierac tylko litery, cyfry, kropki, myslniki i podkreslenia.";
+    return "Login może zawierać tylko litery, cyfry, kropki, myślniki i podkreślenia.";
   }
 
   return undefined;
@@ -24,11 +24,11 @@ export const validateLogin = (login: string): string | undefined => {
 
 export const validatePassword = (password: string): string | undefined => {
   if (!password) {
-    return "Haslo jest wymagane.";
+    return "Hasło jest wymagane.";
   }
 
   if (password.length < 8) {
-    return "Haslo musi miec co najmniej 8 znakow.";
+    return "Hasło musi mieć co najmniej 8 znaków.";
   }
 
   return undefined;

@@ -288,7 +288,7 @@ export const TicketChat: React.FC<TicketChatProps> = ({ ticketId, onTicketStatus
     if (typeof window === "undefined" || typeof window.EventSource === "undefined") {
       dispatch({
         type: "merge-errors",
-        errors: { connection: "Twoja przegladarka nie wspiera polaczenia w czasie rzeczywistym." },
+        errors: { connection: "Twoja przeglądarka nie wspiera połączenia w czasie rzeczywistym." },
       });
       dispatch({ type: "set-connection-status", status: "error" });
       return;
@@ -299,7 +299,7 @@ export const TicketChat: React.FC<TicketChatProps> = ({ ticketId, onTicketStatus
     if (!url) {
       dispatch({
         type: "merge-errors",
-        errors: { connection: "Nie udalo sie nawiazac polaczenia z serwerem powiadomien." },
+        errors: { connection: "Nie udało się nawiązać połączenia z serwerem powiadomień." },
       });
       dispatch({ type: "set-connection-status", status: "error" });
       return;
@@ -323,7 +323,7 @@ export const TicketChat: React.FC<TicketChatProps> = ({ ticketId, onTicketStatus
         type: "merge-errors",
         errors: {
           connection:
-            "Polaczenie z serwerem powiadomien zostalo przerwane. Sprobuj ponownie za chwile.",
+            "Połączenie z serwerem powiadomień zostało przerwane. Spróbuj ponownie za chwilę.",
         },
       });
     };
@@ -416,7 +416,7 @@ export const TicketChat: React.FC<TicketChatProps> = ({ ticketId, onTicketStatus
     if (content.length === 0) {
       dispatch({
         type: "merge-errors",
-        errors: { message: "Wiadomosc nie moze byc pusta." },
+        errors: { message: "Wiadomość nie może być pusta." },
       });
       return;
     }
@@ -424,7 +424,7 @@ export const TicketChat: React.FC<TicketChatProps> = ({ ticketId, onTicketStatus
     if (content.length > MESSAGE_MAX_LENGTH) {
       dispatch({
         type: "merge-errors",
-        errors: { message: `Wiadomosc przekracza maksymalna dlugosc ${MESSAGE_MAX_LENGTH} znakow.` },
+        errors: { message: `Wiadomość przekracza maksymalną długość ${MESSAGE_MAX_LENGTH} znaków.` },
       });
       return;
     }
@@ -459,7 +459,7 @@ export const TicketChat: React.FC<TicketChatProps> = ({ ticketId, onTicketStatus
 
       dispatch({
         type: "merge-errors",
-        errors: { message: "Nie udalo sie wyslac wiadomosci. Sprobuj ponownie." },
+        errors: { message: "Nie udało się wysłać wiadomości. Spróbuj ponownie." },
       });
     }
   };
@@ -476,7 +476,7 @@ export const TicketChat: React.FC<TicketChatProps> = ({ ticketId, onTicketStatus
       <header className="space-y-2">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Czat z zespołem wsparcia</h1>
         <p className="text-sm text-slate-600 dark:text-slate-300">
-          Kontynuuj rozmowe dotyczaca stworzonego ticketa. Wysylaj wiadomosci i otrzymuj odpowiedzi w czasie rzeczywistym.
+          Kontynuuj rozmowę dotyczącą stworzonego ticketa. Wysyłaj wiadomości i otrzymuj odpowiedzi w czasie rzeczywistym.
         </p>
       </header>
 
@@ -487,7 +487,7 @@ export const TicketChat: React.FC<TicketChatProps> = ({ ticketId, onTicketStatus
       />
 
       {ticketQuery.isLoading ? (
-        <LoadingSpinner message="Wczytujemy historie rozmowy..." />
+        <LoadingSpinner message="Wczytujemy historię rozmowy..." />
       ) : null}
 
       {ticketQuery.isError ? (
@@ -496,7 +496,7 @@ export const TicketChat: React.FC<TicketChatProps> = ({ ticketId, onTicketStatus
             ...errors,
             general:
               errors.general ??
-              "Nie udalo sie pobrac danych ticketa. Sprobuj ponownie lub skontaktuj sie z obsluga.",
+              "Nie udało się pobrać danych ticketa. Spróbuj ponownie lub skontaktuj się z obsługą techniczną.",
           }}
           onDismiss={clearGeneralErrors}
         />
@@ -517,18 +517,18 @@ export const TicketChat: React.FC<TicketChatProps> = ({ ticketId, onTicketStatus
           isDisabled={isTicketClosed}
           maxLength={MESSAGE_MAX_LENGTH}
           error={messageError}
-          placeholder={isTicketClosed ? "Ticket jest zamkniety. Nie mozna wysylac kolejnych wiadomosci." : undefined}
+          placeholder={isTicketClosed ? "Ticket jest zamknięty. Nie można wysyłać kolejnych wiadomości." : undefined}
         />
 
         {isTicketClosed ? (
           <p className="text-sm text-amber-700 dark:text-amber-300" role="status" aria-live="polite">
-            Ticket zostal zamkniety. Wysylanie nowych wiadomosci nie jest mozliwe.
+            Ticket został zamknięty. Wysyłanie nowych wiadomości nie jest możliwe.
           </p>
         ) : null}
       </section>
 
       <footer className="text-xs text-slate-500 dark:text-slate-400">
-        Pola formularza sa dostepne z klawiatury. Enter wysyla wiadomosc, a Shift+Enter dodaje nowa linie.
+        Pola formularza są dostępne z klawiatury. Enter wysyła wiadomość, a Shift+Enter dodaje nową linię.
       </footer>
     </div>
   );

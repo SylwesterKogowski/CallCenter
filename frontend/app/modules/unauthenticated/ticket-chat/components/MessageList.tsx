@@ -63,21 +63,21 @@ export const MessageList: React.FC<MessageListProps> = ({ messages, ticketId }) 
       role="region"
       aria-live="polite"
       aria-atomic="false"
-      aria-label="Historia wiadomosci"
+      aria-label="Historia wiadomości"
       className="h-80 overflow-y-auto rounded-lg border border-slate-200 bg-white p-4 shadow-inner focus:outline-none dark:border-slate-700 dark:bg-slate-950"
       tabIndex={0}
     >
       {messages.length === 0 ? (
         <p className="text-sm text-slate-500 dark:text-slate-400" data-testid="empty-messages">
-          Nie ma jeszcze zadnych wiadomosci w tym tickecie. Napisz pierwsza wiadomosc, aby rozpoczac rozmowe.
+          Nie ma jeszcze żadnych wiadomości w tym tickecie. Napisz pierwszą wiadomość, aby rozpocząć rozmowę.
         </p>
       ) : (
         <ul role="list" className="space-y-4">
           {messages.map((message) => {
             const worker = isWorkerMessage(message);
             const label = worker
-              ? `Wiadomosc od pracownika ${message.senderName ?? "Call Center"}`
-              : "Twoja wiadomosc";
+              ? `Wiadomość od pracownika ${message.senderName ?? "Call Center"}`
+              : "Twoja wiadomość";
 
             return (
               <li

@@ -33,7 +33,7 @@ export const PasswordInput: React.FC<PasswordInputProps> = ({
         className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-200"
         htmlFor="worker-login-form-password"
       >
-        Haslo
+        Hasło
       </label>
       <div className="relative">
         <input
@@ -55,9 +55,9 @@ export const PasswordInput: React.FC<PasswordInputProps> = ({
             className="absolute inset-y-0 right-2 flex items-center rounded-md px-2 text-sm font-medium text-slate-600 transition hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-200 disabled:cursor-not-allowed dark:text-slate-300 dark:hover:text-slate-50 dark:focus:ring-blue-900"
             onClick={() => setIsPasswordVisible((state) => !state)}
             disabled={isDisabled}
-            aria-label={isPasswordVisible ? "Ukryj haslo" : "Pokaz haslo"}
+            aria-label={isPasswordVisible ? "Ukryj hasło" : "Pokaż hasło"}
           >
-            {isPasswordVisible ? "Ukryj" : "Pokaz"}
+            {isPasswordVisible ? "Ukryj" : "Pokaż"}
           </button>
         ) : null}
       </div>

@@ -12,9 +12,9 @@ export interface ClientDataFormProps {
 type ClientField = keyof ClientData;
 
 const fieldLabels: Record<ClientField, { label: string; optional?: boolean }> = {
-  email: { label: "Email", optional: true },
+  email: { label: "E-mail", optional: true },
   phone: { label: "Telefon", optional: true },
-  firstName: { label: "Imie", optional: true },
+  firstName: { label: "Imię", optional: true },
   lastName: { label: "Nazwisko", optional: true },
 };
 
@@ -44,7 +44,7 @@ export const ClientDataForm: React.FC<ClientDataFormProps> = ({
       </legend>
 
       <p className="text-sm text-slate-600 dark:text-slate-300">
-        Podaj przynajmniej email lub telefon, aby zespol mogl sie skontaktowac.
+        Podaj przynajmniej adres e-mail lub telefon, aby zespół mógł się skontaktować.
       </p>
 
       {errors?.general ? (

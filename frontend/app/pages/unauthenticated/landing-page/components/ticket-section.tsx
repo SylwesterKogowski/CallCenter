@@ -76,8 +76,8 @@ export const TicketSection: React.FC<TicketSectionProps> = ({
             {title}
           </h2>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-            Wypelnij formularz, aby rozpoczal sie czat z naszym zespolem.
-            Mozesz podac tylko te dane, ktore chcesz udostepnic.
+            Wypełnij formularz, aby rozpoczął się czat z naszym zespołem.
+            Możesz podać tylko te dane, które chcesz udostępnić.
           </p>
         </div>
 
@@ -88,7 +88,7 @@ export const TicketSection: React.FC<TicketSectionProps> = ({
 
         {layout === "columns" ? (
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Po wyslaniu formularza zostaniesz automatycznie przekierowany do
+            Po wysłaniu formularza zostaniesz automatycznie przekierowany do
             czatu z naszym konsultantem.
           </p>
         ) : null}

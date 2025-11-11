@@ -26,7 +26,7 @@ export const LoginButton: React.FC<LoginButtonProps> = ({
           <span>Logowanie...</span>
         </>
       ) : (
-        children ?? "Zaloguj sie"
+        children ?? "Zaloguj się"
       )}
     </button>
   );

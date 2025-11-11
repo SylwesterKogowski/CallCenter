@@ -37,8 +37,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     setActiveSection((prev) => (prev === "ticket" ? "login" : "ticket"));
   }, []);
 
-  const ticketTitle = "Zglos problem";
-  const loginTitle = "Logowanie dla pracownikow";
+  const ticketTitle = "Zgłoś problem";
+  const loginTitle = "Logowanie dla pracowników";
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
@@ -46,14 +46,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         href="#landing-main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:rounded-md focus:bg-white focus:px-4 focus:py-2 focus:text-slate-900 dark:focus:bg-slate-800 dark:focus:text-white"
       >
-        Przejdz do glownej tresci
+        Przejdź do głównej treści
       </a>
 
       <div className="mx-auto max-w-7xl px-4 pb-16 pt-12 sm:px-6 lg:px-8">
         <HeaderSection
           title="Call Center Support"
-          subtitle="Szybka pomoc dla klientow"
-          description="Utworz nowe zgloszenie lub zaloguj sie jako pracownik, aby zarzadzac sprawami klientow."
+          subtitle="Szybka pomoc dla klientów"
+          description="Utwórz nowe zgłoszenie lub zaloguj się jako pracownik, aby zarządzać sprawami klientów."
         />
 
         {showTabs ? (
@@ -96,11 +96,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       <FooterSection
         companyInfo={{
           name: "Call Center Sp. z o.o.",
-          address: "ul. Przykladowa 123, 00-001 Warszawa",
+          address: "ul. Przykładowa 123, 00-001 Warszawa",
           phone: "+48 123 456 789",
           email: "kontakt@callcenter.pl",
           links: [
-            { label: "Polityka prywatnosci", url: "/privacy" },
+            { label: "Polityka prywatności", url: "/privacy" },
             { label: "Regulamin", url: "/terms" },
             { label: "Kontakt", url: "/contact" },
           ],

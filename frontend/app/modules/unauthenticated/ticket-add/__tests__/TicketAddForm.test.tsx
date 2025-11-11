@@ -38,13 +38,13 @@ describe("TicketAddForm", () => {
       {
         id: "cat-support",
         name: "Wsparcie techniczne",
-        description: "Pomoc w rozwiazywaniu problemow technicznych",
+        description: "Pomoc w rozwiązywaniu problemów technicznych",
         defaultResolutionTimeMinutes: 60,
       },
       {
         id: "cat-sales",
-        name: "Sprzedaz",
-        description: "Zapytania o oferte i negocjacje",
+        name: "Sprzedaż",
+        description: "Zapytania o ofertę i negocjacje",
         defaultResolutionTimeMinutes: 30,
       },
     ],
@@ -63,7 +63,7 @@ describe("TicketAddForm", () => {
 
     renderForm();
 
-    expect(await screen.findByText(/Utworz nowy ticket/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Utwórz nowy ticket/i)).toBeInTheDocument();
     expect(await screen.findByText(/Dane kontaktowe klienta/i)).toBeInTheDocument();
     expect(await screen.findByRole("option", { name: /Wsparcie techniczne/i })).toBeInTheDocument();
   });
@@ -75,10 +75,10 @@ describe("TicketAddForm", () => {
 
     await waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
 
-    await userEvent.click(screen.getByRole("button", { name: /Utworz ticket/i }));
+    await userEvent.click(screen.getByRole("button", { name: /Utwórz ticket/i }));
 
     const contactErrors = await screen.findAllByText(
-      /Wymagane jest podanie emaila lub telefonu/i,
+      /Wymagane jest podanie (adresu )?e-?maila lub telefonu/i,
     );
     expect(contactErrors.length).toBeGreaterThanOrEqual(1);
     expect(await screen.findByText(/Kategoria jest wymagana/i)).toBeInTheDocument();
@@ -92,7 +92,7 @@ describe("TicketAddForm", () => {
         clientId: "client-1",
         categoryId: "cat-sales",
         title: "Brak internetu",
-        description: "Od rana nie dziala internet w biurze",
+        description: "Od rana nie działa internet w biurze",
         status: "awaiting_response",
         createdAt: "2025-01-01T10:00:00Z",
       },
@@ -110,7 +110,7 @@ describe("TicketAddForm", () => {
         },
         categoryId: "cat-sales",
         title: "Brak internetu",
-        description: "Od rana nie dziala internet w biurze",
+        description: "Od rana nie działa internet w biurze",
       });
       return createResponse;
     });
@@ -125,17 +125,17 @@ describe("TicketAddForm", () => {
       />,
     );
 
-    await screen.findByRole("option", { name: /Sprzedaz/i });
+    await screen.findByRole("option", { name: /Sprzedaż/i });
 
-    await userEvent.type(screen.getByLabelText(/Email/i), "klient@example.com");
+    await userEvent.type(screen.getByLabelText(/E-mail/i), "klient@example.com");
     await userEvent.selectOptions(screen.getByLabelText(/Kategoria/i), "cat-sales");
-    await userEvent.type(screen.getByLabelText(/Tytul/i), "Brak internetu");
+    await userEvent.type(screen.getByLabelText(/Tytuł/i), "Brak internetu");
     await userEvent.type(
       screen.getByLabelText(/Opis problemu/i),
-      "Od rana nie dziala internet w biurze",
+      "Od rana nie działa internet w biurze",
     );
 
-    await userEvent.click(screen.getByRole("button", { name: /Utworz ticket/i }));
+    await userEvent.click(screen.getByRole("button", { name: /Utwórz ticket/i }));
 
     await waitFor(() => expect(navigateMock).toHaveBeenCalledWith("/ticket-chat/ticket-123"));
     expect(onTicketCreated).toHaveBeenCalledWith(createResponse.ticket.id, createResponse);
@@ -144,9 +144,9 @@ describe("TicketAddForm", () => {
 
   it("displays API validation errors from backend", async () => {
     const apiError = new http.ApiError("Validation failed", 400, {
-      message: "Walidacja nie powiodla sie",
+      message: "Walidacja nie powiodła się",
       errors: {
-        "client.email": "Email jest nieprawidlowy",
+        "client.email": "E-mail jest nieprawidłowy",
         categoryId: "Kategoria jest wymagana",
       },
     });
@@ -157,15 +157,15 @@ describe("TicketAddForm", () => {
 
     renderForm();
 
-    await screen.findByRole("option", { name: /Sprzedaz/i });
+    await screen.findByRole("option", { name: /Sprzedaż/i });
 
-    await userEvent.type(screen.getByLabelText(/Email/i), "klient@example.com");
+    await userEvent.type(screen.getByLabelText(/E-mail/i), "klient@example.com");
     await userEvent.selectOptions(screen.getByLabelText(/Kategoria/i), "cat-sales");
 
-    await userEvent.click(screen.getByRole("button", { name: /Utworz ticket/i }));
+    await userEvent.click(screen.getByRole("button", { name: /Utwórz ticket/i }));
 
-    expect(await screen.findByText(/Walidacja nie powiodla sie/i)).toBeInTheDocument();
-    expect(await screen.findByText(/Email jest nieprawidlowy/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Walidacja nie powiodła się/i)).toBeInTheDocument();
+    expect(await screen.findByText(/E-mail jest nieprawidłowy/i)).toBeInTheDocument();
     expect(await screen.findByText(/Kategoria jest wymagana/i)).toBeInTheDocument();
 
     expect(fetchSpy).toHaveBeenCalledTimes(2);
@@ -174,17 +174,17 @@ describe("TicketAddForm", () => {
   it("allows retrying category fetch when loading fails", async () => {
     const fetchSpy = vi.spyOn(http, "apiFetch");
     fetchSpy.mockRejectedValueOnce(
-      new http.ApiError("Server error", 500, { message: "Ups, cos poszlo nie tak" }),
+      new http.ApiError("Server error", 500, { message: "Ups, coś poszło nie tak" }),
     );
     fetchSpy.mockResolvedValueOnce(categoriesResponse);
 
     renderForm();
 
     expect(
-      await screen.findByText(/Ups, cos poszlo nie tak/i),
+      await screen.findByText(/Ups, coś poszło nie tak/i),
     ).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("button", { name: /Sprobuj ponownie/i }));
+    await userEvent.click(screen.getByRole("button", { name: /Spróbuj ponownie/i }));
 
     await waitFor(() =>
       expect(screen.getByRole("option", { name: /Wsparcie techniczne/i })).toBeInTheDocument(),

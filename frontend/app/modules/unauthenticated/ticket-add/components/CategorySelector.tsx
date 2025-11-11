@@ -40,15 +40,15 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
   return (
     <fieldset className="space-y-3">
       <legend className="text-base font-semibold text-slate-900 dark:text-slate-100">
-        Wybierz kategorie
+        Wybierz kategorię
       </legend>
 
       <p id={hintId} className="text-sm text-slate-600 dark:text-slate-300">
-        Wybierz kategorie z listy, aby skierowac ticketa do odpowiedniego zespolu.
+        Wybierz kategorię z listy, aby skierować ticketa do odpowiedniego zespołu.
       </p>
 
       {isLoading ? (
-        <LoadingSpinner message="Ladujemy listy kategorii..." />
+        <LoadingSpinner message="Ładujemy listę kategorii..." />
       ) : null}
 
       {isError ? (
@@ -56,14 +56,14 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
           className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200"
           role="alert"
         >
-          <p>{fetchErrorMessage ?? "Nie udalo sie pobrac kategorii."}</p>
+          <p>{fetchErrorMessage ?? "Nie udało się pobrać kategorii."}</p>
           {onRetry ? (
             <button
               type="button"
               onClick={onRetry}
               className="mt-2 inline-flex items-center gap-2 rounded-md bg-red-600 px-3 py-1 text-xs font-semibold text-white transition hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
             >
-              Sprobuj ponownie
+              Spróbuj ponownie
             </button>
           ) : null}
         </div>
@@ -89,7 +89,7 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
           data-error-field="category"
         >
           <option value="" disabled>
-            {hasCategories ? "Wybierz kategorie" : "Brak dostepnych kategorii"}
+            {hasCategories ? "Wybierz kategorię" : "Brak dostępnych kategorii"}
           </option>
           {categories.map((category) => (
             <option key={category.id} value={category.id}>

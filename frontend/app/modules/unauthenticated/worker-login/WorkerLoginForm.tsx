@@ -138,7 +138,7 @@ export const WorkerLoginForm: React.FC<WorkerLoginFormProps> = ({
       return;
     }
 
-    setApiError("Nie udalo sie zalogowac. Sprobuj ponownie.");
+    setApiError("Nie udało się zalogować. Spróbuj ponownie.");
   }, []);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -218,14 +218,14 @@ export const WorkerLoginForm: React.FC<WorkerLoginFormProps> = ({
         />
 
         <LoginButton isLoading={isSubmitting} isDisabled={isSubmitting}>
-          Zaloguj sie
+          Zaloguj się
         </LoginButton>
 
         {isSubmitting ? <LoadingSpinner message="Sprawdzamy dane..." /> : null}
       </form>
       <p className="mt-6 text-center text-xs text-slate-500 dark:text-slate-400">
-        Logowanie jest chronione protokolem HTTPS. Haslo nie jest przechowywane
-        na Twoim urzadzeniu.
+        Logowanie jest chronione protokołem HTTPS. Hasło nie jest przechowywane
+        na Twoim urządzeniu.
       </p>
     </LoginCard>
   );

@@ -9,10 +9,10 @@ export interface ConnectionStatusProps {
 }
 
 const statusLabel: Record<ChatConnectionStatus, string> = {
-  connecting: "Laczenie z serwerem",
-  connected: "Polaczono z serwerem",
-  disconnected: "Polaczenie przerwane",
-  error: "Blad polaczenia",
+  connecting: "Łączenie z serwerem",
+  connected: "Połączono z serwerem",
+  disconnected: "Połączenie przerwane",
+  error: "Błąd połączenia",
 };
 
 const statusDotClass: Record<ChatConnectionStatus, string> = {
@@ -42,9 +42,9 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
           type="button"
           className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-700 transition hover:bg-slate-100 focus:outline-none focus-visible:ring focus-visible:ring-slate-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
           onClick={onRetry}
-          aria-label="Ponow polaczenie"
+          aria-label="Ponów połączenie"
         >
-          Ponow polaczenie
+          Ponów połączenie
         </button>
       ) : null}
       {error ? (

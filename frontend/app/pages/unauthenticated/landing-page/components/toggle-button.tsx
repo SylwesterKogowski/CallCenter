@@ -12,7 +12,7 @@ export const ToggleButton: React.FC<ToggleButtonProps> = ({
   onToggle,
 }) => {
   const nextLabel =
-    activeSection === "ticket" ? "Jestem pracownikiem" : "Zglos problem";
+    activeSection === "ticket" ? "Jestem pracownikiem" : "Zgłoś problem";
 
   return (
     <div className="mt-8 text-center">

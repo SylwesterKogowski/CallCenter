@@ -16,13 +16,13 @@ const tabs: Array<{ id: LandingPageSection; label: string; description: string }
   [
     {
       id: "ticket",
-      label: "Zglos problem",
-      description: "Dla klientow",
+      label: "Zgłoś problem",
+      description: "Dla klientów",
     },
     {
       id: "login",
       label: "Logowanie",
-      description: "Dla pracownikow",
+      description: "Dla pracowników",
     },
   ];
 
@@ -35,7 +35,7 @@ export const NavigationTabs: React.FC<NavigationTabsProps> = ({
   return (
     <nav
       className={`mt-8 rounded-full bg-white p-2 shadow-lg ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-700 ${className ?? ""}`}
-      aria-label="Nawigacja miedzy sekcjami"
+      aria-label="Nawigacja między sekcjami"
       role="navigation"
     >
       <div className="grid grid-cols-2 gap-2" role="tablist">

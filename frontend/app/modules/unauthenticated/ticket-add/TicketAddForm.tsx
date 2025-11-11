@@ -218,7 +218,7 @@ export const TicketAddForm: React.FC<TicketAddFormProps> = ({
       return categoriesQuery.error.message;
     }
 
-    return "Nie udalo sie pobrac listy kategorii.";
+    return "Nie udało się pobrać listy kategorii.";
   }, [categoriesQuery.error]);
 
   const clearClientErrors = React.useCallback(() => {
@@ -311,7 +311,7 @@ export const TicketAddForm: React.FC<TicketAddFormProps> = ({
         return;
       }
 
-      setApiError("Nie udalo sie utworzyc ticketa. Sprobuj ponownie.");
+      setApiError("Nie udało się utworzyć ticketa. Spróbuj ponownie.");
     },
     [],
   );
@@ -401,11 +401,11 @@ export const TicketAddForm: React.FC<TicketAddFormProps> = ({
     <div className="mx-auto max-w-2xl rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
       <header className="space-y-2">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-          Utworz nowy ticket
+          Utwórz nowy ticket
         </h1>
         <p className="text-sm text-slate-600 dark:text-slate-300">
-          Wypelnij formularz, aby rozpoczal sie czat z naszym zespolem wsparcia. Wszystkie
-          pola poza kategoria sa opcjonalne.
+          Wypełnij formularz, aby rozpoczął się czat z naszym zespołem wsparcia. Wszystkie
+          pola poza kategorią są opcjonalne.
         </p>
       </header>
 
@@ -452,7 +452,7 @@ export const TicketAddForm: React.FC<TicketAddFormProps> = ({
         <div className="space-y-3">
           <SubmitButton isLoading={isSubmitting} isDisabled={isSubmitting} />
           {isSubmitting ? (
-            <LoadingSpinner message="Tworzymy ticket. To moze potrwac kilka sekund..." />
+            <LoadingSpinner message="Tworzymy ticket. To może potrwać kilka sekund..." />
           ) : null}
         </div>
       </form>

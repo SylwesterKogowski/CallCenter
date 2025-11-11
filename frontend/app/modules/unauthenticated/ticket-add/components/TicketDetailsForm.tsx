@@ -52,7 +52,7 @@ export const TicketDetailsForm: React.FC<TicketDetailsFormProps> = ({
   return (
     <fieldset className="space-y-4">
       <legend className="text-base font-semibold text-slate-900 dark:text-slate-100">
-        Szczegoly ticketa
+        Szczegóły ticketa
       </legend>
 
       <div className="flex flex-col gap-1">
@@ -60,7 +60,7 @@ export const TicketDetailsForm: React.FC<TicketDetailsFormProps> = ({
           htmlFor={titleId}
           className="text-sm font-medium text-slate-700 dark:text-slate-200"
         >
-          Tytul (opcjonalny)
+          Tytuł (opcjonalny)
         </label>
         <input
           id={titleId}
@@ -84,7 +84,7 @@ export const TicketDetailsForm: React.FC<TicketDetailsFormProps> = ({
           </p>
         ) : (
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Maksymalnie 255 znakow.
+            Maksymalnie 255 znaków.
           </p>
         )}
       </div>
@@ -112,9 +112,11 @@ export const TicketDetailsForm: React.FC<TicketDetailsFormProps> = ({
         />
         <div className="flex items-baseline justify-between text-xs text-slate-500 dark:text-slate-400">
           <span id={descriptionCounterId}>
-            Pozostalo znakow: {Math.max(0, remainingCharacters)}
+            Pozostało znaków: {Math.max(0, remainingCharacters)}
           </span>
-          <span>{descriptionLength}/{maxDescriptionLength}</span>
+          <span>
+            {descriptionLength}/{maxDescriptionLength}
+          </span>
         </div>
         {errors?.description ? (
           <p

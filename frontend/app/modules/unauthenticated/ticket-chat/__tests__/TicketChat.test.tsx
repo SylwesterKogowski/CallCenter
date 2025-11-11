@@ -96,9 +96,9 @@ describe("TicketChat", () => {
       id: ticketId,
       clientId: "client-1",
       categoryId: "cat-sales",
-      categoryName: "Sprzedaz",
-      title: "Problem z polaczeniem",
-      description: "Nie moge nawiazac polaczenia od rana",
+      categoryName: "Sprzedaż",
+      title: "Problem z połączeniem",
+      description: "Nie mogę nawiązać połączenia od rana",
       status: "awaiting_response",
       createdAt: "2025-01-01T09:00:00Z",
       updatedAt: "2025-01-01T09:05:00Z",
@@ -108,7 +108,7 @@ describe("TicketChat", () => {
         id: "msg-1",
         ticketId,
         senderType: "client",
-        content: "Dzien dobry, prosze o pomoc",
+        content: "Dzień dobry, proszę o pomoc",
         createdAt: "2025-01-01T09:00:00Z",
       },
       {
@@ -117,7 +117,7 @@ describe("TicketChat", () => {
         senderType: "worker",
         senderId: "worker-1",
         senderName: "Jan Kowalski",
-        content: "W czym moge pomoc?",
+        content: "W czym mogę pomóc?",
         createdAt: "2025-01-01T09:02:00Z",
       },
     ],
@@ -142,8 +142,8 @@ describe("TicketChat", () => {
     await waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
 
     expect(await screen.findByText(/Czat z zespołem wsparcia/i)).toBeInTheDocument();
-    expect(await screen.findByText(/Problem z polaczeniem/i)).toBeInTheDocument();
-    expect(await screen.findByText(/Dzien dobry, prosze o pomoc/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Problem z połączeniem/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Dzień dobry, proszę o pomoc/i)).toBeInTheDocument();
 
     expect(fetchSpy).toHaveBeenCalledTimes(1);
 
@@ -157,7 +157,7 @@ describe("TicketChat", () => {
       id: "msg-3",
       ticketId,
       senderType: "client",
-      content: "Dziekuje za szybka odpowiedz",
+      content: "Dziękuję za szybką odpowiedź",
       createdAt: "2025-01-01T09:03:00Z",
     };
 
@@ -182,12 +182,12 @@ describe("TicketChat", () => {
 
     await waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
 
-    await screen.findByText(/W czym moge pomoc/i);
+    await screen.findByText(/W czym mogę pomóc/i);
 
-    const textarea = screen.getByLabelText(/Pole wprowadzania wiadomosci/i);
+    const textarea = screen.getByLabelText(/Pole wprowadzania wiadomości/i);
 
     await userEvent.type(textarea, newMessage.content);
-    await userEvent.click(screen.getByRole("button", { name: /Wyslij wiadomosc/i }));
+    await userEvent.click(screen.getByRole("button", { name: /Wyślij wiadomość/i }));
 
     await waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(2));
     expect(await screen.findByText(newMessage.content)).toBeInTheDocument();
@@ -203,7 +203,7 @@ describe("TicketChat", () => {
 
     await waitFor(() => expect(http.apiFetch).toHaveBeenCalled());
 
-    await screen.findByText(/Problem z polaczeniem/i);
+    await screen.findByText(/Problem z połączeniem/i);
 
     const [eventSource] = MockEventSource.instances;
     expect(eventSource).toBeDefined();

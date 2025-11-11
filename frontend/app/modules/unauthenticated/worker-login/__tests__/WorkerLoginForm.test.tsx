@@ -71,10 +71,10 @@ describe("WorkerLoginForm", () => {
 
     expect(screen.getByLabelText(/Login/i)).toBeInTheDocument();
     expect(
-      screen.getByLabelText(/Haslo/i, { selector: "input" }),
+      screen.getByLabelText(/Hasło/i, { selector: "input" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /Zaloguj sie/i }),
+      screen.getByRole("button", { name: /Zaloguj się/i }),
     ).toBeInTheDocument();
   });
 
@@ -82,14 +82,14 @@ describe("WorkerLoginForm", () => {
     renderForm();
 
     await userEvent.click(
-      screen.getByRole("button", { name: /Zaloguj sie/i }),
+      screen.getByRole("button", { name: /Zaloguj się/i }),
     );
 
     expect(
       await screen.findByText(/Login jest wymagany/i),
     ).toBeInTheDocument();
     expect(
-      await screen.findByText(/Haslo jest wymagane/i),
+      await screen.findByText(/Hasło jest wymagane/i),
     ).toBeInTheDocument();
   });
 
@@ -122,12 +122,12 @@ describe("WorkerLoginForm", () => {
 
     await userEvent.type(screen.getByLabelText(/Login/i), "jan.kowalski");
     await userEvent.type(
-      screen.getByLabelText(/Haslo/i, { selector: "input" }),
+      screen.getByLabelText(/Hasło/i, { selector: "input" }),
       "superHaslo123",
     );
 
     await userEvent.click(
-      screen.getByRole("button", { name: /Zaloguj sie/i }),
+      screen.getByRole("button", { name: /Zaloguj się/i }),
     );
 
     await waitFor(() => expect(fetchSpy).toHaveBeenCalled());
@@ -151,8 +151,8 @@ describe("WorkerLoginForm", () => {
 
   it("displays API validation errors", async () => {
     const apiError = new http.ApiError("Validation failed", 400, {
-      errors: { login: "Login jest wymagany", password: "Haslo jest wymagane" },
-      message: "Walidacja nie powiodla sie",
+      errors: { login: "Login jest wymagany", password: "Hasło jest wymagane" },
+      message: "Walidacja nie powiodła się",
     });
 
     vi.spyOn(http, "apiFetch").mockRejectedValueOnce(apiError);
@@ -161,35 +161,35 @@ describe("WorkerLoginForm", () => {
 
     await userEvent.type(screen.getByLabelText(/Login/i), "ja");
     await userEvent.type(
-      screen.getByLabelText(/Haslo/i, { selector: "input" }),
+      screen.getByLabelText(/Hasło/i, { selector: "input" }),
       "haslo123",
     );
 
-    // pierwszy bled walidacji klienta
+    // pierwszy błąd walidacji klienta
     await userEvent.click(
-      screen.getByRole("button", { name: /Zaloguj sie/i }),
+      screen.getByRole("button", { name: /Zaloguj się/i }),
     );
 
-    // Popraw login, aby przejsc walidacje klienta
+    // Popraw login, aby przejść walidację klienta
     await userEvent.clear(screen.getByLabelText(/Login/i));
     await userEvent.type(screen.getByLabelText(/Login/i), "jan.kowalski");
     await userEvent.type(
-      screen.getByLabelText(/Haslo/i, { selector: "input" }),
+      screen.getByLabelText(/Hasło/i, { selector: "input" }),
       "superHaslo123",
     );
 
     await userEvent.click(
-      screen.getByRole("button", { name: /Zaloguj sie/i }),
+      screen.getByRole("button", { name: /Zaloguj się/i }),
     );
 
     expect(
-      await screen.findByText(/Walidacja nie powiodla sie/i),
+      await screen.findByText(/Walidacja nie powiodła się/i),
     ).toBeInTheDocument();
     expect(
       await screen.findByText(/Login jest wymagany/i),
     ).toBeInTheDocument();
     expect(
-      await screen.findByText(/Haslo jest wymagane/i),
+      await screen.findByText(/Hasło jest wymagane/i),
     ).toBeInTheDocument();
 
     expect(window.localStorage.getItem(WORKER_SESSION_STORAGE_KEY)).toBeNull();

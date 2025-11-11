@@ -44,16 +44,15 @@ export const LoginSection: React.FC<LoginSectionProps> = ({
             {title}
           </h2>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-            Zaloguj sie, aby zarzadzac zgloszeniami klientow, przegladac
-            historie rozmow i monitorowac obciazenie zespolu.
+            Zaloguj się, aby zarządzać zgłoszeniami klientów, przeglądać historię rozmów i monitorować obciążenie zespołu.
           </p>
         </div>
 
-        <WorkerLoginForm title="Dostep dla pracownikow" />
+        <WorkerLoginForm title="Dostęp dla pracowników" />
 
         {layout === "columns" ? (
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Po pomyslnym logowaniu zostaniesz przekierowany do panelu pracownika.
+            Po pomyślnym logowaniu zostaniesz przekierowany do panelu pracownika.
           </p>
         ) : null}
       </div>
