@@ -1,5 +1,7 @@
 import * as React from "react";
 
+import { subscribeToMercure, type MercurePayload } from "~/services/mercureClient";
+
 export type ScheduleEventType =
   | "ticket_added"
   | "ticket_updated"
@@ -20,81 +22,78 @@ export interface WorkerScheduleSSEConnectionProps {
   onError?: (error: Error) => void;
 }
 
-const resolveEventsUrl = (workerId: string): string => {
-  const baseFromEnv = import.meta.env.VITE_API_URL;
-  const base =
-    (baseFromEnv && baseFromEnv.length > 0 ? baseFromEnv : undefined) ??
-    (typeof window !== "undefined" ? window.location.origin : "http://localhost");
+interface ScheduleEnvelope {
+  type?: ScheduleEventType;
+  ticketId?: string;
+  data?: unknown;
+  timestamp?: string;
+}
 
-  const sanitizedBase = base.replace(/\/$/, "");
-  return `${sanitizedBase}/events/worker/schedule/${workerId}`;
-};
+const SUPPORTED_EVENT_TYPES: ScheduleEventType[] = [
+  "ticket_added",
+  "ticket_updated",
+  "ticket_removed",
+  "status_changed",
+  "time_updated",
+];
+
+const isSupportedEventType = (value: string): value is ScheduleEventType =>
+  SUPPORTED_EVENT_TYPES.includes(value as ScheduleEventType);
 
 export const WorkerScheduleSSEConnection: React.FC<WorkerScheduleSSEConnectionProps> = ({
   workerId,
   onScheduleUpdate,
   onError,
 }) => {
-  const eventSourceRef = React.useRef<EventSource | null>(null);
-
   React.useEffect(() => {
-    if (typeof window === "undefined" || typeof window.EventSource === "undefined") {
+    if (!workerId) {
       return;
     }
 
-    const url = resolveEventsUrl(workerId);
-    const EventSourceImpl = window.EventSource;
-    const eventSource = new EventSourceImpl(url, { withCredentials: true });
-    eventSourceRef.current = eventSource;
+    const subscription = subscribeToMercure<ScheduleEnvelope>({
+      topics: [`worker/schedule/${workerId}`],
+      eventTypes: SUPPORTED_EVENT_TYPES,
+      parse: (raw) => {
+        try {
+          return JSON.parse(raw) as ScheduleEnvelope;
+        } catch (error) {
+          onError?.(
+            error instanceof Error
+              ? error
+              : new Error("Nie udało się przetworzyć danych z kanału Mercure."),
+          );
+          return null;
+        }
+      },
+      onMessage: ({ event, data }: MercurePayload<ScheduleEnvelope>) => {
+        const resolvedType =
+          data.type && isSupportedEventType(data.type)
+            ? data.type
+            : isSupportedEventType(event)
+              ? event
+              : null;
 
-    const eventTypes: ScheduleEventType[] = [
-      "ticket_added",
-      "ticket_updated",
-      "ticket_removed",
-      "status_changed",
-      "time_updated",
-    ];
-
-    const handleUpdate = (event: MessageEvent) => {
-      try {
-        const payload = JSON.parse(event.data) as Partial<ScheduleUpdate>;
-        if (!payload || !payload.type) {
+        if (!resolvedType) {
           return;
         }
+
         onScheduleUpdate({
-          type: payload.type as ScheduleEventType,
-          ticketId: payload.ticketId ?? "",
-          data: payload.data,
-          timestamp: payload.timestamp ?? new Date().toISOString(),
+          type: resolvedType,
+          ticketId: data.ticketId ?? "",
+          data: data.data,
+          timestamp: data.timestamp ?? new Date().toISOString(),
         });
-      } catch (error) {
-        if (onError) {
-          onError(error instanceof Error ? error : new Error("Nie udało się przetworzyć danych SSE."));
-        }
-      }
-    };
-
-    eventTypes.forEach((eventName) => {
-      eventSource.addEventListener(eventName, handleUpdate);
+      },
+      onError: (error) => {
+        onError?.(error);
+      },
+      includeMessageEvent: false,
     });
-    eventSource.onmessage = handleUpdate;
-
-    eventSource.onerror = () => {
-      if (onError) {
-        onError(new Error("Połączenie z serwerem SSE zostało przerwane."));
-      }
-    };
 
     return () => {
-      eventTypes.forEach((eventName) => {
-        eventSource.removeEventListener(eventName, handleUpdate);
-      });
-      eventSource.close();
-      eventSourceRef.current = null;
+      subscription.close();
     };
   }, [workerId, onScheduleUpdate, onError]);
 
   return null;
 };
-
-

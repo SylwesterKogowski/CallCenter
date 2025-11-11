@@ -7,6 +7,11 @@ namespace App\Modules\Tickets\Application;
 use App\Modules\Authentication\Domain\WorkerInterface;
 use App\Modules\Clients\Domain\ClientInterface;
 use App\Modules\TicketCategories\Domain\TicketCategoryInterface;
+use App\Modules\Tickets\Application\Event\TicketAddedEvent;
+use App\Modules\Tickets\Application\Event\TicketChangedEvent;
+use App\Modules\Tickets\Application\Event\TicketEventInterface;
+use App\Modules\Tickets\Application\Event\TicketStatusChangedEvent;
+use App\Modules\Tickets\Application\Event\TicketUpdatedEvent;
 use App\Modules\Tickets\Domain\Exception\ActiveTicketWorkExistsException;
 use App\Modules\Tickets\Domain\Exception\InvalidTicketTimeEntryException;
 use App\Modules\Tickets\Domain\Exception\TicketWorkNotFoundException;
@@ -20,14 +25,16 @@ use App\Modules\Tickets\Infrastructure\Persistence\Doctrine\Entity\TicketMessage
 use App\Modules\Tickets\Infrastructure\Persistence\Doctrine\Entity\TicketNote;
 use App\Modules\Tickets\Infrastructure\Persistence\Doctrine\Entity\TicketRegisteredTime;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
- * Test w {@see \Tests\Unit\Modules\Tickets\Application\TicketServiceTest}
+ * Test w {@see \Tests\Unit\Modules\Tickets\Application\TicketServiceTest}.
  */
 final class TicketService implements TicketServiceInterface
 {
     public function __construct(
         private readonly TicketRepositoryInterface $repository,
+        private readonly EventDispatcherInterface $eventDispatcher,
     ) {
     }
 
@@ -55,6 +62,13 @@ final class TicketService implements TicketServiceInterface
         );
 
         $this->repository->save($ticket);
+
+        $this->dispatchTicketEvent(new TicketAddedEvent(
+            $ticket->getId(),
+            [
+                'ticket' => $this->createTicketSnapshot($ticket),
+            ],
+        ));
 
         return $ticket;
     }
@@ -107,15 +121,47 @@ final class TicketService implements TicketServiceInterface
 
         $this->repository->addMessage($message);
 
+        $this->dispatchTicketEvent(new TicketUpdatedEvent(
+            $ticketEntity->getId(),
+            [
+                'message' => $this->createTicketMessageSnapshot($message),
+                'ticket' => $this->createTicketSnapshot($ticketEntity),
+            ],
+        ));
+
         return $message;
     }
 
     public function updateTicketStatus(TicketInterface $ticket, string $status): TicketInterface
     {
         $ticketEntity = $this->assertTicketEntity($ticket);
+        $previousStatus = $ticketEntity->getStatus();
         $ticketEntity->changeStatus($status);
 
         $this->repository->update($ticketEntity);
+
+        if ($previousStatus !== $ticketEntity->getStatus()) {
+            $snapshot = $this->createTicketSnapshot($ticketEntity);
+
+            $this->dispatchTicketEvent(new TicketStatusChangedEvent(
+                $ticketEntity->getId(),
+                [
+                    'ticketId' => $ticketEntity->getId(),
+                    'oldStatus' => $previousStatus,
+                    'newStatus' => $ticketEntity->getStatus(),
+                    'ticket' => $snapshot,
+                ],
+            ));
+
+            $this->dispatchTicketEvent(new TicketChangedEvent(
+                $ticketEntity->getId(),
+                [
+                    'ticketId' => $ticketEntity->getId(),
+                    'status' => $ticketEntity->getStatus(),
+                    'ticket' => $snapshot,
+                ],
+            ));
+        }
 
         return $ticketEntity;
     }
@@ -137,6 +183,15 @@ final class TicketService implements TicketServiceInterface
         );
 
         $this->repository->addNote($noteEntity);
+
+        $this->dispatchTicketEvent(new TicketUpdatedEvent(
+            $ticketEntity->getId(),
+            [
+                'note' => $this->createTicketNoteSnapshot($noteEntity),
+                'ticket' => $this->createTicketSnapshot($ticketEntity),
+            ],
+            workerId: $worker->getId(),
+        ));
 
         return $noteEntity;
     }
@@ -172,6 +227,7 @@ final class TicketService implements TicketServiceInterface
         }
 
         $ticketEntity = $this->assertTicketEntity($ticket);
+        $previousStatus = $ticketEntity->getStatus();
 
         $registeredTime = new TicketRegisteredTime(
             Uuid::v7()->toRfc4122(),
@@ -186,6 +242,41 @@ final class TicketService implements TicketServiceInterface
 
         $this->repository->addRegisteredTime($registeredTime);
         $this->repository->update($ticketEntity);
+
+        $ticketSnapshot = $this->createTicketSnapshot($ticketEntity);
+        $registeredTimeSnapshot = $this->createRegisteredTimeSnapshot($registeredTime);
+
+        $this->dispatchTicketEvent(new TicketUpdatedEvent(
+            $ticketEntity->getId(),
+            [
+                'registeredTime' => $registeredTimeSnapshot,
+                'ticket' => $ticketSnapshot,
+            ],
+            workerId: $worker->getId(),
+        ));
+
+        if ($previousStatus !== $ticketEntity->getStatus()) {
+            $this->dispatchTicketEvent(new TicketStatusChangedEvent(
+                $ticketEntity->getId(),
+                [
+                    'ticketId' => $ticketEntity->getId(),
+                    'oldStatus' => $previousStatus,
+                    'newStatus' => $ticketEntity->getStatus(),
+                    'ticket' => $ticketSnapshot,
+                ],
+                workerId: $worker->getId(),
+            ));
+
+            $this->dispatchTicketEvent(new TicketChangedEvent(
+                $ticketEntity->getId(),
+                [
+                    'ticketId' => $ticketEntity->getId(),
+                    'status' => $ticketEntity->getStatus(),
+                    'ticket' => $ticketSnapshot,
+                ],
+                workerId: $worker->getId(),
+            ));
+        }
 
         return $registeredTime;
     }
@@ -202,10 +293,46 @@ final class TicketService implements TicketServiceInterface
         $this->repository->updateRegisteredTime($active);
 
         $ticketEntity = $this->assertTicketEntity($ticket);
+        $previousStatus = $ticketEntity->getStatus();
 
         if ($ticketEntity->isInProgress() && !$this->hasAnyActiveSessions($ticketEntity)) {
             $ticketEntity->changeStatus(TicketInterface::STATUS_AWAITING_RESPONSE);
             $this->repository->update($ticketEntity);
+        }
+
+        $ticketSnapshot = $this->createTicketSnapshot($ticketEntity);
+        $registeredTimeSnapshot = $this->createRegisteredTimeSnapshot($active);
+
+        $this->dispatchTicketEvent(new TicketUpdatedEvent(
+            $ticketEntity->getId(),
+            [
+                'registeredTime' => $registeredTimeSnapshot,
+                'ticket' => $ticketSnapshot,
+            ],
+            workerId: $worker->getId(),
+        ));
+
+        if ($previousStatus !== $ticketEntity->getStatus()) {
+            $this->dispatchTicketEvent(new TicketStatusChangedEvent(
+                $ticketEntity->getId(),
+                [
+                    'ticketId' => $ticketEntity->getId(),
+                    'oldStatus' => $previousStatus,
+                    'newStatus' => $ticketEntity->getStatus(),
+                    'ticket' => $ticketSnapshot,
+                ],
+                workerId: $worker->getId(),
+            ));
+
+            $this->dispatchTicketEvent(new TicketChangedEvent(
+                $ticketEntity->getId(),
+                [
+                    'ticketId' => $ticketEntity->getId(),
+                    'status' => $ticketEntity->getStatus(),
+                    'ticket' => $ticketSnapshot,
+                ],
+                workerId: $worker->getId(),
+            ));
         }
 
         return $active;
@@ -240,6 +367,15 @@ final class TicketService implements TicketServiceInterface
         }
 
         $this->repository->addRegisteredTime($registeredTime);
+
+        $this->dispatchTicketEvent(new TicketUpdatedEvent(
+            $ticketEntity->getId(),
+            [
+                'registeredTime' => $this->createRegisteredTimeSnapshot($registeredTime),
+                'ticket' => $this->createTicketSnapshot($ticketEntity),
+            ],
+            workerId: $worker->getId(),
+        ));
     }
 
     public function closeTicket(
@@ -248,9 +384,33 @@ final class TicketService implements TicketServiceInterface
         ?\DateTimeImmutable $closedAt = null,
     ): TicketInterface {
         $ticketEntity = $this->assertTicketEntity($ticket);
+        $previousStatus = $ticketEntity->getStatus();
         $ticketEntity->close($worker, $closedAt);
 
         $this->repository->update($ticketEntity);
+
+        $ticketSnapshot = $this->createTicketSnapshot($ticketEntity);
+
+        $this->dispatchTicketEvent(new TicketStatusChangedEvent(
+            $ticketEntity->getId(),
+            [
+                'ticketId' => $ticketEntity->getId(),
+                'oldStatus' => $previousStatus,
+                'newStatus' => $ticketEntity->getStatus(),
+                'ticket' => $ticketSnapshot,
+            ],
+            workerId: $worker->getId(),
+        ));
+
+        $this->dispatchTicketEvent(new TicketChangedEvent(
+            $ticketEntity->getId(),
+            [
+                'ticketId' => $ticketEntity->getId(),
+                'status' => $ticketEntity->getStatus(),
+                'ticket' => $ticketSnapshot,
+            ],
+            workerId: $worker->getId(),
+        ));
 
         return $ticketEntity;
     }
@@ -379,6 +539,95 @@ final class TicketService implements TicketServiceInterface
         $normalized = trim($value);
 
         return '' === $normalized ? null : $normalized;
+    }
+
+    private function dispatchTicketEvent(TicketEventInterface $event): void
+    {
+        $this->eventDispatcher->dispatch($event);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function createTicketSnapshot(TicketInterface $ticket): array
+    {
+        $category = $ticket->getCategory();
+        $client = $ticket->getClient();
+
+        return [
+            'id' => $ticket->getId(),
+            'status' => $ticket->getStatus(),
+            'title' => $ticket->getTitle(),
+            'description' => $ticket->getDescription(),
+            'createdAt' => $this->formatDate($ticket->getCreatedAt()),
+            'updatedAt' => $this->formatDate($ticket->getUpdatedAt()),
+            'closedAt' => $this->formatDate($ticket->getClosedAt()),
+            'closedByWorkerId' => $ticket->getClosedByWorkerId(),
+            'category' => [
+                'id' => $category->getId(),
+                'name' => $category->getName(),
+                'defaultResolutionMinutes' => $category->getDefaultResolutionTimeMinutes(),
+            ],
+            'client' => [
+                'id' => $client->getId(),
+                'firstName' => $client->getFirstName(),
+                'lastName' => $client->getLastName(),
+                'email' => $client->getEmail(),
+                'phone' => $client->getPhone(),
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function createTicketMessageSnapshot(TicketMessageInterface $message): array
+    {
+        return [
+            'id' => $message->getId(),
+            'ticketId' => $message->getTicketId(),
+            'senderType' => $message->getSenderType(),
+            'senderId' => $message->getSenderId(),
+            'senderName' => $message->getSenderName(),
+            'content' => $message->getContent(),
+            'createdAt' => $this->formatDate($message->getCreatedAt()),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function createTicketNoteSnapshot(TicketNoteInterface $note): array
+    {
+        return [
+            'id' => $note->getId(),
+            'ticketId' => $note->getTicketId(),
+            'workerId' => $note->getWorkerId(),
+            'content' => $note->getContent(),
+            'createdAt' => $this->formatDate($note->getCreatedAt()),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function createRegisteredTimeSnapshot(TicketRegisteredTimeInterface $registeredTime): array
+    {
+        return [
+            'id' => $registeredTime->getId(),
+            'ticketId' => $registeredTime->getTicketId(),
+            'workerId' => $registeredTime->getWorkerId(),
+            'startedAt' => $this->formatDate($registeredTime->getStartedAt()),
+            'endedAt' => $this->formatDate($registeredTime->getEndedAt()),
+            'durationMinutes' => $registeredTime->getDurationMinutes(),
+            'isPhoneCall' => $registeredTime->isPhoneCall(),
+            'isActive' => $registeredTime->isActive(),
+        ];
+    }
+
+    private function formatDate(?\DateTimeInterface $date): ?string
+    {
+        return $date?->format(DATE_ATOM);
     }
 
     private function now(): \DateTimeImmutable

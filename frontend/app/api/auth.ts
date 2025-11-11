@@ -52,6 +52,7 @@ export interface LoginResponse {
     id: string;
     login: string;
     createdAt: string;
+    isManager: boolean;
   };
   session: {
     token: string;

@@ -7,6 +7,10 @@ namespace Tests\Unit\Modules\Tickets\Application;
 use App\Modules\Authentication\Domain\WorkerInterface;
 use App\Modules\Clients\Domain\ClientInterface;
 use App\Modules\TicketCategories\Domain\TicketCategoryInterface;
+use App\Modules\Tickets\Application\Event\TicketAddedEvent;
+use App\Modules\Tickets\Application\Event\TicketChangedEvent;
+use App\Modules\Tickets\Application\Event\TicketStatusChangedEvent;
+use App\Modules\Tickets\Application\Event\TicketUpdatedEvent;
 use App\Modules\Tickets\Application\TicketService;
 use App\Modules\Tickets\Application\TicketServiceInterface;
 use App\Modules\Tickets\Domain\Exception\ActiveTicketWorkExistsException;
@@ -18,6 +22,7 @@ use App\Modules\Tickets\Domain\TicketRepositoryInterface;
 use App\Modules\Tickets\Infrastructure\Persistence\Doctrine\Entity\Ticket;
 use App\Modules\Tickets\Infrastructure\Persistence\Doctrine\Entity\TicketRegisteredTime;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 final class TicketServiceTest extends TestCase
 {
@@ -25,10 +30,13 @@ final class TicketServiceTest extends TestCase
 
     private InMemoryTicketRepository $repository;
 
+    private RecordingEventDispatcher $dispatcher;
+
     protected function setUp(): void
     {
         $this->repository = new InMemoryTicketRepository();
-        $this->service = new TicketService($this->repository);
+        $this->dispatcher = new RecordingEventDispatcher();
+        $this->service = new TicketService($this->repository, $this->dispatcher);
     }
 
     public function testCreateTicketPersistsTicket(): void
@@ -40,6 +48,7 @@ final class TicketServiceTest extends TestCase
 
         self::assertSame($ticket, $this->repository->findById('ticket-1'));
         self::assertSame(TicketInterface::STATUS_AWAITING_RESPONSE, $ticket->getStatus());
+        self::assertEventDispatched(TicketAddedEvent::class);
     }
 
     public function testStartTicketWorkCreatesActiveEntryAndSetsStatus(): void
@@ -51,6 +60,9 @@ final class TicketServiceTest extends TestCase
 
         self::assertTrue($registeredTime->isActive());
         self::assertSame(TicketInterface::STATUS_IN_PROGRESS, $this->repository->findById('ticket-1')?->getStatus());
+        self::assertEventDispatched(TicketUpdatedEvent::class);
+        self::assertEventDispatched(TicketStatusChangedEvent::class);
+        self::assertEventDispatched(TicketChangedEvent::class);
     }
 
     public function testStartTicketWorkThrowsWhenActiveSessionExists(): void
@@ -71,11 +83,15 @@ final class TicketServiceTest extends TestCase
         $worker = $this->createWorker('worker-1');
 
         $this->service->startTicketWork($ticket, $worker);
+        $this->dispatcher->reset();
         $registeredTime = $this->service->stopTicketWork($ticket, $worker);
 
         self::assertFalse($registeredTime->isActive());
         self::assertSame(TicketInterface::STATUS_AWAITING_RESPONSE, $this->repository->findById('ticket-1')?->getStatus());
         self::assertNotNull($registeredTime->getEndedAt());
+        self::assertEventDispatched(TicketUpdatedEvent::class);
+        self::assertEventDispatched(TicketStatusChangedEvent::class);
+        self::assertEventDispatched(TicketChangedEvent::class);
     }
 
     public function testCalculateWorkerEfficiencyUsesRegisteredTime(): void
@@ -153,6 +169,43 @@ final class TicketServiceTest extends TestCase
         $worker->method('getId')->willReturn($id);
 
         return $worker;
+    }
+
+    private function assertEventDispatched(string $eventClass): void
+    {
+        self::assertNotNull(
+            $this->dispatcher->firstEventOf($eventClass),
+            sprintf('Failed asserting that event "%s" was dispatched.', $eventClass),
+        );
+    }
+}
+
+final class RecordingEventDispatcher extends EventDispatcher
+{
+    /** @var list<object> */
+    private array $events = [];
+
+    public function dispatch(object $event, ?string $eventName = null): object
+    {
+        $this->events[] = $event;
+
+        return parent::dispatch($event, $eventName ?? $event::class);
+    }
+
+    public function reset(): void
+    {
+        $this->events = [];
+    }
+
+    public function firstEventOf(string $eventClass): ?object
+    {
+        foreach ($this->events as $event) {
+            if ($event instanceof $eventClass) {
+                return $event;
+            }
+        }
+
+        return null;
     }
 }
 

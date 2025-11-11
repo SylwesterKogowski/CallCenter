@@ -119,7 +119,7 @@ final class WorkerPhoneService implements WorkerPhoneServiceInterface
                     $startTime,
                     $endTime,
                 );
-            } elseif($context) {
+            } elseif ($context) {
                 $previousTicketPayload = $this->resumePreviousTicket(
                     $context['primaryTicketId'],
                     $worker,
