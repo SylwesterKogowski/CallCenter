@@ -16,7 +16,7 @@ export const HeaderSection: React.FC<HeaderSectionProps> = ({
   return (
     <header
       className="space-y-6"
-      aria-label="Naglowek strony"
+      aria-label="Nagłówek strony"
       role="banner"
     >
       <div className="flex flex-col gap-4 text-center md:flex-row md:items-center md:justify-between md:text-left">
