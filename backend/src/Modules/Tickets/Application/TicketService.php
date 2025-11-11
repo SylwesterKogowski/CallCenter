@@ -21,6 +21,9 @@ use App\Modules\Tickets\Infrastructure\Persistence\Doctrine\Entity\TicketNote;
 use App\Modules\Tickets\Infrastructure\Persistence\Doctrine\Entity\TicketRegisteredTime;
 use Symfony\Component\Uid\Uuid;
 
+/**
+ * Test w {@see \Tests\Unit\Modules\Tickets\Application\TicketServiceTest}
+ */
 final class TicketService implements TicketServiceInterface
 {
     public function __construct(

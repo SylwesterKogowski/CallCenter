@@ -93,7 +93,7 @@ final class WorkerPhoneService implements WorkerPhoneServiceInterface
     ): array {
         $context = $this->getCallContext($callId);
 
-        if ($context['workerId'] !== $workerId) {
+        if ($context && $context['workerId'] !== $workerId) {
             throw new \RuntimeException(sprintf('Call "%s" does not belong to worker "%s".', $callId, $workerId));
         }
 
@@ -119,7 +119,7 @@ final class WorkerPhoneService implements WorkerPhoneServiceInterface
                     $startTime,
                     $endTime,
                 );
-            } else {
+            } elseif($context) {
                 $previousTicketPayload = $this->resumePreviousTicket(
                     $context['primaryTicketId'],
                     $worker,
@@ -337,12 +337,12 @@ final class WorkerPhoneService implements WorkerPhoneServiceInterface
      *         newStatus: string
      *     }>,
      *     primaryTicketId: ?string
-     * }
+     * }|null
      */
-    private function getCallContext(string $callId): array
+    private function getCallContext(string $callId): ?array
     {
         if (!isset($this->activeCalls[$callId])) {
-            throw new \RuntimeException(sprintf('Call context "%s" does not exist.', $callId));
+            return null;
         }
 
         return $this->activeCalls[$callId];

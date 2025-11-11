@@ -48,6 +48,7 @@ final class Version20251110234912 extends AbstractMigration
                 'id' => Types::GUID,
                 'login' => Types::STRING,
                 'password_hash' => Types::STRING,
+                'is_manager' => Types::BOOLEAN,
             ],
         );
 

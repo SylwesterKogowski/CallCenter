@@ -152,6 +152,7 @@ class AuthController extends AbstractJsonController
                     'id' => $worker->getId(),
                     'login' => $worker->getLogin(),
                     'createdAt' => $worker->getCreatedAt()->format(DATE_ATOM),
+                    'isManager' => $worker->isManager(),
                 ],
                 'session' => [
                     'token' => $token,

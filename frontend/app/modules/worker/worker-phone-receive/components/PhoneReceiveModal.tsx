@@ -1,5 +1,5 @@
 import * as React from "react";
-
+import { DateTime } from "luxon";
 import type { TicketStatus } from "~/api/types";
 import {
   type CreateWorkerTicketResponse,
@@ -261,8 +261,8 @@ export const PhoneReceiveModal: React.FC<PhoneReceiveModalProps> = ({
       ticketId: selectedTicket?.id ?? null,
       duration,
       notes: notes.trim(),
-      startTime: callStartTime.toISOString(),
-      endTime: end.toISOString(),
+      startTime: DateTime.fromJSDate(callStartTime).toISO({precision: 'second'}),
+      endTime: DateTime.fromJSDate(end).toISO({precision: 'second'}),
     });
   }, [callData, callDuration, callStartTime, endCallMutation, notes, selectedTicket]);
 
