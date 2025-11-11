@@ -4,7 +4,8 @@ export default [
     index("routes/home.tsx"),
     layout("routes/worker.tsx",[
         ...prefix("worker",[
-            index("pages/worker/schedule/schedule-page.tsx")
+            index("pages/worker/schedule/schedule-page.tsx"),
+            route("availability", "pages/worker/availability/availability-page.tsx"),
         ]),
     ]),
 ] satisfies RouteConfig;

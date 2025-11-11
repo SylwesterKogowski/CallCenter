@@ -44,7 +44,7 @@ type WorkerLayoutAction =
 const MENU_ITEMS: MenuItem[] = [
   {
     label: "Grafik",
-    path: "/worker/schedule",
+    path: "/worker",
     icon: "🗓️",
   },
   {
