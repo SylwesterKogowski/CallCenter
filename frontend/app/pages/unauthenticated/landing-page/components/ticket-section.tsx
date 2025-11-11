@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import { TicketAddForm } from "~/modules/unauthenticated/ticket-add";
+import { TicketChatModal } from "./ticket-chat-modal";
 
 import type { LandingPageLayout } from "../landing-page";
 
@@ -19,6 +20,9 @@ export const TicketSection: React.FC<TicketSectionProps> = ({
   forceVisibleOnDesktop = false,
   layout,
 }) => {
+  const [chatTicketId, setChatTicketId] = React.useState<string | null>(null);
+  const latestTicketIdRef = React.useRef<string | null>(null);
+
   const visibilityClasses = React.useMemo(() => {
     if (forceVisibleOnDesktop) {
       return isActive
@@ -28,6 +32,32 @@ export const TicketSection: React.FC<TicketSectionProps> = ({
 
     return isActive ? "block md:flex-1" : "hidden";
   }, [forceVisibleOnDesktop, isActive]);
+
+  const isChatOpen = chatTicketId !== null;
+
+  const handleCloseChat = React.useCallback(() => {
+    setChatTicketId(null);
+    latestTicketIdRef.current = null;
+  }, []);
+
+  const handleTicketCreated = React.useCallback((ticketId: string) => {
+    latestTicketIdRef.current = ticketId;
+    setChatTicketId(ticketId);
+  }, []);
+
+  const handleNavigateToChat = React.useCallback((path: string) => {
+    if (latestTicketIdRef.current) {
+      setChatTicketId(latestTicketIdRef.current);
+      return;
+    }
+
+    const extractedId = path.split("/").filter(Boolean).pop();
+
+    if (extractedId) {
+      latestTicketIdRef.current = extractedId;
+      setChatTicketId(extractedId);
+    }
+  }, []);
 
   return (
     <section
@@ -51,7 +81,10 @@ export const TicketSection: React.FC<TicketSectionProps> = ({
           </p>
         </div>
 
-        <TicketAddForm />
+        <TicketAddForm
+          onTicketCreated={handleTicketCreated}
+          navigate={handleNavigateToChat}
+        />
 
         {layout === "columns" ? (
           <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -60,6 +93,11 @@ export const TicketSection: React.FC<TicketSectionProps> = ({
           </p>
         ) : null}
       </div>
+      <TicketChatModal
+        isOpen={isChatOpen}
+        ticketId={chatTicketId}
+        onClose={handleCloseChat}
+      />
     </section>
   );
 };
