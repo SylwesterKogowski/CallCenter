@@ -1,0 +1,17 @@
+RewriteEngine On
+
+DirectoryIndex frontend/index.html index.php
+
+# 1. --- Symfony API Routing ---
+# Route requests starting with /api/ to the Symfony entry point (e.g., index.php)
+# The path here is relative to the .htaccess file location.
+RewriteRule ^api/.*$ index.php [L]
+
+# --- React SPA Routing ---
+# 2. Skip if the file or directory exists physically in the DocumentRoot
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# 3. SPA Fallback: Route all remaining requests to the React index.html
+#    NOTE: We now prepend the folder name 'frontend/' to the target.
+RewriteRule ^.*$ frontend/index.html [QSA,L]

@@ -16,7 +16,7 @@ export const PhoneReceiveButton: React.FC<PhoneReceiveButtonProps> = ({
   isActive = false,
 }) => {
   return (
-    <div className="w-full max-w-xs">
+    <div className="max-w-xs">
       <CorePhoneReceiveButton onClick={onClick} isDisabled={isDisabled} isActive={isActive} />
     </div>
   );

@@ -6,7 +6,7 @@ framework:
     session:
         handler_id: null
         cookie_secure: auto
-        cookie_samesite: lax
+        cookie_samesite: 'lax'
         cookie_httponly: true
         cookie_lifetime: 0
         name: BFFSESSID
