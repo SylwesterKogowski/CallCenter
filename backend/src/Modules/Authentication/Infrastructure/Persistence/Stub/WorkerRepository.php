@@ -31,4 +31,14 @@ final class WorkerRepository implements WorkerRepositoryInterface
     {
         $this->notImplemented(__METHOD__);
     }
+
+    public function findNonManagerWorkerIdsOrderedByLogin(): array
+    {
+        return $this->notImplemented(__METHOD__);
+    }
+
+    public function countNonManagerWorkers(): int
+    {
+        return $this->notImplemented(__METHOD__);
+    }
 }

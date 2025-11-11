@@ -75,6 +75,13 @@ interface TicketServiceInterface
         WorkerInterface $worker,
     ): int;
 
+    /**
+     * @param string[] $workerIds
+     *
+     * @return array<string, int>
+     */
+    public function getWorkersTimeSpentForDate(array $workerIds, \DateTimeImmutable $date): array;
+
     public function getTotalTimeSpentOnTicket(TicketInterface $ticket): int;
 
     public function startTicketWork(TicketInterface $ticket, WorkerInterface $worker): TicketRegisteredTimeInterface;

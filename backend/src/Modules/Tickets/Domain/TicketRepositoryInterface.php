@@ -48,6 +48,13 @@ interface TicketRepositoryInterface
     public function getWorkerTimeSpentOnTicket(string $ticketId, string $workerId): int;
 
     /**
+     * @param string[] $workerIds
+     *
+     * @return array<string, int>
+     */
+    public function getWorkersTimeSpentForDate(array $workerIds, \DateTimeImmutable $date): array;
+
+    /**
      * @param array{
      *     status?: string|null,
      *     category_id?: string|null,

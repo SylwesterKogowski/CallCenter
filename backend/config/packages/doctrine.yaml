@@ -60,6 +60,12 @@ doctrine:
                 dir: '%kernel.project_dir%/src/Modules/Tickets/Infrastructure/Persistence/Doctrine/Entity'
                 prefix: 'App\Modules\Tickets\Infrastructure\Persistence\Doctrine\Entity'
                 alias: Tickets
+            AppBackendForFrontendManager:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Modules/BackendForFrontend/Manager/Persistence/Entity'
+                prefix: 'App\Modules\BackendForFrontend\Manager\Persistence\Entity'
+                alias: BackendForFrontendManager
         controller_resolver:
             auto_mapping: false
 

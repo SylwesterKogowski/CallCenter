@@ -94,6 +94,47 @@ final class TicketServiceTest extends TestCase
         self::assertEventDispatched(TicketChangedEvent::class);
     }
 
+    public function testGetWorkersTimeSpentForDateAggregatesMinutes(): void
+    {
+        $ticket = $this->seedTicket('ticket-1');
+        $workerA = $this->createWorker('worker-1');
+        $workerB = $this->createWorker('worker-2');
+
+        $ticketEntity = $this->repository->findById($ticket->getId());
+        \assert($ticketEntity instanceof Ticket);
+
+        $sessionA = new TicketRegisteredTime(
+            'session-1',
+            $ticketEntity,
+            $workerA->getId(),
+            new \DateTimeImmutable('2024-05-01T09:00:00+00:00'),
+        );
+        $sessionA->end(new \DateTimeImmutable('2024-05-01T09:45:00+00:00'), 45);
+        $this->repository->addRegisteredTime($sessionA);
+
+        $sessionB = new TicketRegisteredTime(
+            'session-2',
+            $ticketEntity,
+            $workerB->getId(),
+            new \DateTimeImmutable('2024-05-01T10:00:00+00:00'),
+        );
+        $sessionB->end(new \DateTimeImmutable('2024-05-01T10:30:00+00:00'), 30);
+        $this->repository->addRegisteredTime($sessionB);
+
+        $result = $this->service->getWorkersTimeSpentForDate(
+            ['worker-1', 'worker-2'],
+            new \DateTimeImmutable('2024-05-01T00:00:00+00:00'),
+        );
+
+        self::assertSame(
+            [
+                'worker-1' => 45,
+                'worker-2' => 30,
+            ],
+            $result,
+        );
+    }
+
     public function testCalculateWorkerEfficiencyUsesRegisteredTime(): void
     {
         $ticket = $this->seedTicket('ticket-1', defaultMinutes: 60, categoryId: 'category-1');
@@ -321,6 +362,44 @@ final class InMemoryTicketRepository implements TicketRepositoryInterface
     public function getWorkerBacklog(string $workerId, array $filters): array
     {
         return [];
+    }
+
+    public function getWorkersTimeSpentForDate(array $workerIds, \DateTimeImmutable $date): array
+    {
+        if ([] === $workerIds) {
+            return [];
+        }
+
+        $targetDate = $date->format('Y-m-d');
+        $minutesByWorker = [];
+
+        foreach ($this->registeredTimes as $registeredTime) {
+            $workerId = $registeredTime->getWorkerId();
+
+            if (!\in_array($workerId, $workerIds, true)) {
+                continue;
+            }
+
+            $startedAt = $registeredTime->getStartedAt();
+
+            if ($startedAt->format('Y-m-d') !== $targetDate) {
+                continue;
+            }
+
+            $duration = $registeredTime->getDurationMinutes();
+
+            if (null === $duration) {
+                $endedAt = $registeredTime->getEndedAt() ?? $startedAt;
+                $duration = max(
+                    0,
+                    (int) floor(($endedAt->getTimestamp() - $startedAt->getTimestamp()) / 60),
+                );
+            }
+
+            $minutesByWorker[$workerId] = ($minutesByWorker[$workerId] ?? 0) + max(0, $duration);
+        }
+
+        return $minutesByWorker;
     }
 
     public function findTicketsByClient(string $clientId, ?string $status = null): array

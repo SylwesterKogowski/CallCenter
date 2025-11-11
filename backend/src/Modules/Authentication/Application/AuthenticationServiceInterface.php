@@ -17,4 +17,11 @@ interface AuthenticationServiceInterface
     public function getWorkerByLogin(string $login): ?WorkerInterface;
 
     public function changePassword(WorkerInterface $worker, string $oldPassword, string $newPassword): void;
+
+    /**
+     * @return list<string>
+     */
+    public function getNonManagerWorkerIds(): array;
+
+    public function countNonManagerWorkers(): int;
 }

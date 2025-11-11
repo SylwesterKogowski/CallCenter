@@ -14,6 +14,8 @@ use App\Modules\Tickets\Infrastructure\Persistence\Doctrine\Entity\Ticket;
 use App\Modules\Tickets\Infrastructure\Persistence\Doctrine\Entity\TicketMessage;
 use App\Modules\Tickets\Infrastructure\Persistence\Doctrine\Entity\TicketNote;
 use App\Modules\Tickets\Infrastructure\Persistence\Doctrine\Entity\TicketRegisteredTime;
+use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\ParameterType;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\NoResultException;
@@ -165,6 +167,61 @@ final class TicketRepository implements TicketRepositoryInterface
         }
 
         return $total;
+    }
+
+    public function getWorkersTimeSpentForDate(array $workerIds, \DateTimeImmutable $date): array
+    {
+        if ([] === $workerIds) {
+            return [];
+        }
+
+        $connection = $this->entityManager->getConnection();
+
+        $start = $date->setTime(0, 0, 0);
+        $end = $start->add(new \DateInterval('P1D'));
+
+        $sql = <<<SQL
+SELECT
+    worker_id,
+    SUM(
+        CASE
+            WHEN duration_minutes IS NOT NULL THEN duration_minutes
+            WHEN ended_at IS NOT NULL THEN GREATEST(0, TIMESTAMPDIFF(MINUTE, started_at, ended_at))
+            ELSE GREATEST(0, TIMESTAMPDIFF(MINUTE, started_at, :endOfDay))
+        END
+    ) AS minutes
+FROM ticket_registered_time
+WHERE worker_id IN (:workerIds)
+  AND started_at >= :start
+  AND started_at < :end
+GROUP BY worker_id
+SQL;
+
+        $params = [
+            'workerIds' => $workerIds,
+            'start' => $start->format('Y-m-d H:i:s'),
+            'end' => $end->format('Y-m-d H:i:s'),
+            'endOfDay' => $end->format('Y-m-d H:i:s'),
+        ];
+
+        $types = [
+            'workerIds' => Connection::PARAM_STR_ARRAY,
+            'start' => ParameterType::STRING,
+            'end' => ParameterType::STRING,
+            'endOfDay' => ParameterType::STRING,
+        ];
+
+        $rows = $connection->fetchAllAssociative($sql, $params, $types);
+
+        $map = [];
+
+        foreach ($rows as $row) {
+            $workerId = (string) ($row['worker_id'] ?? '');
+            $minutes = (int) ($row['minutes'] ?? 0);
+            $map[$workerId] = max(0, $minutes);
+        }
+
+        return $map;
     }
 
     public function searchWorkerTickets(string $workerId, array $filters, int $limit, int $offset): array

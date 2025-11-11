@@ -213,6 +213,11 @@ final class TicketService implements TicketServiceInterface
         return $this->repository->getWorkerTimeSpentOnTicket($ticket->getId(), $worker->getId());
     }
 
+    public function getWorkersTimeSpentForDate(array $workerIds, \DateTimeImmutable $date): array
+    {
+        return $this->repository->getWorkersTimeSpentForDate($workerIds, $date);
+    }
+
     public function getTotalTimeSpentOnTicket(TicketInterface $ticket): int
     {
         return $this->repository->getTotalTimeSpentOnTicket($ticket->getId());

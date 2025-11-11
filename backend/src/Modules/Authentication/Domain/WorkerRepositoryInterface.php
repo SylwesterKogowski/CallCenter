@@ -13,4 +13,11 @@ interface WorkerRepositoryInterface
     public function save(WorkerInterface $worker): void;
 
     public function update(WorkerInterface $worker): void;
+
+    /**
+     * @return list<string>
+     */
+    public function findNonManagerWorkerIdsOrderedByLogin(): array;
+
+    public function countNonManagerWorkers(): int;
 }

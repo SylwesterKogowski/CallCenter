@@ -68,6 +68,41 @@ final class WorkerRepository implements WorkerRepositoryInterface
         $this->entityManager->flush();
     }
 
+    public function findNonManagerWorkerIdsOrderedByLogin(): array
+    {
+        $rows = $this->entityManager->createQueryBuilder()
+            ->select('worker.id AS id')
+            ->from(WorkerEntity::class, 'worker')
+            ->where('worker.manager = :isManager')
+            ->setParameter('isManager', false)
+            ->orderBy('worker.login', 'ASC')
+            ->getQuery()
+            ->getScalarResult();
+
+        $ids = array_map(
+            static fn (array $row): string => (string) ($row['id'] ?? ''),
+            $rows,
+        );
+
+        return array_values(
+            array_filter(
+                $ids,
+                static fn (string $id): bool => '' !== $id,
+            ),
+        );
+    }
+
+    public function countNonManagerWorkers(): int
+    {
+        return (int) $this->entityManager->createQueryBuilder()
+            ->select('COUNT(worker.id)')
+            ->from(WorkerEntity::class, 'worker')
+            ->where('worker.manager = :isManager')
+            ->setParameter('isManager', false)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
     private function createEntityFromDomain(WorkerInterface $worker): WorkerEntity
     {
         if ($worker instanceof WorkerEntity) {

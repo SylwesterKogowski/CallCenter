@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Modules\BackendForFrontend\Manager\Service;
 
+use App\Modules\Authentication\Application\AuthenticationServiceInterface;
 use App\Modules\Authorization\Application\AuthorizationServiceInterface;
 use App\Modules\BackendForFrontend\Manager\Dto\UpdateAutoAssignmentSettingsInput;
 use App\Modules\BackendForFrontend\Manager\Persistence\Entity\ManagerAutoAssignmentSettings;
@@ -11,27 +12,26 @@ use App\Modules\BackendForFrontend\Manager\Persistence\ManagerAutoAssignmentSett
 use App\Modules\BackendForFrontend\Manager\Service\ManagerMonitoringService;
 use App\Modules\TicketCategories\Application\TicketCategoryServiceInterface;
 use App\Modules\TicketCategories\Domain\TicketCategory;
+use App\Modules\Tickets\Application\TicketServiceInterface;
 use App\Modules\Tickets\Domain\TicketInterface;
 use App\Modules\WorkerSchedule\Application\Dto\WorkerScheduleAssignmentInterface;
 use App\Modules\WorkerSchedule\Application\WorkerScheduleServiceInterface;
-use Doctrine\DBAL\Connection;
-use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 final class ManagerMonitoringServiceTest extends TestCase
 {
-    /** @var EntityManagerInterface&MockObject */
-    private EntityManagerInterface $entityManager;
-
-    /** @var Connection&MockObject */
-    private Connection $connection;
+    /** @var AuthenticationServiceInterface&MockObject */
+    private AuthenticationServiceInterface $authenticationService;
 
     /** @var AuthorizationServiceInterface&MockObject */
     private AuthorizationServiceInterface $authorizationService;
 
     /** @var TicketCategoryServiceInterface&MockObject */
     private TicketCategoryServiceInterface $ticketCategoryService;
+
+    /** @var TicketServiceInterface&MockObject */
+    private TicketServiceInterface $ticketService;
 
     /** @var ManagerAutoAssignmentSettingsRepositoryInterface&MockObject */
     private ManagerAutoAssignmentSettingsRepositoryInterface $settingsRepository;
@@ -45,21 +45,18 @@ final class ManagerMonitoringServiceTest extends TestCase
     {
         parent::setUp();
 
-        $this->entityManager = $this->createMock(EntityManagerInterface::class);
-        $this->connection = $this->createMock(Connection::class);
+        $this->authenticationService = $this->createMock(AuthenticationServiceInterface::class);
         $this->authorizationService = $this->createMock(AuthorizationServiceInterface::class);
         $this->ticketCategoryService = $this->createMock(TicketCategoryServiceInterface::class);
+        $this->ticketService = $this->createMock(TicketServiceInterface::class);
         $this->settingsRepository = $this->createMock(ManagerAutoAssignmentSettingsRepositoryInterface::class);
         $this->workerScheduleService = $this->createMock(WorkerScheduleServiceInterface::class);
 
-        $this->entityManager
-            ->method('getConnection')
-            ->willReturn($this->connection);
-
         $this->service = new ManagerMonitoringService(
-            $this->entityManager,
+            $this->authenticationService,
             $this->authorizationService,
             $this->ticketCategoryService,
+            $this->ticketService,
             $this->settingsRepository,
             $this->workerScheduleService,
             static fn (): \DateTimeImmutable => new \DateTimeImmutable('2024-05-03T12:00:00+00:00'),
@@ -104,9 +101,9 @@ final class ManagerMonitoringServiceTest extends TestCase
             ],
         ];
 
-        $timeSpentRows = [
-            ['worker_id' => 'worker-1', 'minutes' => '45'],
-            ['worker_id' => 'worker-2', 'minutes' => '30'],
+        $timeSpentMap = [
+            'worker-1' => 45,
+            'worker-2' => 30,
         ];
 
         $this->workerScheduleService
@@ -117,16 +114,21 @@ final class ManagerMonitoringServiceTest extends TestCase
             }))
             ->willReturn($assignments);
 
-        $this->connection
+        $this->ticketService
             ->expects(self::once())
-            ->method('fetchAllAssociative')
-            ->willReturn($timeSpentRows);
+            ->method('getWorkersTimeSpentForDate')
+            ->with(
+                ['worker-1', 'worker-2'],
+                self::callback(static function (\DateTimeImmutable $date): bool {
+                    return '2024-05-01' === $date->format('Y-m-d');
+                }),
+            )
+            ->willReturn($timeSpentMap);
 
-        $this->connection
+        $this->authenticationService
             ->expects(self::once())
-            ->method('fetchOne')
-            ->with('SELECT COUNT(*) FROM workers WHERE is_manager = 0')
-            ->willReturn('7');
+            ->method('countNonManagerWorkers')
+            ->willReturn(7);
 
         $this->authorizationService
             ->expects(self::exactly(2))
@@ -234,10 +236,9 @@ final class ManagerMonitoringServiceTest extends TestCase
 
     public function testTriggerAutoAssignmentUpdatesSettingsAndReturnsSummary(): void
     {
-        $this->connection
+        $this->authenticationService
             ->expects(self::once())
-            ->method('fetchFirstColumn')
-            ->with('SELECT id FROM workers WHERE is_manager = 0 ORDER BY login ASC')
+            ->method('getNonManagerWorkerIds')
             ->willReturn(['worker-1', 'worker-2']);
 
         $assignmentStub = $this->createAssignmentStub('worker-1', 'ticket-foo');

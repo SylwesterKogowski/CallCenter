@@ -74,6 +74,26 @@ final class WorkerRepositoryTest extends KernelTestCase
         self::assertNotNull($reloaded->getUpdatedAt());
     }
 
+    public function testNonManagerAggregationsExcludeManagers(): void
+    {
+        $bob = Worker::register('bob.agent', 'password123');
+        $alice = Worker::register('alice.agent', 'password123');
+        $manager = Worker::register('zoe.manager', 'password123', true);
+
+        $this->repository->save($bob);
+        $this->repository->save($alice);
+        $this->repository->save($manager);
+        $this->entityManager->clear();
+
+        $nonManagerIds = $this->repository->findNonManagerWorkerIdsOrderedByLogin();
+
+        self::assertSame(
+            [$alice->getId(), $bob->getId()],
+            $nonManagerIds,
+        );
+        self::assertSame(2, $this->repository->countNonManagerWorkers());
+    }
+
     protected function tearDown(): void
     {
         if (isset($this->connection)) {

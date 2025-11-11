@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace App\Modules\BackendForFrontend\Manager\Service;
 
+use App\Modules\Authentication\Application\AuthenticationServiceInterface;
 use App\Modules\Authorization\Application\AuthorizationServiceInterface;
 use App\Modules\BackendForFrontend\Manager\Dto\UpdateAutoAssignmentSettingsInput;
 use App\Modules\BackendForFrontend\Manager\Persistence\Entity\ManagerAutoAssignmentSettings;
 use App\Modules\BackendForFrontend\Manager\Persistence\ManagerAutoAssignmentSettingsRepositoryInterface;
 use App\Modules\TicketCategories\Application\TicketCategoryServiceInterface;
+use App\Modules\Tickets\Application\TicketServiceInterface;
 use App\Modules\Tickets\Domain\TicketInterface;
 use App\Modules\WorkerSchedule\Application\WorkerScheduleServiceInterface;
-use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\ParameterType;
-use Doctrine\ORM\EntityManagerInterface;
 
 final class ManagerMonitoringService implements ManagerMonitoringServiceInterface
 {
@@ -28,9 +27,10 @@ final class ManagerMonitoringService implements ManagerMonitoringServiceInterfac
     private ?array $categoryNamesById = null;
 
     public function __construct(
-        private readonly EntityManagerInterface $entityManager,
+        private readonly AuthenticationServiceInterface $authenticationService,
         private readonly AuthorizationServiceInterface $authorizationService,
         private readonly TicketCategoryServiceInterface $ticketCategoryService,
+        private readonly TicketServiceInterface $ticketService,
         private readonly ManagerAutoAssignmentSettingsRepositoryInterface $settingsRepository,
         private readonly WorkerScheduleServiceInterface $workerScheduleService,
         ?callable $nowFactory = null,
@@ -42,15 +42,18 @@ final class ManagerMonitoringService implements ManagerMonitoringServiceInterfac
     {
         $this->assertManagerId($managerId);
 
-        $connection = $this->entityManager->getConnection();
         $dateString = $date->format('Y-m-d');
         $assignments = $this->workerScheduleService->fetchAssignmentsForDate($date);
         $workerIds = array_values(array_unique(array_column($assignments, 'worker_id')));
-        $timeSpentMap = $this->fetchTimeSpentMap($connection, $workerIds, $date);
+        $timeSpentMap = $this->ticketService->getWorkersTimeSpentForDate($workerIds, $date);
 
         $workerStats = $this->buildWorkerStats($assignments, $timeSpentMap);
         $queueStats = $this->buildQueueStats($assignments);
-        $summary = $this->buildSummary($workerStats, $queueStats, $connection);
+        $summary = $this->buildSummary(
+            $workerStats,
+            $queueStats,
+            $this->authenticationService->countNonManagerWorkers(),
+        );
 
         $settings = $this->settingsRepository->find($managerId);
         $settingsPayload = $this->normalizeSettings($settings ?? new ManagerAutoAssignmentSettings($managerId));
@@ -92,8 +95,7 @@ final class ManagerMonitoringService implements ManagerMonitoringServiceInterfac
     {
         $this->assertManagerId($managerId);
 
-        $connection = $this->entityManager->getConnection();
-        $workerIds = $this->fetchNonManagerWorkerIds($connection);
+        $workerIds = $this->authenticationService->getNonManagerWorkerIds();
 
         $totalAssigned = 0;
         $assignedTo = [];
@@ -147,64 +149,6 @@ final class ManagerMonitoringService implements ManagerMonitoringServiceInterfac
         if ('' === trim($managerId)) {
             throw new \InvalidArgumentException('Manager id cannot be empty.');
         }
-    }
-
-    /**
-     * @param string[] $workerIds
-     *
-     * @return array<string, int>
-     */
-    private function fetchTimeSpentMap(Connection $connection, array $workerIds, \DateTimeImmutable $date): array
-    {
-        if ([] === $workerIds) {
-            return [];
-        }
-
-        $start = $date->setTime(0, 0, 0);
-        $end = $start->add(new \DateInterval('P1D'));
-
-        $sql = <<<SQL
-SELECT
-    worker_id,
-    SUM(
-        CASE
-            WHEN duration_minutes IS NOT NULL THEN duration_minutes
-            WHEN ended_at IS NOT NULL THEN GREATEST(0, TIMESTAMPDIFF(MINUTE, started_at, ended_at))
-            ELSE GREATEST(0, TIMESTAMPDIFF(MINUTE, started_at, :endOfDay))
-        END
-    ) AS minutes
-FROM ticket_registered_time
-WHERE worker_id IN (:workerIds)
-  AND started_at >= :start
-  AND started_at < :end
-GROUP BY worker_id
-SQL;
-
-        $params = [
-            'workerIds' => $workerIds,
-            'start' => $start->format('Y-m-d H:i:s'),
-            'end' => $end->format('Y-m-d H:i:s'),
-            'endOfDay' => $end->format('Y-m-d H:i:s'),
-        ];
-
-        $types = [
-            'workerIds' => Connection::PARAM_STR_ARRAY,
-            'start' => ParameterType::STRING,
-            'end' => ParameterType::STRING,
-            'endOfDay' => ParameterType::STRING,
-        ];
-
-        $rows = $connection->fetchAllAssociative($sql, $params, $types);
-
-        $map = [];
-
-        foreach ($rows as $row) {
-            $workerId = (string) ($row['worker_id'] ?? '');
-            $minutes = (int) ($row['minutes'] ?? 0);
-            $map[$workerId] = max(0, $minutes);
-        }
-
-        return $map;
     }
 
     /**
@@ -355,9 +299,8 @@ SQL;
      *
      * @return array<string, int|float>
      */
-    private function buildSummary(array $workerStats, array $queueStats, Connection $connection): array
+    private function buildSummary(array $workerStats, array $queueStats, int $totalWorkers): array
     {
-        $totalWorkers = (int) $connection->fetchOne('SELECT COUNT(*) FROM workers WHERE is_manager = 0');
         $totalTickets = 0;
         $waiting = 0;
         $inProgress = 0;
@@ -405,17 +348,6 @@ SQL;
             'inProgressTicketsTotal' => $inProgress,
             'completedTicketsTotal' => $completed,
         ];
-    }
-
-    /**
-     * @return string[]
-     */
-    private function fetchNonManagerWorkerIds(Connection $connection): array
-    {
-        /** @var list<string> $ids */
-        $ids = $connection->fetchFirstColumn('SELECT id FROM workers WHERE is_manager = 0 ORDER BY login ASC');
-
-        return array_values(array_filter(array_map('strval', $ids)));
     }
 
     /**

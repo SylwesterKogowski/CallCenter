@@ -66,6 +66,16 @@ final class AuthenticationService implements AuthenticationServiceInterface
         $this->workerRepository->update($worker);
     }
 
+    public function getNonManagerWorkerIds(): array
+    {
+        return $this->workerRepository->findNonManagerWorkerIdsOrderedByLogin();
+    }
+
+    public function countNonManagerWorkers(): int
+    {
+        return $this->workerRepository->countNonManagerWorkers();
+    }
+
     private function normalizeLogin(string $login): string
     {
         return trim($login);
