@@ -97,6 +97,7 @@ final class TicketMercurePublisher
         if ([] === $topics) {
             $topics[] = sprintf('tickets/%s', $event->getTicketId());
         }
+        $topics[] = 'manager/monitoring';
 
         return array_values(array_unique($topics));
     }

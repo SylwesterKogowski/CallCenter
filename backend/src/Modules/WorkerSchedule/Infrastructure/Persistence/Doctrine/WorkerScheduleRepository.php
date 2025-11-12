@@ -141,6 +141,21 @@ SQL;
         ]);
     }
 
+    public function findWorkerIdsByTicketId(string $ticketId): array
+    {
+        $connection = $this->entityManager->getConnection();
+
+        /** @var list<string> $workerIds */
+        $workerIds = $connection->fetchFirstColumn(
+            'SELECT DISTINCT ws.worker_id FROM worker_schedule ws WHERE ws.ticket_id = :ticketId',
+            [
+                'ticketId' => $ticketId,
+            ],
+        );
+
+        return array_map(static fn (string $id): string => trim($id), $workerIds);
+    }
+
     public function save(WorkerScheduleInterface $assignment): void
     {
         $entity = $this->assertEntity($assignment);

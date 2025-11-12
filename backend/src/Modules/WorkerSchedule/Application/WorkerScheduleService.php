@@ -385,6 +385,16 @@ final class WorkerScheduleService implements WorkerScheduleServiceInterface
     }
 
     /**
+     * @return list<string>
+     */
+    public function getWorkerIdsAssignedToTicket(string $ticketId): array
+    {
+        $normalizedTicketId = $this->normalizeId($ticketId, 'Ticket id cannot be empty.');
+
+        return $this->repository->findWorkerIdsByTicketId($normalizedTicketId);
+    }
+
+    /**
      * @param WorkerScheduleAssignmentInterface[] $assignments
      *
      * @return array<string, WorkerScheduleAssignmentInterface[]>

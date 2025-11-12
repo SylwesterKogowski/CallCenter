@@ -28,6 +28,7 @@ class Ticket implements TicketInterface
         self::STATUS_AWAITING_RESPONSE,
         self::STATUS_AWAITING_CUSTOMER,
         self::STATUS_IN_PROGRESS,
+        self::STATUS_WAITING,
     ];
 
     #[ORM\Id]

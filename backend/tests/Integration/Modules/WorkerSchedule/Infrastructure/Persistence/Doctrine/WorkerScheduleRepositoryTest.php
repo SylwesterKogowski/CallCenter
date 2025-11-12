@@ -235,6 +235,45 @@ final class WorkerScheduleRepositoryTest extends KernelTestCase
         self::assertArrayHasKey('status', $row);
     }
 
+    public function testFindWorkerIdsByTicketIdReturnsDistinctWorkerIds(): void
+    {
+        $workerOne = $this->createWorker('worker.schedule.distinct1');
+        $workerTwo = $this->createWorker('worker.schedule.distinct2');
+        $ticket = $this->createTicket('customer.distinct@example.com');
+
+        $assignmentOne = new WorkerSchedule(
+            Uuid::v7()->toRfc4122(),
+            $workerOne->getId(),
+            $ticket->getId(),
+            new \DateTimeImmutable('+1 day'),
+        );
+        $assignmentTwo = new WorkerSchedule(
+            Uuid::v7()->toRfc4122(),
+            $workerTwo->getId(),
+            $ticket->getId(),
+            new \DateTimeImmutable('+2 days'),
+        );
+        $assignmentDuplicate = new WorkerSchedule(
+            Uuid::v7()->toRfc4122(),
+            $workerOne->getId(),
+            $ticket->getId(),
+            new \DateTimeImmutable('+3 days'),
+        );
+
+        $this->repository->save($assignmentOne);
+        $this->repository->save($assignmentTwo);
+        $this->repository->save($assignmentDuplicate);
+        $this->entityManager->clear();
+
+        $workerIds = $this->repository->findWorkerIdsByTicketId($ticket->getId());
+        sort($workerIds);
+
+        $expected = [$workerOne->getId(), $workerTwo->getId()];
+        sort($expected);
+
+        self::assertSame($expected, $workerIds);
+    }
+
     public function testRemoveDeletesAssignment(): void
     {
         $worker = $this->createWorker('worker.schedule.remove');

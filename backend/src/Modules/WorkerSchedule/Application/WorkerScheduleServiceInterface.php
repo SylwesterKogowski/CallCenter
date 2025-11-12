@@ -67,4 +67,9 @@ interface WorkerScheduleServiceInterface
      * @return array<int, array<string, mixed>>
      */
     public function fetchAssignmentsForDate(\DateTimeImmutable $date): array;
+
+    /**
+     * @return list<string>
+     */
+    public function getWorkerIdsAssignedToTicket(string $ticketId): array;
 }

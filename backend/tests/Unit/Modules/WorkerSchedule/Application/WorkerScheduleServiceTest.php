@@ -420,6 +420,22 @@ final class WorkerScheduleServiceTest extends TestCase
         self::assertSame($expected, $result);
     }
 
+    public function testGetWorkerIdsAssignedToTicketNormalizesIdAndDelegatesToRepository(): void
+    {
+        $ticketId = 'ticket-worker-list';
+        $expected = ['worker-1', 'worker-2'];
+
+        $this->repository
+            ->expects(self::once())
+            ->method('findWorkerIdsByTicketId')
+            ->with(self::callback(static fn (string $argument): bool => $argument === $ticketId))
+            ->willReturn($expected);
+
+        $result = $this->service->getWorkerIdsAssignedToTicket('  '.$ticketId.'  ');
+
+        self::assertSame($expected, $result);
+    }
+
     private function createTicket(
         string $ticketId,
         TicketCategoryInterface $category,

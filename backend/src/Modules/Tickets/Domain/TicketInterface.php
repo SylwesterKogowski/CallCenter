@@ -14,6 +14,7 @@ interface TicketInterface
     public const STATUS_AWAITING_RESPONSE = 'awaiting_response';
     public const STATUS_AWAITING_CUSTOMER = 'awaiting_customer';
     public const STATUS_IN_PROGRESS = 'in_progress';
+    public const STATUS_WAITING = 'waiting';
 
     public function getId(): string;
 

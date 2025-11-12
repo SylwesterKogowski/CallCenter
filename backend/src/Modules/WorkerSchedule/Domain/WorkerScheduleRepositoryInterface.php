@@ -38,6 +38,11 @@ interface WorkerScheduleRepositoryInterface
      */
     public function fetchAssignmentsForDate(\DateTimeImmutable $date): array;
 
+    /**
+     * @return list<string>
+     */
+    public function findWorkerIdsByTicketId(string $ticketId): array;
+
     public function save(WorkerScheduleInterface $assignment): void;
 
     public function remove(WorkerScheduleInterface $assignment): void;

@@ -1,5 +1,5 @@
 const MERCURE_HUB_URL = import.meta.env.VITE_MERCURE_URL ?? "/.well-known/mercure";
-const MERCURE_SUBSCRIBER_TOKEN = import.meta.env.VITE_MERCURE_SUBSCRIBER_JWT_KEY;
+const MERCURE_SUBSCRIBER_TOKEN = import.meta.env.VITE_MERCURE_JWT_SUBSCRIBER_TOKEN;
 
 export interface MercurePayload<T = unknown> {
   /** Raw event name as received from Mercure hub. */
@@ -59,7 +59,7 @@ const buildHubUrl = (topics: string[]): string | null => {
     });
 
     if (MERCURE_SUBSCRIBER_TOKEN) {
-      url.searchParams.set("token", MERCURE_SUBSCRIBER_TOKEN);
+      url.searchParams.set("authorization", MERCURE_SUBSCRIBER_TOKEN);
     }
 
     return url.toString();
