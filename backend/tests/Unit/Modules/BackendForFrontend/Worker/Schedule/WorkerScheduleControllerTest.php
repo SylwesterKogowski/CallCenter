@@ -11,6 +11,7 @@ use App\Modules\BackendForFrontend\Worker\Schedule\WorkerScheduleController;
 use App\Modules\Clients\Domain\ClientInterface;
 use App\Modules\TicketCategories\Domain\TicketCategoryInterface;
 use App\Modules\Tickets\Domain\TicketInterface;
+use App\Modules\Tickets\Domain\TicketMessageInterface;
 use App\Modules\Tickets\Domain\TicketNoteInterface;
 use App\Modules\WorkerSchedule\Application\Dto\WorkerScheduleAssignmentInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -249,6 +250,7 @@ final class WorkerScheduleControllerTest extends BackendForFrontendTestCase
                     'createdBy' => 'worker-id',
                 ],
             ],
+            'messages' => [],
         ], $data['activeTicket'] ?? null);
     }
 
@@ -703,6 +705,80 @@ final class WorkerScheduleControllerTest extends BackendForFrontendTestCase
             'createdAt' => '2024-06-12T14:30:00+00:00',
             'createdBy' => 'worker-id',
         ], $data['note'] ?? null);
+    }
+
+    public function testAddTicketMessagePersistsMessageAndReturnsPayload(): void
+    {
+        $worker = $this->createAuthenticatedWorkerFixture(false, ['cat-support']);
+        $provider = $this->stubAuthenticatedWorkerProvider($worker);
+
+        $workerEntity = $this->createConfiguredMock(WorkerInterface::class, [
+            'getId' => 'worker-id',
+            'getLogin' => 'john.doe',
+        ]);
+
+        $category = $this->createConfiguredMock(TicketCategoryInterface::class, [
+            'getId' => 'cat-support',
+        ]);
+
+        $ticket = $this->createConfiguredMock(TicketInterface::class, [
+            'getId' => 'ticket-7',
+            'getCategory' => $category,
+        ]);
+
+        $message = $this->createConfiguredMock(TicketMessageInterface::class, [
+            'getId' => 'msg-1',
+            'getTicketId' => 'ticket-7',
+            'getSenderType' => 'worker',
+            'getSenderId' => 'worker-id',
+            'getSenderName' => 'john.doe',
+            'getContent' => 'Przeprowadzono rozmowę z klientem.',
+            'getCreatedAt' => new \DateTimeImmutable('2024-06-12T16:00:00+00:00'),
+            'getStatus' => 'sent',
+        ]);
+
+        $this->authenticationService
+            ->method('getWorkerById')
+            ->with('worker-id')
+            ->willReturn($workerEntity);
+
+        $this->ticketService
+            ->expects(self::once())
+            ->method('getTicketById')
+            ->with('ticket-7')
+            ->willReturn($ticket);
+
+        $this->ticketService
+            ->expects(self::once())
+            ->method('addMessageToTicket')
+            ->with($ticket, 'Przeprowadzono rozmowę z klientem.', 'worker', 'worker-id', 'john.doe')
+            ->willReturn($message);
+
+        $this->createClientWithMocks($provider);
+
+        /** @var WorkerScheduleController $controller */
+        $controller = static::getContainer()->get(WorkerScheduleController::class);
+
+        $request = $this->createJsonRequest(
+            Request::METHOD_POST,
+            '/api/worker/tickets/ticket-7/messages',
+            ['content' => 'Przeprowadzono rozmowę z klientem.'],
+        );
+
+        $response = $controller->addTicketMessage('ticket-7', $request);
+        $data = json_decode((string) $response->getContent(), true);
+
+        self::assertSame(Response::HTTP_CREATED, $response->getStatusCode());
+        self::assertSame([
+            'id' => 'msg-1',
+            'ticketId' => 'ticket-7',
+            'senderType' => 'worker',
+            'senderId' => 'worker-id',
+            'senderName' => 'john.doe',
+            'content' => 'Przeprowadzono rozmowę z klientem.',
+            'createdAt' => '2024-06-12T16:00:00+00:00',
+            'status' => 'sent',
+        ], $data['message'] ?? null);
     }
 
     public function testUpdateTicketStatusReturnsNotFoundWhenTicketIsMissing(): void

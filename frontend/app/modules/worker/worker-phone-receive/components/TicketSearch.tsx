@@ -1,7 +1,11 @@
 import * as React from "react";
 
+import { ApiError } from "~/api/http";
+import { useTicketCategoriesQuery } from "~/api/ticket-categories";
 import type { TicketStatus } from "~/api/types";
 import type { WorkerTicketSearchResult } from "~/api/worker/phone";
+
+import { CategorySelector } from "../../../unauthenticated/ticket-add/components/CategorySelector";
 
 interface TicketSearchProps {
   query: string;
@@ -41,6 +45,48 @@ export const TicketSearch: React.FC<TicketSearchProps> = ({
   onTicketSelect,
   excludeTicketId,
 }) => {
+  const categoriesQuery = useTicketCategoriesQuery({
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const categories = categoriesQuery.data?.categories ?? [];
+
+  const categoryErrorMessage = React.useMemo(() => {
+    const queryError: unknown = categoriesQuery.error;
+
+    if (!queryError) {
+      return null;
+    }
+
+    const extractMessage = (payload: unknown, fallback: string) => {
+      if (typeof payload === "object" && payload !== null) {
+        const record = payload as Record<string, unknown>;
+        if (typeof record.message === "string") {
+          return record.message;
+        }
+        if (typeof record.error === "string") {
+          return record.error;
+        }
+      }
+
+      return fallback;
+    };
+
+    if (queryError instanceof ApiError) {
+      return extractMessage(queryError.payload, queryError.message);
+    }
+
+    if (queryError instanceof Error) {
+      return queryError.message;
+    }
+
+    return "Nie udało się pobrać listy kategorii.";
+  }, [categoriesQuery.error]);
+
+  const handleRetryCategories = React.useCallback(() => {
+    void categoriesQuery.refetch();
+  }, [categoriesQuery]);
+
   return (
     <section className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/50">
       <header className="flex flex-col gap-1">
@@ -66,17 +112,6 @@ export const TicketSearch: React.FC<TicketSearchProps> = ({
         </label>
 
         <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-slate-600 dark:text-slate-300">Kategoria</span>
-          <input
-            type="text"
-            value={categoryId}
-            onChange={(event) => onCategoryChange(event.target.value)}
-            placeholder="ID kategorii (opcjonalnie)"
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-500/20"
-          />
-        </label>
-
-        <label className="flex flex-col gap-1 text-sm">
           <span className="font-medium text-slate-600 dark:text-slate-300">Status</span>
           <select
             value={status}
@@ -91,6 +126,22 @@ export const TicketSearch: React.FC<TicketSearchProps> = ({
             ))}
           </select>
         </label>
+
+        <div className="md:col-span-3">
+          <CategorySelector
+            categories={categories}
+            selectedCategoryId={categoryId || undefined}
+            onChange={onCategoryChange}
+            isDisabled={isLoading}
+            isLoading={categoriesQuery.isPending}
+            isError={categoriesQuery.isError}
+            fetchErrorMessage={categoryErrorMessage ?? undefined}
+            onRetry={categoriesQuery.isError ? handleRetryCategories : undefined}
+            isOptional
+            optionalLabel="Dowolna kategoria"
+            optionalDescription="Możesz zawęzić listę ticketów według kategorii lub wybrać opcję dowolną, aby przeszukiwać wszystkie kategorie."
+          />
+        </div>
       </div>
 
       {errorMessage ? (

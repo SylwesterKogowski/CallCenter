@@ -21,8 +21,8 @@ final class TicketMercurePublisher
 {
     public function __construct(
         private readonly HubInterface $hub,
-        private readonly ?LoggerInterface $logger = null,
         private readonly WorkerScheduleServiceInterface $workerScheduleService,
+        private readonly ?LoggerInterface $logger = null,
     ) {
     }
 
@@ -104,9 +104,7 @@ final class TicketMercurePublisher
             $topics[] = sprintf('worker/schedule/%s', $workerId);
         }
 
-        if ([] === $topics) {
-            $topics[] = sprintf('tickets/%s', $event->getTicketId());
-        }
+        $topics[] = sprintf('tickets/%s', $event->getTicketId());
         $topics[] = 'manager/monitoring';
 
         return array_values(array_unique($topics));

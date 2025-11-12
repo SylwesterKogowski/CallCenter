@@ -185,6 +185,8 @@ export const apiPaths = {
   workerTicketsSearch: "/api/worker/tickets/search",
   workerTickets: "/api/worker/tickets",
   workerTicketNotes: (ticketId: string) => `/api/worker/tickets/${ticketId}/notes`,
+  workerTicketMessages: (ticketId: string) =>
+    `/api/worker/tickets/${ticketId}/messages`,
   workerClientsSearch: "/api/worker/clients/search",
   workerSchedule: "/api/worker/schedule",
   workerTicketStatus: (ticketId: string) =>

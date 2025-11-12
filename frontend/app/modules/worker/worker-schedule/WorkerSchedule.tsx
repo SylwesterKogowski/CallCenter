@@ -6,6 +6,7 @@ import {
   type ScheduleDay,
   type ScheduleTicket,
   useAddScheduleTicketNoteMutation,
+  useAddScheduleTicketMessageMutation,
   useAddTicketTimeMutation,
   useUpdateTicketStatusMutation,
   useWorkerScheduleQuery,
@@ -81,6 +82,7 @@ export const WorkerSchedule: React.FC<WorkerScheduleProps> = ({ workerId }) => {
   const [pendingTicketId, setPendingTicketId] = React.useState<string | null>(null);
   const [addingNoteTicketId, setAddingNoteTicketId] = React.useState<string | null>(null);
   const [addingTimeTicketId, setAddingTimeTicketId] = React.useState<string | null>(null);
+  const [addingMessageTicketId, setAddingMessageTicketId] = React.useState<string | null>(null);
   const [trackingStart, setTrackingStart] = React.useState<number | null>(null);
 
   const scheduleQuery = useWorkerScheduleQuery({
@@ -92,9 +94,21 @@ export const WorkerSchedule: React.FC<WorkerScheduleProps> = ({ workerId }) => {
   const updateTicketStatusMutation = useUpdateTicketStatusMutation();
   const addTicketTimeMutation = useAddTicketTimeMutation();
   const addTicketNoteMutation = useAddScheduleTicketNoteMutation();
+  const addTicketMessageMutation = useAddScheduleTicketMessageMutation();
 
   const schedule = scheduleQuery.data?.schedule ?? [];
-  const activeTicket = scheduleQuery.data?.activeTicket ?? null;
+  const rawActiveTicket = scheduleQuery.data?.activeTicket ?? null;
+  const activeTicket = React.useMemo(() => {
+    if (!rawActiveTicket) {
+      return null;
+    }
+
+    return {
+      ...rawActiveTicket,
+      notes: rawActiveTicket.notes ?? [],
+      messages: rawActiveTicket.messages ?? [],
+    };
+  }, [rawActiveTicket]);
 
   const todayStats = workStatusQuery.data?.todayStats ?? null;
   const workStatus = workStatusQuery.data?.status ?? null;
@@ -258,6 +272,35 @@ export const WorkerSchedule: React.FC<WorkerScheduleProps> = ({ workerId }) => {
     [addTicketNoteMutation, invalidateSchedule],
   );
 
+  const handleMessageSend = React.useCallback(
+    async (ticketId: string, content: string) => {
+      if (content.trim().length === 0) {
+        setErrorMessage("Wiadomość nie może być pusta.");
+        return false;
+      }
+
+      setAddingMessageTicketId(ticketId);
+      setErrorMessage(null);
+      setInfoMessage(null);
+
+      try {
+        await addTicketMessageMutation.mutateAsync({
+          ticketId,
+          content,
+        });
+        await invalidateSchedule();
+        setInfoMessage("Wiadomość została wysłana.");
+        return true;
+      } catch (error) {
+        setErrorMessage(resolveErrorMessage(error));
+        return false;
+      } finally {
+        setAddingMessageTicketId(null);
+      }
+    },
+    [addTicketMessageMutation, invalidateSchedule],
+  );
+
   const handleSseUpdate = React.useCallback(() => {
     setConnectionError(null);
     void invalidateSchedule().catch((error) => {
@@ -299,6 +342,27 @@ export const WorkerSchedule: React.FC<WorkerScheduleProps> = ({ workerId }) => {
         isError={workStatusQuery.isError}
       />
 
+      <section className="grid gap-6 lg:grid-cols-[3fr,2fr]">
+        <ActiveTicketSection
+          ticket={activeTicket}
+          onStopWork={handleStopWork}
+          onNoteAdd={handleNoteAdd}
+          onMessageSend={handleMessageSend}
+          isAddingNote={addingNoteTicketId === activeTicket?.id}
+          isSendingMessage={addingMessageTicketId === activeTicket?.id}
+          isChangingStatus={pendingTicketId === activeTicket?.id}
+          formatMinutes={formatMinutes}
+        />
+
+        <TimeTracker
+          ticket={activeTicket}
+          trackingStart={trackingStart}
+          onTimeAdd={handleTimeAdd}
+          isAddingTime={addingTimeTicketId === activeTicket?.id}
+          formatMinutes={formatMinutes}
+        />
+      </section>
+
       <section className="grid gap-6 lg:grid-cols-[2fr,3fr]">
         <ScheduleCalendar
           schedule={schedule}
@@ -315,25 +379,6 @@ export const WorkerSchedule: React.FC<WorkerScheduleProps> = ({ workerId }) => {
           onTicketPause={(ticketId) => handleTicketStatusChange(ticketId, "waiting")}
           pendingTicketId={pendingTicketId}
           isLoading={scheduleQuery.isLoading}
-        />
-      </section>
-
-      <section className="grid gap-6 lg:grid-cols-[3fr,2fr]">
-        <ActiveTicketSection
-          ticket={activeTicket}
-          onStopWork={handleStopWork}
-          onNoteAdd={handleNoteAdd}
-          isAddingNote={addingNoteTicketId === activeTicket?.id}
-          isChangingStatus={pendingTicketId === activeTicket?.id}
-          formatMinutes={formatMinutes}
-        />
-
-        <TimeTracker
-          ticket={activeTicket}
-          trackingStart={trackingStart}
-          onTimeAdd={handleTimeAdd}
-          isAddingTime={addingTimeTicketId === activeTicket?.id}
-          formatMinutes={formatMinutes}
         />
       </section>
 

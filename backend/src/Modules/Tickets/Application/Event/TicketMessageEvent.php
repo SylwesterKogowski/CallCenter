@@ -11,5 +11,3 @@ final class TicketMessageEvent extends AbstractTicketEvent
         return 'message';
     }
 }
-
-

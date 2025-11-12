@@ -1,12 +1,37 @@
 import * as React from "react";
 
 import type { ScheduleTicket } from "~/api/worker/schedule";
+import type { TicketMessage } from "~/api/tickets";
+import { subscribeToMercure, type MercureSubscription } from "~/api/SSE/mercureClient";
+import type { TicketEvent } from "~/api/SSE/TicketEvent";
+
+const MERCURE_TOPIC_PREFIX = import.meta.env.VITE_MERCURE_TOPIC_PREFIX ?? "tickets";
+
+type MessagesAction =
+  | { type: "reset"; payload: TicketMessage[] }
+  | { type: "upsert"; payload: TicketMessage };
+
+const messagesReducer = (state: TicketMessage[], action: MessagesAction): TicketMessage[] => {
+  switch (action.type) {
+    case "reset":
+      return [...action.payload].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    case "upsert": {
+      const byId = new Map(state.map((message) => [message.id, message] as const));
+      byId.set(action.payload.id, action.payload);
+      return [...byId.values()].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    }
+    default:
+      return state;
+  }
+};
 
 interface ActiveTicketSectionProps {
   ticket: ScheduleTicket | null;
   onStopWork: () => Promise<void> | void;
   onNoteAdd: (ticketId: string, note: string) => Promise<boolean> | boolean;
+  onMessageSend: (ticketId: string, message: string) => Promise<boolean> | boolean;
   isAddingNote: boolean;
+  isSendingMessage: boolean;
   isChangingStatus: boolean;
   formatMinutes: (minutes: number) => string;
 }
@@ -15,17 +40,76 @@ export const ActiveTicketSection: React.FC<ActiveTicketSectionProps> = ({
   ticket,
   onStopWork,
   onNoteAdd,
+  onMessageSend,
   isAddingNote,
+  isSendingMessage,
   isChangingStatus,
   formatMinutes,
 }) => {
   const [noteContent, setNoteContent] = React.useState("");
+  const [messageContent, setMessageContent] = React.useState("");
+  const [messages, dispatchMessages] = React.useReducer(messagesReducer, ticket?.messages ?? [], () =>
+    (ticket?.messages ?? []).sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
+  );
 
   React.useEffect(() => {
     React.startTransition(() => {
       setNoteContent("");
+      setMessageContent("");
     });
   }, [ticket?.id]);
+
+  React.useEffect(() => {
+    dispatchMessages({ type: "reset", payload: ticket?.messages ?? [] });
+  }, [ticket?.id, ticket?.messages]);
+
+  const subscribeToTicketMessages = React.useCallback(
+    (ticketId: string): MercureSubscription | null => {
+      const topic = `${MERCURE_TOPIC_PREFIX}/${ticketId}`;
+
+      let isActive = true;
+
+      const subscription = subscribeToMercure<TicketEvent<TicketMessage>>({
+        topics: [topic],
+        withCredentials: true,
+        onMessage: ({ data }) => {
+          if (!isActive || data.data.ticketId !== ticketId || data.type !== "message") {
+            return;
+          }
+
+          dispatchMessages({ type: "upsert", payload: data.data });
+        },
+        onError: (error) => {
+          console.warn("Mercure connection issue for ticket messages", error);
+        },
+      });
+
+      return {
+        close: () => {
+          isActive = false;
+          subscription.close();
+        },
+        reconnect: () => {
+          subscription.reconnect();
+        },
+      };
+    },
+    [],
+  );
+
+  React.useEffect(() => {
+    const ticketId = ticket?.id;
+
+    if (!ticketId) {
+      return undefined;
+    }
+
+    const subscription = subscribeToTicketMessages(ticketId);
+
+    return () => {
+      subscription?.close();
+    };
+  }, [ticket?.id, subscribeToTicketMessages]);
 
   if (!ticket) {
     return (
@@ -42,6 +126,24 @@ export const ActiveTicketSection: React.FC<ActiveTicketSectionProps> = ({
     if (success) {
       setNoteContent("");
     }
+  };
+
+  const handleMessageSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const success = await onMessageSend(ticket.id, messageContent.trim());
+    if (success) {
+      setMessageContent("");
+    }
+  };
+
+  const notes = ticket.notes ?? [];
+
+  const resolveSenderLabel = (senderType: "client" | "worker", senderName?: string) => {
+    if (senderName && senderName.trim().length > 0) {
+      return senderName;
+    }
+
+    return senderType === "worker" ? "Pracownik" : "Klient";
   };
 
   return (
@@ -117,10 +219,56 @@ export const ActiveTicketSection: React.FC<ActiveTicketSectionProps> = ({
       </div>
 
       <section className="flex flex-col gap-3">
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-200">Notatki</h3>
-        {ticket.notes && ticket.notes.length > 0 ? (
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-200">Wiadomości</h3>
+        {messages.length > 0 ? (
           <ul className="flex max-h-48 flex-col gap-2 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-300">
-            {ticket.notes.map((note) => (
+            {messages.map((message) => (
+              <li key={message.id} className="flex flex-col gap-1">
+                <p>{message.content}</p>
+                <span className="text-[10px] uppercase text-slate-400 dark:text-slate-500">
+                  {new Date(message.createdAt).toLocaleString("pl-PL")} —{" "}
+                  {resolveSenderLabel(message.senderType, message.senderName)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="rounded-lg border border-dashed border-slate-200 p-3 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
+            Brak wiadomości dla tego ticketa.
+          </p>
+        )}
+
+        <form className="flex flex-col gap-2" onSubmit={handleMessageSubmit}>
+          <label
+            htmlFor="worker-schedule-message"
+            className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400"
+          >
+            Wyślij wiadomość
+          </label>
+          <textarea
+            id="worker-schedule-message"
+            className="min-h-[96px] rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+            value={messageContent}
+            onChange={(event) => setMessageContent(event.target.value)}
+            placeholder="Przekaż informacje klientowi..."
+          />
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 disabled:cursor-not-allowed disabled:bg-indigo-300 dark:bg-indigo-500 dark:hover:bg-indigo-400"
+              disabled={isSendingMessage || messageContent.trim().length === 0}
+            >
+              {isSendingMessage ? "Wysyłanie..." : "Wyślij wiadomość"}
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-200">Notatki</h3>
+        {notes.length > 0 ? (
+          <ul className="flex max-h-48 flex-col gap-2 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-300">
+            {notes.map((note) => (
               <li key={note.id} className="flex flex-col gap-1">
                 <p>{note.content}</p>
                 <span className="text-[10px] uppercase text-slate-400 dark:text-slate-500">

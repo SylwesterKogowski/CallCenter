@@ -86,6 +86,13 @@ const createTicketResponse = {
   },
 };
 
+const ticketCategoriesResponse = {
+  categories: [
+    { id: "cat-1", name: "Wsparcie techniczne" },
+    { id: "cat-2", name: "Aktualizacje" },
+  ],
+};
+
 const noteResponse = {
   note: {
     id: "note-123",
@@ -136,6 +143,10 @@ describe("WorkerPhoneReceive", () => {
         return ticketSearchResponse;
       }
 
+      if (options.path === apiPaths.ticketCategories) {
+        return ticketCategoriesResponse;
+      }
+
       if (options.path === apiPaths.workerPhoneEnd && options.method === "POST") {
         return endCallResponse;
       }
@@ -168,6 +179,10 @@ describe("WorkerPhoneReceive", () => {
 
       if (options.path === apiPaths.workerTicketsSearch) {
         return ticketSearchResponse;
+      }
+
+      if (options.path === apiPaths.ticketCategories) {
+        return ticketCategoriesResponse;
       }
 
       if (
@@ -233,6 +248,10 @@ describe("WorkerPhoneReceive", () => {
         return ticketSearchResponse;
       }
 
+      if (options.path === apiPaths.ticketCategories) {
+        return ticketCategoriesResponse;
+      }
+
       if (options.path === apiPaths.workerClientsSearch) {
         return clientSearchResponse;
       }
@@ -274,8 +293,9 @@ describe("WorkerPhoneReceive", () => {
     const titleInput = await screen.findByLabelText(/Tytuł/i);
     await userEvent.type(titleInput, "Nowy problem");
 
-    const categoryInput = await screen.findByLabelText(/Kategoria/i);
-    await userEvent.type(categoryInput, "cat-1");
+    const categorySelect = await screen.findByLabelText(/Kategoria/i);
+    await waitFor(() => expect(categorySelect).not.toBeDisabled());
+    await userEvent.selectOptions(categorySelect, "cat-1");
 
     const clientSearchInput = await screen.findByLabelText(/Szukaj klienta/i);
     await userEvent.type(clientSearchInput, "Nowy Klient");

@@ -14,6 +14,9 @@ export interface CategorySelectorProps {
   isError?: boolean;
   fetchErrorMessage?: string;
   onRetry?: () => void;
+  isOptional?: boolean;
+  optionalLabel?: string;
+  optionalDescription?: string;
 }
 
 export const CategorySelector: React.FC<CategorySelectorProps> = ({
@@ -26,6 +29,9 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
   isError,
   fetchErrorMessage,
   onRetry,
+  isOptional = false,
+  optionalLabel,
+  optionalDescription,
 }) => {
   const selectId = React.useId();
   const errorId = error ? `${selectId}-error` : undefined;
@@ -36,6 +42,16 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
   };
 
   const hasCategories = categories.length > 0;
+  const labelSuffix = isOptional ? " (opcjonalne)" : " (wymagane)";
+  const description = isOptional
+    ? optionalDescription ??
+      "Możesz zawęzić listę, wybierając kategorię, lub pozostaw to pole puste, aby wyszukać we wszystkich kategoriach."
+    : "Wybierz kategorię z listy, aby skierować ticketa do odpowiedniego zespołu.";
+  const placeholderLabel = isOptional
+    ? optionalLabel ?? (hasCategories ? "Dowolna kategoria" : "Brak dostępnych kategorii")
+    : hasCategories
+      ? "Wybierz kategorię"
+      : "Brak dostępnych kategorii";
 
   return (
     <fieldset className="space-y-3">
@@ -44,7 +60,7 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
       </legend>
 
       <p id={hintId} className="text-sm text-slate-600 dark:text-slate-300">
-        Wybierz kategorię z listy, aby skierować ticketa do odpowiedniego zespołu.
+        {description}
       </p>
 
       {isLoading ? (
@@ -74,22 +90,22 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
           htmlFor={selectId}
           className="text-sm font-medium text-slate-700 dark:text-slate-200"
         >
-          Kategoria (wymagane)
+          Kategoria{labelSuffix}
         </label>
         <select
           id={selectId}
           name="categoryId"
           value={selectedCategoryId ?? ""}
           onChange={handleChange}
-          disabled={isDisabled || isLoading || !hasCategories}
+          disabled={isDisabled || isLoading || (!hasCategories && !isOptional)}
           className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-          aria-required="true"
+          aria-required={isOptional ? undefined : true}
           aria-invalid={error ? "true" : undefined}
           aria-describedby={[hintId, errorId].filter(Boolean).join(" ") || undefined}
           data-error-field="category"
         >
-          <option value="" disabled>
-            {hasCategories ? "Wybierz kategorię" : "Brak dostępnych kategorii"}
+          <option value="" disabled={!isOptional}>
+            {placeholderLabel}
           </option>
           {categories.map((category) => (
             <option key={category.id} value={category.id}>

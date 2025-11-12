@@ -27,6 +27,7 @@ import type {
   TicketChatStatus,
   TicketChatTypingState,
 } from "./types";
+import type { TicketEvent } from "~/api/SSE/TicketEvent";
 
 const MERCURE_TOPIC_PREFIX = import.meta.env.VITE_MERCURE_TOPIC_PREFIX ?? "tickets";
 
@@ -99,6 +100,79 @@ const parseJson = <T,>(value: string): T | null => {
     console.warn("Failed to parse SSE payload", error);
     return null;
   }
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+const isTicketEventPayload = (value: unknown): value is TicketEvent<unknown> =>
+  isRecord(value) && typeof value.type === "string" && "data" in value;
+
+const isTicketMessagePayload = (value: unknown): value is TicketMessage => {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.id === "string" &&
+    typeof value.ticketId === "string" &&
+    typeof value.senderType === "string" &&
+    typeof value.content === "string" &&
+    typeof value.createdAt === "string"
+  );
+};
+
+const extractTicketMessage = (value: unknown): TicketMessage | null => {
+  if (isTicketEventPayload(value)) {
+    return extractTicketMessage(value.data);
+  }
+
+  if (isTicketMessagePayload(value)) {
+    return value;
+  }
+
+  return null;
+};
+
+const extractStatusPayload = (value: unknown): TicketStatusChangedEvent | null => {
+  if (isTicketEventPayload(value)) {
+    return extractStatusPayload(value.data);
+  }
+
+  if (!isRecord(value) || typeof value.ticketId !== "string") {
+    return null;
+  }
+
+  if (typeof value.status === "string") {
+    return {
+      ticketId: value.ticketId,
+      status: value.status as TicketChatStatus,
+      updatedAt: typeof value.updatedAt === "string" ? value.updatedAt : undefined,
+    };
+  }
+
+  return null;
+};
+
+const extractTypingPayload = (value: unknown): TypingEventPayload | null => {
+  if (isTicketEventPayload(value)) {
+    return extractTypingPayload(value.data);
+  }
+
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  if (typeof value.ticketId === "string" && typeof value.isTyping === "boolean") {
+    return {
+      ticketId: value.ticketId,
+      isTyping: value.isTyping,
+      workerId: typeof value.workerId === "string" ? value.workerId : undefined,
+      workerName: typeof value.workerName === "string" ? value.workerName : undefined,
+    };
+  }
+
+  return null;
 };
 
 const chatReducer = (state: ChatState, action: ChatAction): ChatState => {
@@ -270,27 +344,21 @@ export const TicketChat: React.FC<TicketChatProps> = ({ ticketId, onTicketStatus
 
   const handleMercureMessage = React.useCallback(
     (payload: MercurePayload<unknown>) => {
-      switch (payload.event) {
-        case "message": {
-          if (payload.data && typeof payload.data === "object") {
-            handleMessageEvent(payload.data as TicketMessage);
-          }
-          break;
-        }
-        case "ticket_status_changed": {
-          if (payload.data && typeof payload.data === "object") {
-            handleStatusEvent(payload.data as TicketStatusChangedEvent);
-          }
-          break;
-        }
-        case "typing": {
-          if (payload.data && typeof payload.data === "object") {
-            handleTypingEvent(payload.data as TypingEventPayload);
-          }
-          break;
-        }
-        default:
-          break;
+      const message = extractTicketMessage(payload.data);
+      if (message) {
+        handleMessageEvent(message);
+        return;
+      }
+
+      const statusEvent = extractStatusPayload(payload.data);
+      if (statusEvent) {
+        handleStatusEvent(statusEvent);
+        return;
+      }
+
+      const typingEvent = extractTypingPayload(payload.data);
+      if (typingEvent) {
+        handleTypingEvent(typingEvent);
       }
     },
     [handleMessageEvent, handleStatusEvent, handleTypingEvent],

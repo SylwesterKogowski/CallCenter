@@ -11,6 +11,7 @@ import type {
   TicketNote,
   TicketStatus,
 } from "../types";
+import type { TicketMessage } from "../tickets";
 
 export interface ScheduleTicket {
   id: string;
@@ -22,6 +23,7 @@ export interface ScheduleTicket {
   scheduledDate: string;
   isActive?: boolean;
   notes?: TicketNote[];
+  messages?: TicketMessage[];
   client?: Client;
 }
 
@@ -174,6 +176,11 @@ export interface AddScheduleTicketNotePayload {
   content: string;
 }
 
+export interface AddScheduleTicketMessagePayload {
+  ticketId: string;
+  content: string;
+}
+
 export const useAddScheduleTicketNoteMutation = (
   options?: ApiMutationOptions<
     { note: TicketNote },
@@ -186,6 +193,29 @@ export const useAddScheduleTicketNoteMutation = (
     mutationFn: ({ ticketId, content }) =>
       apiFetch<{ note: TicketNote }>({
         path: apiPaths.workerTicketNotes(ticketId),
+        method: "POST",
+        body: { content },
+      }),
+    onSuccess: (data, variables, context, mutation) => {
+      invalidateScheduleData(queryClient);
+      options?.onSuccess?.(data, variables, context, mutation);
+    },
+    ...options,
+  });
+};
+
+export const useAddScheduleTicketMessageMutation = (
+  options?: ApiMutationOptions<
+    { message: TicketMessage },
+    AddScheduleTicketMessagePayload
+  >,
+) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ ticketId, content }) =>
+      apiFetch<{ message: TicketMessage }>({
+        path: apiPaths.workerTicketMessages(ticketId),
         method: "POST",
         body: { content },
       }),

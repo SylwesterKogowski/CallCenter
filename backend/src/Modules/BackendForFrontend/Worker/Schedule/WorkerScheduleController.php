@@ -13,6 +13,7 @@ use App\Modules\BackendForFrontend\Shared\Exception\ResourceNotFoundException;
 use App\Modules\BackendForFrontend\Shared\Security\Attribute\RequiresWorker;
 use App\Modules\BackendForFrontend\Shared\Security\AuthenticatedWorker;
 use App\Modules\BackendForFrontend\Shared\Security\AuthenticatedWorkerProvider;
+use App\Modules\BackendForFrontend\Worker\Schedule\Dto\AddTicketMessageRequest;
 use App\Modules\BackendForFrontend\Worker\Schedule\Dto\AddTicketNoteRequest;
 use App\Modules\BackendForFrontend\Worker\Schedule\Dto\AddTicketTimeRequest;
 use App\Modules\BackendForFrontend\Worker\Schedule\Dto\UpdateTicketStatusRequest;
@@ -20,6 +21,7 @@ use App\Modules\Clients\Domain\ClientInterface;
 use App\Modules\TicketCategories\Domain\TicketCategoryInterface;
 use App\Modules\Tickets\Application\TicketServiceInterface;
 use App\Modules\Tickets\Domain\TicketInterface;
+use App\Modules\Tickets\Domain\TicketMessageInterface;
 use App\Modules\Tickets\Domain\TicketNoteInterface;
 use App\Modules\WorkerSchedule\Application\Dto\WorkerScheduleAssignmentInterface;
 use App\Modules\WorkerSchedule\Application\WorkerScheduleServiceInterface;
@@ -243,6 +245,39 @@ final class WorkerScheduleController extends AbstractJsonController
         }, Response::HTTP_CREATED);
     }
 
+    #[Route(
+        path: '/tickets/{ticketId}/messages',
+        name: 'tickets_add_message',
+        methods: [Request::METHOD_POST],
+        requirements: ['ticketId' => '[A-Za-z0-9\-]+'],
+    )]
+    public function addTicketMessage(string $ticketId, Request $request): JsonResponse
+    {
+        return $this->execute(function () use ($ticketId, $request) {
+            $worker = $this->requireWorker();
+            $workerEntity = $this->getWorkerEntity($worker);
+            $ticket = $this->findTicketOrThrow($ticketId);
+
+            $this->assertWorkerHasAccessToTicket($worker, $ticket);
+
+            $payload = $this->getJsonBody($request);
+            $dto = $this->hydrateAddMessageRequest($payload);
+            $this->validateDto($dto);
+
+            $message = $this->ticketService->addMessageToTicket(
+                $ticket,
+                $dto->content,
+                'worker',
+                $workerEntity->getId(),
+                $workerEntity->getLogin(),
+            );
+
+            return [
+                'message' => $this->formatTicketMessage($message),
+            ];
+        }, Response::HTTP_CREATED);
+    }
+
     /**
      * @return array{start: \DateTimeImmutable, end: \DateTimeImmutable}
      */
@@ -336,10 +371,16 @@ final class WorkerScheduleController extends AbstractJsonController
     ): array {
         $ticket = $assignment->getTicket();
         $notes = $this->ticketService->getTicketNotes($ticket);
+        $messages = $this->ticketService->getTicketMessages($ticket);
 
         $basePayload['notes'] = array_map(
             fn (TicketNoteInterface $note): array => $this->formatTicketNote($note),
             $notes,
+        );
+
+        $basePayload['messages'] = array_map(
+            fn (TicketMessageInterface $message): array => $this->formatTicketMessage($message),
+            $messages,
         );
 
         if (!isset($basePayload['client'])) {
@@ -488,6 +529,16 @@ final class WorkerScheduleController extends AbstractJsonController
         );
     }
 
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private function hydrateAddMessageRequest(array $payload): AddTicketMessageRequest
+    {
+        return new AddTicketMessageRequest(
+            content: (string) ($payload['content'] ?? ''),
+        );
+    }
+
     private function requireWorker(): AuthenticatedWorker
     {
         return $this->workerProvider->getAuthenticatedWorker();
@@ -585,6 +636,32 @@ final class WorkerScheduleController extends AbstractJsonController
             'content' => $note->getContent(),
             'createdAt' => $note->getCreatedAt()->format(DATE_ATOM),
             'createdBy' => $note->getWorkerId(),
+        ];
+    }
+
+    /**
+     * @return array{
+     *     id: string,
+     *     ticketId: string,
+     *     senderType: string,
+     *     senderId: ?string,
+     *     senderName: ?string,
+     *     content: string,
+     *     createdAt: string,
+     *     status: ?string
+     * }
+     */
+    private function formatTicketMessage(TicketMessageInterface $message): array
+    {
+        return [
+            'id' => $message->getId(),
+            'ticketId' => $message->getTicketId(),
+            'senderType' => $message->getSenderType(),
+            'senderId' => $message->getSenderId(),
+            'senderName' => $message->getSenderName(),
+            'content' => $message->getContent(),
+            'createdAt' => $message->getCreatedAt()->format(DATE_ATOM),
+            'status' => $message->getStatus(),
         ];
     }
 

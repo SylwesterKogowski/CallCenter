@@ -1,6 +1,10 @@
 import * as React from "react";
 
+import { ApiError } from "~/api/http";
+import { useTicketCategoriesQuery } from "~/api/ticket-categories";
 import type { Client } from "~/api/types";
+
+import { CategorySelector } from "../../../unauthenticated/ticket-add/components/CategorySelector";
 
 export interface NewTicketData {
   title: string;
@@ -42,10 +46,50 @@ export const TicketCreateForm: React.FC<TicketCreateFormProps> = ({
   const [newClientEmail, setNewClientEmail] = React.useState("");
   const [newClientPhone, setNewClientPhone] = React.useState("");
   const [formError, setFormError] = React.useState<string | null>(null);
+  const [categoryError, setCategoryError] = React.useState<string | null>(null);
+
+  const categoriesQuery = useTicketCategoriesQuery({
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const categories = categoriesQuery.data?.categories ?? [];
+
+  const categoryErrorMessage = React.useMemo(() => {
+    const error = categoriesQuery.error;
+
+    if (!error) {
+      return null;
+    }
+
+    const extractMessage = (payload: unknown, fallback: string) => {
+      if (typeof payload === "object" && payload !== null) {
+        const record = payload as Record<string, unknown>;
+        if (typeof record.message === "string") {
+          return record.message;
+        }
+        if (typeof record.error === "string") {
+          return record.error;
+        }
+      }
+
+      return fallback;
+    };
+
+    if (error instanceof ApiError) {
+      return extractMessage(error.payload, error.message);
+    }
+
+    if (error instanceof Error) {
+      return error.message;
+    }
+
+    return "Nie udało się pobrać listy kategorii.";
+  }, [categoriesQuery.error]);
 
   const resetForm = React.useCallback(() => {
     setTitle("");
     setCategoryId("");
+    setCategoryError(null);
     setClientQuery("");
     setSelectedClientId(null);
     setNewClientName("");
@@ -55,13 +99,16 @@ export const TicketCreateForm: React.FC<TicketCreateFormProps> = ({
   }, []);
 
   const validate = React.useCallback(() => {
+    setCategoryError(null);
+
     if (!title.trim()) {
       setFormError("Podaj tytuł ticketa.");
       return false;
     }
 
     if (!categoryId.trim()) {
-      setFormError("Podaj identyfikator kategorii.");
+      setCategoryError("Wybierz kategorię.");
+      setFormError(null);
       return false;
     }
 
@@ -126,6 +173,19 @@ export const TicketCreateForm: React.FC<TicketCreateFormProps> = ({
     };
   }, [clientQuery, onClientSearch]);
 
+  const handleCategoryChange = React.useCallback(
+    (nextCategoryId: string) => {
+      setCategoryId(nextCategoryId);
+      setCategoryError(null);
+      setFormError(null);
+    },
+    [],
+  );
+
+  const handleRetryCategories = React.useCallback(() => {
+    void categoriesQuery.refetch();
+  }, [categoriesQuery]);
+
   return (
     <form
       onSubmit={handleSubmit}
@@ -164,17 +224,17 @@ export const TicketCreateForm: React.FC<TicketCreateFormProps> = ({
         />
       </label>
 
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium text-slate-600 dark:text-slate-300">Kategoria (ID)</span>
-        <input
-          type="text"
-          value={categoryId}
-          onChange={(event) => setCategoryId(event.target.value)}
-          placeholder="np. cat-1"
-          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-blue-400 dark:focus:ring-blue-500/20"
-          required
-        />
-      </label>
+      <CategorySelector
+        categories={categories}
+        selectedCategoryId={categoryId}
+        onChange={handleCategoryChange}
+        error={categoryError ?? undefined}
+        isDisabled={isSubmitting}
+        isLoading={categoriesQuery.isPending}
+        isError={categoriesQuery.isError}
+        fetchErrorMessage={categoryErrorMessage ?? undefined}
+        onRetry={categoriesQuery.isError ? handleRetryCategories : undefined}
+      />
 
       <section className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/40">
         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">

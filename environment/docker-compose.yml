@@ -13,7 +13,7 @@ services:
     volumes:
       - ../backend:/var/www/html
       - ./backend/php-xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
-      - ../frontend/build/client:/var/www/html/public/frontend
+      - ../frontend/build:/var/www/html/public/frontend
       #- ./backend/apache-site.conf:/etc/apache2/sites-enabled/00-default.conf
     ports:
       - "${BACKEND_PORT}:80"
