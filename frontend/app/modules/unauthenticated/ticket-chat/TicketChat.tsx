@@ -6,6 +6,11 @@ import {
   useTicketDetailsQuery,
   type TicketMessage,
 } from "~/api/tickets";
+import {
+  subscribeToMercure,
+  type MercurePayload,
+  type MercureSubscription,
+} from "~/api/SSE/mercureClient";
 
 import { ConnectionStatus } from "./components/ConnectionStatus";
 import { ErrorDisplay } from "./components/ErrorDisplay";
@@ -23,12 +28,21 @@ import type {
   TicketChatTypingState,
 } from "./types";
 
-const MERCURE_HUB_URL = import.meta.env.VITE_MERCURE_HUB_URL ?? "/hub";
 const MERCURE_TOPIC_PREFIX = import.meta.env.VITE_MERCURE_TOPIC_PREFIX ?? "tickets";
-const MERCURE_TOKEN = import.meta.env.VITE_MERCURE_SUBSCRIBER_TOKEN;
 
 const MESSAGE_MAX_LENGTH = 5000;
 const TYPING_TIMEOUT_MS = 5000;
+
+const resolveConnectionErrorMessage = (error: Error) => {
+  switch (error.message) {
+    case "Mercure SSE is not supported in this environment.":
+      return "Twoja przeglądarka nie wspiera połączenia w czasie rzeczywistym.";
+    case "Unable to resolve Mercure hub URL.":
+      return "Nie udało się nawiązać połączenia z serwerem powiadomień.";
+    default:
+      return "Połączenie z serwerem powiadomień zostało przerwane. Spróbuj ponownie za chwilę.";
+  }
+};
 
 interface TicketStatusChangedEvent {
   ticketId: string;
@@ -67,26 +81,6 @@ const initialChatState: ChatState = {
 };
 
 const noop = () => {};
-
-const buildMercureUrl = (ticketId: string) => {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  try {
-    const url = new URL(MERCURE_HUB_URL, window.location.origin);
-    url.searchParams.append("topic", `${MERCURE_TOPIC_PREFIX}/${ticketId}`);
-
-    if (MERCURE_TOKEN) {
-      url.searchParams.set("token", MERCURE_TOKEN);
-    }
-
-    return url.toString();
-  } catch (error) {
-    console.error("Cannot build Mercure URL", error);
-    return null;
-  }
-};
 
 const dedupeAndSortMessages = (
   messages: TicketChatMessage[],
@@ -180,7 +174,7 @@ export const TicketChat: React.FC<TicketChatProps> = ({ ticketId, onTicketStatus
   const { messages, ticket, connectionStatus, errors } = state;
 
   const typingTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-  const eventSourceRef = React.useRef<EventSource | null>(null);
+  const mercureSubscriptionRef = React.useRef<MercureSubscription | null>(null);
   const reconnectRef = React.useRef<() => void>(noop);
 
   const ticketQuery = useTicketDetailsQuery(ticketId, {
@@ -274,9 +268,37 @@ export const TicketChat: React.FC<TicketChatProps> = ({ ticketId, onTicketStatus
     [dispatch, ticketId],
   );
 
-  const disconnectEventSource = React.useCallback(() => {
-    eventSourceRef.current?.close();
-    eventSourceRef.current = null;
+  const handleMercureMessage = React.useCallback(
+    (payload: MercurePayload<unknown>) => {
+      switch (payload.event) {
+        case "message": {
+          if (payload.data && typeof payload.data === "object") {
+            handleMessageEvent(payload.data as TicketMessage);
+          }
+          break;
+        }
+        case "ticket_status_changed": {
+          if (payload.data && typeof payload.data === "object") {
+            handleStatusEvent(payload.data as TicketStatusChangedEvent);
+          }
+          break;
+        }
+        case "typing": {
+          if (payload.data && typeof payload.data === "object") {
+            handleTypingEvent(payload.data as TypingEventPayload);
+          }
+          break;
+        }
+        default:
+          break;
+      }
+    },
+    [handleMessageEvent, handleStatusEvent, handleTypingEvent],
+  );
+
+  const disconnectMercure = React.useCallback(() => {
+    mercureSubscriptionRef.current?.close();
+    mercureSubscriptionRef.current = null;
     dispatch({ type: "set-connection-status", status: "disconnected" });
   }, [dispatch]);
 
@@ -285,77 +307,42 @@ export const TicketChat: React.FC<TicketChatProps> = ({ ticketId, onTicketStatus
       return;
     }
 
-    if (typeof window === "undefined" || typeof window.EventSource === "undefined") {
-      dispatch({
-        type: "merge-errors",
-        errors: { connection: "Twoja przeglądarka nie wspiera połączenia w czasie rzeczywistym." },
-      });
-      dispatch({ type: "set-connection-status", status: "error" });
-      return;
-    }
-
-    const url = buildMercureUrl(ticketId);
-
-    if (!url) {
-      dispatch({
-        type: "merge-errors",
-        errors: { connection: "Nie udało się nawiązać połączenia z serwerem powiadomień." },
-      });
-      dispatch({ type: "set-connection-status", status: "error" });
-      return;
-    }
-
-    disconnectEventSource();
+    disconnectMercure();
     dispatch({ type: "set-connection-status", status: "connecting" });
     dispatch({ type: "clear-error", field: "connection" });
 
-    const EventSourceImpl = window.EventSource;
-    const eventSource = new EventSourceImpl(url, { withCredentials: true });
+    const topic = `${MERCURE_TOPIC_PREFIX}/${ticketId}`;
 
-    eventSource.onopen = () => {
-      dispatch({ type: "set-connection-status", status: "connected" });
-      dispatch({ type: "clear-error", field: "connection" });
-    };
-
-    eventSource.onerror = () => {
-      dispatch({ type: "set-connection-status", status: "error" });
-      dispatch({
-        type: "merge-errors",
-        errors: {
-          connection:
-            "Połączenie z serwerem powiadomień zostało przerwane. Spróbuj ponownie za chwilę.",
-        },
-      });
-    };
-
-    eventSource.addEventListener("message", (event) => {
-      const parsed = parseJson<TicketMessage>((event as MessageEvent<string>).data);
-      if (parsed) {
-        handleMessageEvent(parsed);
-      }
+    const subscription = subscribeToMercure<unknown>({
+      topics: [topic],
+      eventTypes: ["ticket_status_changed", "typing"],
+      withCredentials: true,
+      parse: (raw) => parseJson<unknown>(raw),
+      onMessage: handleMercureMessage,
+      onConnectionChange: (isConnected) => {
+        if (isConnected) {
+          dispatch({ type: "set-connection-status", status: "connected" });
+          dispatch({ type: "clear-error", field: "connection" });
+        } else {
+          dispatch({ type: "set-connection-status", status: "disconnected" });
+        }
+      },
+      onError: (error) => {
+        dispatch({ type: "set-connection-status", status: "error" });
+        dispatch({
+          type: "merge-errors",
+          errors: {
+            connection: resolveConnectionErrorMessage(error),
+          },
+        });
+      },
     });
 
-    eventSource.addEventListener("ticket_status_changed", (event) => {
-      const parsed = parseJson<TicketStatusChangedEvent>((event as MessageEvent<string>).data);
-      if (parsed) {
-        handleStatusEvent(parsed);
-      }
-    });
-
-    eventSource.addEventListener("typing", (event) => {
-      const parsed = parseJson<TypingEventPayload>((event as MessageEvent<string>).data);
-      if (parsed) {
-        handleTypingEvent(parsed);
-      }
-    });
-
-    eventSourceRef.current = eventSource;
+    mercureSubscriptionRef.current = subscription;
   }, [
-    disconnectEventSource,
+    disconnectMercure,
     dispatch,
-    handleMessageEvent,
-    handleStatusEvent,
-    handleTypingEvent,
+    handleMercureMessage,
     ticketId,
   ]);
 
@@ -371,15 +358,15 @@ export const TicketChat: React.FC<TicketChatProps> = ({ ticketId, onTicketStatus
     connectToMercure();
 
     return () => {
-      disconnectEventSource();
+      disconnectMercure();
     };
-  }, [connectToMercure, disconnectEventSource, ticketId]);
+  }, [connectToMercure, disconnectMercure, ticketId]);
 
   React.useEffect(() => {
     return () => {
-      disconnectEventSource();
+      disconnectMercure();
     };
-  }, [disconnectEventSource]);
+  }, [disconnectMercure]);
 
   const handleRetryConnection = () => {
     reconnectRef.current?.();

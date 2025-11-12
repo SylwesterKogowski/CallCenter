@@ -7,9 +7,11 @@ namespace App\Modules\BackendForFrontend\Worker\Tickets\EventListeners;
 use App\Modules\Tickets\Application\Event\TicketAddedEvent;
 use App\Modules\Tickets\Application\Event\TicketChangedEvent;
 use App\Modules\Tickets\Application\Event\TicketEventInterface;
+use App\Modules\Tickets\Application\Event\TicketMessageEvent;
 use App\Modules\Tickets\Application\Event\TicketRemovedEvent;
 use App\Modules\Tickets\Application\Event\TicketStatusChangedEvent;
 use App\Modules\Tickets\Application\Event\TicketUpdatedEvent;
+use App\Modules\WorkerSchedule\Application\WorkerScheduleServiceInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\Mercure\HubInterface;
@@ -20,6 +22,7 @@ final class TicketMercurePublisher
     public function __construct(
         private readonly HubInterface $hub,
         private readonly ?LoggerInterface $logger = null,
+        private readonly WorkerScheduleServiceInterface $workerScheduleService,
     ) {
     }
 
@@ -31,6 +34,12 @@ final class TicketMercurePublisher
 
     #[AsEventListener]
     public function onTicketUpdated(TicketUpdatedEvent $event): void
+    {
+        $this->publish($event);
+    }
+
+    #[AsEventListener]
+    public function onTicketMessage(TicketMessageEvent $event): void
     {
         $this->publish($event);
     }
@@ -90,8 +99,9 @@ final class TicketMercurePublisher
     {
         $topics = $event->getTopics();
 
-        if (null !== $event->getWorkerId()) {
-            $topics[] = sprintf('worker/schedule/%s', $event->getWorkerId());
+        $workerIds = $this->workerScheduleService->getWorkerIdsAssignedToTicket($event->getTicketId());
+        foreach ($workerIds as $workerId) {
+            $topics[] = sprintf('worker/schedule/%s', $workerId);
         }
 
         if ([] === $topics) {

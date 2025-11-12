@@ -59,6 +59,7 @@ class MockEventSource implements EventSource {
   dispatch(type: string, payload: unknown) {
     const event = {
       data: JSON.stringify(payload),
+      type,
     } as MessageEvent<string>;
 
     this.listeners.get(type)?.forEach((listener) => listener(event));
@@ -434,7 +435,7 @@ describe("WorkerSchedule", () => {
     expect(await screen.findByText(/Instalacja oprogramowania/)).toBeInTheDocument();
 
     const [eventSource] = MockEventSource.instances;
-    expect(eventSource.url).toContain("/events/worker/schedule/worker-123");
+    expect(decodeURIComponent(eventSource.url)).toContain("topic=worker/schedule/worker-123");
 
     currentSchedule = JSON.parse(JSON.stringify(currentSchedule));
     currentSchedule.activeTicket = {

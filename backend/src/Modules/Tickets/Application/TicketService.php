@@ -11,6 +11,7 @@ use App\Modules\Tickets\Application\Event\TicketAddedEvent;
 use App\Modules\Tickets\Application\Event\TicketChangedEvent;
 use App\Modules\Tickets\Application\Event\TicketEventInterface;
 use App\Modules\Tickets\Application\Event\TicketStatusChangedEvent;
+use App\Modules\Tickets\Application\Event\TicketMessageEvent;
 use App\Modules\Tickets\Application\Event\TicketUpdatedEvent;
 use App\Modules\Tickets\Domain\Exception\ActiveTicketWorkExistsException;
 use App\Modules\Tickets\Domain\Exception\InvalidTicketTimeEntryException;
@@ -121,11 +122,21 @@ final class TicketService implements TicketServiceInterface
 
         $this->repository->addMessage($message);
 
+        $messageSnapshot = $this->createTicketMessageSnapshot($message);
+        $ticketSnapshot = $this->createTicketSnapshot($ticketEntity);
+        $workerId = 'worker' === $message->getSenderType() ? $message->getSenderId() : null;
+
+        $this->dispatchTicketEvent(new TicketMessageEvent(
+            $ticketEntity->getId(),
+            $messageSnapshot,
+            workerId: $workerId,
+        ));
+
         $this->dispatchTicketEvent(new TicketUpdatedEvent(
             $ticketEntity->getId(),
             [
-                'message' => $this->createTicketMessageSnapshot($message),
-                'ticket' => $this->createTicketSnapshot($ticketEntity),
+                'message' => $messageSnapshot,
+                'ticket' => $ticketSnapshot,
             ],
         ));
 
@@ -588,7 +599,7 @@ final class TicketService implements TicketServiceInterface
      */
     private function createTicketMessageSnapshot(TicketMessageInterface $message): array
     {
-        return [
+        $snapshot = [
             'id' => $message->getId(),
             'ticketId' => $message->getTicketId(),
             'senderType' => $message->getSenderType(),
@@ -596,7 +607,13 @@ final class TicketService implements TicketServiceInterface
             'senderName' => $message->getSenderName(),
             'content' => $message->getContent(),
             'createdAt' => $this->formatDate($message->getCreatedAt()),
+            'status' => $message->getStatus(),
         ];
+
+        return array_filter(
+            $snapshot,
+            static fn (mixed $value): bool => null !== $value,
+        );
     }
 
     /**

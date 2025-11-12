@@ -39,13 +39,12 @@ const isSupportedMonitoringType = (value: string): value is MonitoringEventType 
   SUPPORTED_EVENT_TYPES.includes(value as MonitoringEventType);
 
 const buildManagerTopic = (managerId: string, selectedDate: string): string => {
-  // if (!selectedDate) {
-  //   return `manager/monitoring/${managerId}`;
-  // }
+  if (!selectedDate) {
+    return `manager/monitoring/${managerId}`;
+  }
 
-  // const encodedDate = encodeURIComponent(selectedDate);
-  // return `manager/monitoring/${managerId}?date=${encodedDate}`;
-  return `manager/monitoring`;
+  const encodedDate = encodeURIComponent(selectedDate);
+  return `manager/monitoring/${managerId}?date=${encodedDate}`;
 };
 
 export const ManagerMonitoringSSEConnection: React.FC<

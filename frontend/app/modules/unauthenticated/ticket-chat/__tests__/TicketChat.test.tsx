@@ -60,6 +60,7 @@ class MockEventSource implements EventSource {
   dispatch(type: string, payload: unknown) {
     const event = {
       data: JSON.stringify(payload),
+      type,
     } as MessageEvent<string>;
 
     this.listeners.get(type)?.forEach((listener) => listener(event));

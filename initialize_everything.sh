@@ -16,6 +16,7 @@ cd ../backend
 cd ../environment
 docker compose --profile=all up -d --wait
 
+sleep 5
 cd ../backend
 ./exec.sh composer run migrate
 
