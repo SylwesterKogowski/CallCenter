@@ -31,6 +31,8 @@ export interface ScheduleDay {
   date: string;
   tickets: ScheduleTicket[];
   totalTimeSpent: number;
+  totalTimePlanned: number;
+  totalAvailableTime: number;
 }
 
 export interface WorkerScheduleResponse {

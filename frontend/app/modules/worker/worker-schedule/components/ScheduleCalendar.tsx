@@ -104,9 +104,15 @@ export const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                   {ticketCount} {pluralizeTickets(ticketCount)}
                 </p>
               </div>
-              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                <span>Zaplanowany czas</span>
-                <span>{day.totalTimeSpent} min</span>
+              <div className="flex flex-col gap-1 text-xs text-slate-500 dark:text-slate-400">
+                <div className="flex items-center justify-between">
+                  <span>Zaplanowany czas</span>
+                  <span>{day.totalTimePlanned} min</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Dostępny czas</span>
+                  <span>{day.totalAvailableTime} min</span>
+                </div>
               </div>
             </button>
           );

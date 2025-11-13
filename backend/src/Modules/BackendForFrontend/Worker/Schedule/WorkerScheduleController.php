@@ -76,6 +76,7 @@ final class WorkerScheduleController extends AbstractJsonController
 
             foreach ($grouped as $date => $dayAssignments) {
                 $formattedTickets = [];
+                $dateImmutable = new \DateTimeImmutable($date);
 
                 foreach ($dayAssignments as $assignment) {
                     $ticketPayload = $this->formatScheduleTicket($assignment, $workerEntity);
@@ -90,6 +91,15 @@ final class WorkerScheduleController extends AbstractJsonController
                     }
                 }
 
+                $totalTimePlanned = array_sum(array_map(
+                    static fn (array $ticket): int => $ticket['estimatedTime'],
+                    $formattedTickets,
+                ));
+                $totalAvailableTime = $this->workerAvailabilityService->getAvailableTimeForDate(
+                    $worker->getId(),
+                    $dateImmutable,
+                );
+
                 $schedule[] = [
                     'date' => $date,
                     'tickets' => $formattedTickets,
@@ -97,6 +107,8 @@ final class WorkerScheduleController extends AbstractJsonController
                         static fn (array $ticket): int => $ticket['timeSpent'],
                         $formattedTickets,
                     )),
+                    'totalTimePlanned' => $totalTimePlanned,
+                    'totalAvailableTime' => $totalAvailableTime,
                 ];
             }
 

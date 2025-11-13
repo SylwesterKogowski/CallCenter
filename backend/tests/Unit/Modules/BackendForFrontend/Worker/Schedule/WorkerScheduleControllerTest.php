@@ -155,6 +155,18 @@ final class WorkerScheduleControllerTest extends BackendForFrontendTestCase
             ->expects(self::never())
             ->method('getTicketById');
 
+        $this->workerAvailabilityService
+            ->expects(self::exactly(2))
+            ->method('getAvailableTimeForDate')
+            ->with(
+                'worker-id',
+                self::callback(static function (\DateTimeImmutable $date): bool {
+                    $dateStr = $date->format('Y-m-d');
+                    return $dateStr === '2024-06-10' || $dateStr === '2024-06-11';
+                }),
+            )
+            ->willReturn(480);
+
         $this->createClientWithMocks($provider);
 
         /** @var WorkerScheduleController $controller */
@@ -195,6 +207,8 @@ final class WorkerScheduleControllerTest extends BackendForFrontendTestCase
                 ],
             ],
             'totalTimeSpent' => 30,
+            'totalTimePlanned' => 60,
+            'totalAvailableTime' => 480,
         ], $schedule[0]);
 
         self::assertSame([
@@ -222,6 +236,8 @@ final class WorkerScheduleControllerTest extends BackendForFrontendTestCase
                 ],
             ],
             'totalTimeSpent' => 15,
+            'totalTimePlanned' => 45,
+            'totalAvailableTime' => 480,
         ], $schedule[1]);
 
         self::assertSame([

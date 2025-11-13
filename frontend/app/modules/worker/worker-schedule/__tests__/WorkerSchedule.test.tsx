@@ -83,6 +83,8 @@ const baseScheduleResponse: WorkerScheduleResponse = {
     {
       date: "2025-01-15",
       totalTimeSpent: 90,
+      totalTimePlanned: 150,
+      totalAvailableTime: 480,
       tickets: [
         {
           id: "ticket-1",
@@ -122,6 +124,8 @@ const baseScheduleResponse: WorkerScheduleResponse = {
     {
       date: "2025-01-16",
       totalTimeSpent: 45,
+      totalTimePlanned: 120,
+      totalAvailableTime: 480,
       tickets: [
         {
           id: "ticket-3",
