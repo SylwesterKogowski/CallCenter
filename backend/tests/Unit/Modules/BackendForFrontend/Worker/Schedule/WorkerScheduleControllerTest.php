@@ -10,9 +10,11 @@ use App\Modules\BackendForFrontend\Shared\Security\AuthenticatedWorkerProvider;
 use App\Modules\BackendForFrontend\Worker\Schedule\WorkerScheduleController;
 use App\Modules\Clients\Domain\ClientInterface;
 use App\Modules\TicketCategories\Domain\TicketCategoryInterface;
+use App\Modules\Tickets\Domain\Exception\TicketWorkNotFoundException;
 use App\Modules\Tickets\Domain\TicketInterface;
 use App\Modules\Tickets\Domain\TicketMessageInterface;
 use App\Modules\Tickets\Domain\TicketNoteInterface;
+use App\Modules\Tickets\Domain\TicketRegisteredTimeInterface;
 use App\Modules\WorkerSchedule\Application\Dto\WorkerScheduleAssignmentInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -817,5 +819,230 @@ final class WorkerScheduleControllerTest extends BackendForFrontendTestCase
 
         self::assertSame(Response::HTTP_NOT_FOUND, $response->getStatusCode());
         self::assertSame('Ticket nie został znaleziony', $data['message'] ?? null);
+    }
+
+    public function testCloseTicketDeniesAccessForUnauthorizedWorker(): void
+    {
+        $worker = $this->createAuthenticatedWorkerFixture(false, ['cat-support']);
+        $provider = $this->stubAuthenticatedWorkerProvider($worker);
+
+        $workerEntity = $this->createConfiguredMock(WorkerInterface::class, [
+            'getId' => 'worker-id',
+        ]);
+
+        $category = $this->createConfiguredMock(TicketCategoryInterface::class, [
+            'getId' => 'cat-billing',
+        ]);
+
+        $ticket = $this->createConfiguredMock(TicketInterface::class, [
+            'getId' => 'ticket-8',
+            'getCategory' => $category,
+        ]);
+
+        $this->authenticationService
+            ->method('getWorkerById')
+            ->with('worker-id')
+            ->willReturn($workerEntity);
+
+        $this->ticketService
+            ->expects(self::once())
+            ->method('getTicketById')
+            ->with('ticket-8')
+            ->willReturn($ticket);
+
+        $this->ticketService
+            ->expects(self::never())
+            ->method('stopTicketWork');
+
+        $this->ticketService
+            ->expects(self::never())
+            ->method('closeTicket');
+
+        $this->createClientWithMocks($provider);
+
+        /** @var WorkerScheduleController $controller */
+        $controller = static::getContainer()->get(WorkerScheduleController::class);
+
+        $response = $controller->closeTicket('ticket-8');
+        $data = json_decode((string) $response->getContent(), true);
+
+        self::assertSame(Response::HTTP_FORBIDDEN, $response->getStatusCode());
+        self::assertSame('Brak uprawnień do obsługi ticketa', $data['message'] ?? null);
+        self::assertSame('ticket-8', $data['ticketId'] ?? null);
+        self::assertSame('cat-billing', $data['categoryId'] ?? null);
+    }
+
+    public function testCloseTicketReturnsNotFoundWhenTicketIsMissing(): void
+    {
+        $worker = $this->createAuthenticatedWorkerFixture(false, ['cat-support']);
+        $provider = $this->stubAuthenticatedWorkerProvider($worker);
+
+        $workerEntity = $this->createConfiguredMock(WorkerInterface::class, [
+            'getId' => 'worker-id',
+        ]);
+
+        $this->authenticationService
+            ->method('getWorkerById')
+            ->with('worker-id')
+            ->willReturn($workerEntity);
+
+        $this->ticketService
+            ->expects(self::once())
+            ->method('getTicketById')
+            ->with('ticket-missing-close')
+            ->willReturn(null);
+
+        $this->ticketService
+            ->expects(self::never())
+            ->method('stopTicketWork');
+
+        $this->ticketService
+            ->expects(self::never())
+            ->method('closeTicket');
+
+        $this->createClientWithMocks($provider);
+
+        /** @var WorkerScheduleController $controller */
+        $controller = static::getContainer()->get(WorkerScheduleController::class);
+
+        $response = $controller->closeTicket('ticket-missing-close');
+        $data = json_decode((string) $response->getContent(), true);
+
+        self::assertSame(Response::HTTP_NOT_FOUND, $response->getStatusCode());
+        self::assertSame('Ticket nie został znaleziony', $data['message'] ?? null);
+    }
+
+    public function testCloseTicketStopsActiveWorkAndClosesTicket(): void
+    {
+        $worker = $this->createAuthenticatedWorkerFixture(false, ['cat-support']);
+        $provider = $this->stubAuthenticatedWorkerProvider($worker);
+
+        $workerEntity = $this->createConfiguredMock(WorkerInterface::class, [
+            'getId' => 'worker-id',
+        ]);
+
+        $category = $this->createConfiguredMock(TicketCategoryInterface::class, [
+            'getId' => 'cat-support',
+        ]);
+
+        $ticket = $this->createConfiguredMock(TicketInterface::class, [
+            'getId' => 'ticket-9',
+            'getCategory' => $category,
+        ]);
+
+        $registeredTime = $this->createConfiguredMock(TicketRegisteredTimeInterface::class, [
+            'getId' => 'time-1',
+        ]);
+
+        $closedTicket = $this->createConfiguredMock(TicketInterface::class, [
+            'getId' => 'ticket-9',
+            'getStatus' => 'closed',
+            'getClosedAt' => new \DateTimeImmutable('2024-06-12T17:00:00+00:00'),
+            'getUpdatedAt' => new \DateTimeImmutable('2024-06-12T17:00:00+00:00'),
+        ]);
+
+        $this->authenticationService
+            ->method('getWorkerById')
+            ->with('worker-id')
+            ->willReturn($workerEntity);
+
+        $this->ticketService
+            ->expects(self::once())
+            ->method('getTicketById')
+            ->with('ticket-9')
+            ->willReturn($ticket);
+
+        $this->ticketService
+            ->expects(self::once())
+            ->method('stopTicketWork')
+            ->with($ticket, $workerEntity)
+            ->willReturn($registeredTime);
+
+        $this->ticketService
+            ->expects(self::once())
+            ->method('closeTicket')
+            ->with($ticket, $workerEntity)
+            ->willReturn($closedTicket);
+
+        $this->createClientWithMocks($provider);
+
+        /** @var WorkerScheduleController $controller */
+        $controller = static::getContainer()->get(WorkerScheduleController::class);
+
+        $response = $controller->closeTicket('ticket-9');
+        $data = json_decode((string) $response->getContent(), true);
+
+        self::assertSame(Response::HTTP_OK, $response->getStatusCode());
+        self::assertSame([
+            'id' => 'ticket-9',
+            'status' => 'closed',
+            'closedAt' => '2024-06-12T17:00:00+00:00',
+            'updatedAt' => '2024-06-12T17:00:00+00:00',
+        ], $data['ticket'] ?? null);
+    }
+
+    public function testCloseTicketClosesTicketWhenNoActiveWork(): void
+    {
+        $worker = $this->createAuthenticatedWorkerFixture(false, ['cat-support']);
+        $provider = $this->stubAuthenticatedWorkerProvider($worker);
+
+        $workerEntity = $this->createConfiguredMock(WorkerInterface::class, [
+            'getId' => 'worker-id',
+        ]);
+
+        $category = $this->createConfiguredMock(TicketCategoryInterface::class, [
+            'getId' => 'cat-support',
+        ]);
+
+        $ticket = $this->createConfiguredMock(TicketInterface::class, [
+            'getId' => 'ticket-10',
+            'getCategory' => $category,
+        ]);
+
+        $closedTicket = $this->createConfiguredMock(TicketInterface::class, [
+            'getId' => 'ticket-10',
+            'getStatus' => 'closed',
+            'getClosedAt' => new \DateTimeImmutable('2024-06-12T18:00:00+00:00'),
+            'getUpdatedAt' => new \DateTimeImmutable('2024-06-12T18:00:00+00:00'),
+        ]);
+
+        $this->authenticationService
+            ->method('getWorkerById')
+            ->with('worker-id')
+            ->willReturn($workerEntity);
+
+        $this->ticketService
+            ->expects(self::once())
+            ->method('getTicketById')
+            ->with('ticket-10')
+            ->willReturn($ticket);
+
+        $this->ticketService
+            ->expects(self::once())
+            ->method('stopTicketWork')
+            ->with($ticket, $workerEntity)
+            ->willThrowException(TicketWorkNotFoundException::forWorker('ticket-10', 'worker-id'));
+
+        $this->ticketService
+            ->expects(self::once())
+            ->method('closeTicket')
+            ->with($ticket, $workerEntity)
+            ->willReturn($closedTicket);
+
+        $this->createClientWithMocks($provider);
+
+        /** @var WorkerScheduleController $controller */
+        $controller = static::getContainer()->get(WorkerScheduleController::class);
+
+        $response = $controller->closeTicket('ticket-10');
+        $data = json_decode((string) $response->getContent(), true);
+
+        self::assertSame(Response::HTTP_OK, $response->getStatusCode());
+        self::assertSame([
+            'id' => 'ticket-10',
+            'status' => 'closed',
+            'closedAt' => '2024-06-12T18:00:00+00:00',
+            'updatedAt' => '2024-06-12T18:00:00+00:00',
+        ], $data['ticket'] ?? null);
     }
 }

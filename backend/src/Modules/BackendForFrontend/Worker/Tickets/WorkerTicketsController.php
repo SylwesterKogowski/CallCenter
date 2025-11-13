@@ -31,6 +31,9 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
+/**
+ * Testy w {@see Tests\Unit\Modules\BackendForFrontend\Worker\Tickets\WorkerTicketsControllerTest}
+ */
 #[RequiresWorker]
 #[Route(path: '/api/worker/tickets', name: 'backend_for_frontend_worker_tickets_')]
 final class WorkerTicketsController extends AbstractJsonController

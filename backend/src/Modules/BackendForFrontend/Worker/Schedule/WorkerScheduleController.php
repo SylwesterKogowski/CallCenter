@@ -20,6 +20,7 @@ use App\Modules\BackendForFrontend\Worker\Schedule\Dto\UpdateTicketStatusRequest
 use App\Modules\Clients\Domain\ClientInterface;
 use App\Modules\TicketCategories\Domain\TicketCategoryInterface;
 use App\Modules\Tickets\Application\TicketServiceInterface;
+use App\Modules\Tickets\Domain\Exception\TicketWorkNotFoundException;
 use App\Modules\Tickets\Domain\TicketInterface;
 use App\Modules\Tickets\Domain\TicketMessageInterface;
 use App\Modules\Tickets\Domain\TicketNoteInterface;
@@ -32,6 +33,9 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
+/**
+ * Testy w {@see \Tests\Unit\Modules\BackendForFrontend\Worker\Schedule\WorkerScheduleControllerTest}.
+ */
 #[RequiresWorker]
 #[Route(path: '/api/worker', name: 'backend_for_frontend_worker_schedule_')]
 final class WorkerScheduleController extends AbstractJsonController
@@ -276,6 +280,42 @@ final class WorkerScheduleController extends AbstractJsonController
                 'message' => $this->formatTicketMessage($message),
             ];
         }, Response::HTTP_CREATED);
+    }
+
+    #[Route(
+        path: '/tickets/{ticketId}/close',
+        name: 'tickets_close',
+        methods: [Request::METHOD_POST],
+        requirements: ['ticketId' => '[A-Za-z0-9\-]+'],
+    )]
+    public function closeTicket(string $ticketId): JsonResponse
+    {
+        return $this->execute(function () use ($ticketId) {
+            $worker = $this->requireWorker();
+            $workerEntity = $this->getWorkerEntity($worker);
+            $ticket = $this->findTicketOrThrow($ticketId);
+
+            $this->assertWorkerHasAccessToTicket($worker, $ticket);
+
+            try {
+                $this->ticketService->stopTicketWork($ticket, $workerEntity);
+            } catch (TicketWorkNotFoundException) {
+                // No active work to stop, continue with closing
+            }
+
+            $closedTicket = $this->ticketService->closeTicket($ticket, $workerEntity);
+            $closedAt = $closedTicket->getClosedAt() ?? new \DateTimeImmutable();
+            $updatedAt = $closedTicket->getUpdatedAt() ?? new \DateTimeImmutable();
+
+            return [
+                'ticket' => [
+                    'id' => $closedTicket->getId(),
+                    'status' => $closedTicket->getStatus(),
+                    'closedAt' => $closedAt->format(DATE_ATOM),
+                    'updatedAt' => $updatedAt->format(DATE_ATOM),
+                ],
+            ];
+        });
     }
 
     /**
