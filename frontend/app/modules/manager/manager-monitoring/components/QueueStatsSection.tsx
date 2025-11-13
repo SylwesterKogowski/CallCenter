@@ -88,7 +88,7 @@ export const QueueStatsSection: React.FC<QueueStatsSectionProps> = ({
           Brak statystyk kolejek do wyświetlenia.
         </p>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="">
           {filteredQueues.map((queue) => (
             <QueueStatsCard
               key={queue.queueId}

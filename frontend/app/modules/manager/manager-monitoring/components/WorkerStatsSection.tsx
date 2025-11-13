@@ -129,7 +129,7 @@ export const WorkerStatsSection: React.FC<WorkerStatsSectionProps> = ({
           Brak danych spełniających wybrane kryteria.
         </p>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="">
           {filteredWorkers.map((worker) => (
             <WorkerStatsCard
               key={worker.workerId}
