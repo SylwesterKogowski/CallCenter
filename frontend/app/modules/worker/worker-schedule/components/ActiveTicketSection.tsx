@@ -28,22 +28,26 @@ const messagesReducer = (state: TicketMessage[], action: MessagesAction): Ticket
 interface ActiveTicketSectionProps {
   ticket: ScheduleTicket | null;
   onStopWork: () => Promise<void> | void;
+  onTicketClose?: () => Promise<void> | void;
   onNoteAdd: (ticketId: string, note: string) => Promise<boolean> | boolean;
   onMessageSend: (ticketId: string, message: string) => Promise<boolean> | boolean;
   isAddingNote: boolean;
   isSendingMessage: boolean;
   isChangingStatus: boolean;
+  isClosing?: boolean;
   formatMinutes: (minutes: number) => string;
 }
 
 export const ActiveTicketSection: React.FC<ActiveTicketSectionProps> = ({
   ticket,
   onStopWork,
+  onTicketClose,
   onNoteAdd,
   onMessageSend,
   isAddingNote,
   isSendingMessage,
   isChangingStatus,
+  isClosing = false,
   formatMinutes,
 }) => {
   const [noteContent, setNoteContent] = React.useState("");
@@ -212,10 +216,22 @@ export const ActiveTicketSection: React.FC<ActiveTicketSectionProps> = ({
             void onStopWork();
           }}
           className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-          disabled={isChangingStatus}
+          disabled={isChangingStatus || isClosing}
         >
           Zakończ pracę
         </button>
+        {onTicketClose ? (
+          <button
+            type="button"
+            onClick={() => {
+              void onTicketClose();
+            }}
+            className="rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-500/40 dark:bg-red-900/40 dark:text-red-200 dark:hover:bg-red-900/60"
+            disabled={isChangingStatus || isClosing}
+          >
+            {isClosing ? "Zamykanie..." : "Zamknij ticket"}
+          </button>
+        ) : null}
       </div>
 
       <section className="flex flex-col gap-3">

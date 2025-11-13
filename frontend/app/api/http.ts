@@ -193,6 +193,8 @@ export const apiPaths = {
     `/api/worker/tickets/${ticketId}/status`,
   workerTicketTime: (ticketId: string) =>
     `/api/worker/tickets/${ticketId}/time`,
+  workerTicketClose: (ticketId: string) =>
+    `/api/worker/tickets/${ticketId}/close`,
   workerWorkStatus: "/api/worker/work-status",
   tickets: "/api/tickets",
   ticketDetails: (ticketId: string) => `/api/tickets/${ticketId}`,

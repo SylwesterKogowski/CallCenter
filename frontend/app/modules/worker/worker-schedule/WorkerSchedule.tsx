@@ -9,6 +9,7 @@ import {
   useAddScheduleTicketMessageMutation,
   useAddTicketTimeMutation,
   useUpdateTicketStatusMutation,
+  useCloseTicketMutation,
   useWorkerScheduleQuery,
   useWorkerWorkStatusQuery,
   workerScheduleKey,
@@ -83,6 +84,7 @@ export const WorkerSchedule: React.FC<WorkerScheduleProps> = ({ workerId }) => {
   const [addingNoteTicketId, setAddingNoteTicketId] = React.useState<string | null>(null);
   const [addingTimeTicketId, setAddingTimeTicketId] = React.useState<string | null>(null);
   const [addingMessageTicketId, setAddingMessageTicketId] = React.useState<string | null>(null);
+  const [closingTicketId, setClosingTicketId] = React.useState<string | null>(null);
   const [trackingStart, setTrackingStart] = React.useState<number | null>(null);
 
   const scheduleQuery = useWorkerScheduleQuery({
@@ -95,6 +97,7 @@ export const WorkerSchedule: React.FC<WorkerScheduleProps> = ({ workerId }) => {
   const addTicketTimeMutation = useAddTicketTimeMutation();
   const addTicketNoteMutation = useAddScheduleTicketNoteMutation();
   const addTicketMessageMutation = useAddScheduleTicketMessageMutation();
+  const closeTicketMutation = useCloseTicketMutation();
 
   const schedule = scheduleQuery.data?.schedule ?? [];
   const rawActiveTicket = scheduleQuery.data?.activeTicket ?? null;
@@ -301,6 +304,25 @@ export const WorkerSchedule: React.FC<WorkerScheduleProps> = ({ workerId }) => {
     [addTicketMessageMutation, invalidateSchedule],
   );
 
+  const handleTicketClose = React.useCallback(
+    async (ticketId: string) => {
+      setClosingTicketId(ticketId);
+      setErrorMessage(null);
+      setInfoMessage(null);
+
+      try {
+        await closeTicketMutation.mutateAsync({ ticketId });
+        await invalidateSchedule();
+        setInfoMessage("Ticket został zamknięty.");
+      } catch (error) {
+        setErrorMessage(resolveErrorMessage(error));
+      } finally {
+        setClosingTicketId(null);
+      }
+    },
+    [closeTicketMutation, invalidateSchedule],
+  );
+
   const handleSseUpdate = React.useCallback(() => {
     setConnectionError(null);
     void invalidateSchedule().catch((error) => {
@@ -346,11 +368,13 @@ export const WorkerSchedule: React.FC<WorkerScheduleProps> = ({ workerId }) => {
         <ActiveTicketSection
           ticket={activeTicket}
           onStopWork={handleStopWork}
+          onTicketClose={activeTicket ? () => handleTicketClose(activeTicket.id) : undefined}
           onNoteAdd={handleNoteAdd}
           onMessageSend={handleMessageSend}
           isAddingNote={addingNoteTicketId === activeTicket?.id}
           isSendingMessage={addingMessageTicketId === activeTicket?.id}
           isChangingStatus={pendingTicketId === activeTicket?.id}
+          isClosing={closingTicketId === activeTicket?.id}
           formatMinutes={formatMinutes}
         />
 
@@ -377,7 +401,9 @@ export const WorkerSchedule: React.FC<WorkerScheduleProps> = ({ workerId }) => {
           activeTicketId={activeTicket?.id ?? null}
           onTicketSelect={handleTicketSelect}
           onTicketPause={(ticketId) => handleTicketStatusChange(ticketId, "waiting")}
+          onTicketClose={handleTicketClose}
           pendingTicketId={pendingTicketId}
+          closingTicketId={closingTicketId}
           isLoading={scheduleQuery.isLoading}
         />
       </section>

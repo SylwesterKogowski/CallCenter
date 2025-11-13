@@ -227,4 +227,32 @@ export const useAddScheduleTicketMessageMutation = (
   });
 };
 
+export interface CloseTicketResponse {
+  ticket: {
+    id: string;
+    status: TicketStatus;
+    closedAt: string;
+    updatedAt: string;
+  };
+}
+
+export const useCloseTicketMutation = (
+  options?: ApiMutationOptions<CloseTicketResponse, { ticketId: string }>,
+) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ ticketId }) =>
+      apiFetch<CloseTicketResponse>({
+        path: apiPaths.workerTicketClose(ticketId),
+        method: "POST",
+      }),
+    onSuccess: (data, variables, context, mutation) => {
+      invalidateScheduleData(queryClient);
+      options?.onSuccess?.(data, variables, context, mutation);
+    },
+    ...options,
+  });
+};
+
 

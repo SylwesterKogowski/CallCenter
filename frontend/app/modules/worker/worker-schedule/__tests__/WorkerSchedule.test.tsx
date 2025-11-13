@@ -474,6 +474,66 @@ describe("WorkerSchedule", () => {
       ).toHaveTextContent("40 min"),
     );
   });
+
+  it("allows closing a ticket", async () => {
+    let currentSchedule: WorkerScheduleResponse = JSON.parse(
+      JSON.stringify(baseScheduleResponse),
+    );
+
+    const fetchSpy = vi.spyOn(http, "apiFetch").mockImplementation(async (options) => {
+      if (options.path === apiPaths.workerSchedule && (options.method ?? "GET") === "GET") {
+        return currentSchedule;
+      }
+
+      if (options.path === apiPaths.workerWorkStatus) {
+        return baseWorkStatusResponse;
+      }
+
+      if (options.path === apiPaths.workerTicketClose("ticket-1") && options.method === "POST") {
+        currentSchedule = JSON.parse(JSON.stringify(currentSchedule));
+        currentSchedule.schedule = currentSchedule.schedule.map((day) => ({
+          ...day,
+          tickets: day.tickets.map((ticket) =>
+            ticket.id === "ticket-1"
+              ? { ...ticket, status: "closed" as typeof ticket.status }
+              : ticket,
+          ),
+        }));
+        currentSchedule.activeTicket = null;
+        return {
+          ticket: {
+            id: "ticket-1",
+            status: "closed",
+            closedAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+        };
+      }
+
+      throw new Error(`Unhandled API call ${options.path} (${options.method ?? "GET"})`);
+    });
+
+    const queryClient = createQueryClient();
+    renderSchedule(queryClient);
+
+    expect(await screen.findByText(/Instalacja oprogramowania/)).toBeInTheDocument();
+
+    const closeButton = await screen.findByRole("button", { name: /Zamknij ticket/i });
+    await userEvent.click(closeButton);
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(/Ticket został zamknięty./i),
+      ).toBeInTheDocument(),
+    );
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: apiPaths.workerTicketClose("ticket-1"),
+        method: "POST",
+      }),
+    );
+  });
 });
 
 

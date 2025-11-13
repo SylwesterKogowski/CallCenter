@@ -22,7 +22,9 @@ interface TicketListProps {
   activeTicketId: string | null;
   onTicketSelect: (ticket: ScheduleTicket) => void;
   onTicketPause: (ticketId: string) => void;
+  onTicketClose: (ticketId: string) => void;
   pendingTicketId: string | null;
+  closingTicketId: string | null;
   isLoading?: boolean;
 }
 
@@ -31,7 +33,9 @@ export const TicketList: React.FC<TicketListProps> = ({
   activeTicketId,
   onTicketSelect,
   onTicketPause,
+  onTicketClose,
   pendingTicketId,
+  closingTicketId,
   isLoading = false,
 }) => {
   const hasTickets = tickets.length > 0;
@@ -57,6 +61,8 @@ export const TicketList: React.FC<TicketListProps> = ({
         {tickets.map((ticket) => {
           const isActive = ticket.id === activeTicketId;
           const isPending = ticket.id === pendingTicketId;
+          const isClosing = ticket.id === closingTicketId;
+          const isClosed = ticket.status === "closed";
 
           return (
             <article
@@ -65,17 +71,33 @@ export const TicketList: React.FC<TicketListProps> = ({
                 "rounded-lg border p-4 transition dark:bg-slate-900/40",
                 isActive
                   ? "border-emerald-500 bg-emerald-50/80 dark:border-emerald-500/40 dark:bg-emerald-900/40"
-                  : "border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-800",
+                  : isClosed
+                    ? "border-slate-300 bg-slate-100/60 opacity-75 dark:border-slate-700 dark:bg-slate-800/60"
+                    : "border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-800",
               ].join(" ")}
               data-testid={`worker-schedule-ticket-${ticket.id}`}
             >
               <div className="flex flex-col gap-2">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                    <h3
+                      className={[
+                        "text-base font-semibold",
+                        isClosed
+                          ? "text-slate-500 dark:text-slate-400"
+                          : "text-slate-900 dark:text-slate-100",
+                      ].join(" ")}
+                    >
                       {ticket.title}
                     </h3>
-                    <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    <p
+                      className={[
+                        "text-xs uppercase tracking-wide",
+                        isClosed
+                          ? "text-slate-400 dark:text-slate-500"
+                          : "text-slate-500 dark:text-slate-400",
+                      ].join(" ")}
+                    >
                       {ticket.category.name}
                     </p>
                   </div>
@@ -86,20 +108,45 @@ export const TicketList: React.FC<TicketListProps> = ({
                         ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200"
                         : ticket.status === "waiting"
                           ? "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
-                          : "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200",
+                          : ticket.status === "closed"
+                            ? "bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-400"
+                            : "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200",
                     ].join(" ")}
                   >
                     {ticket.status}
                   </span>
                 </div>
 
-                <dl className="grid grid-cols-2 gap-2 text-xs text-slate-500 dark:text-slate-400">
+                <dl
+                  className={[
+                    "grid grid-cols-2 gap-2 text-xs",
+                    isClosed
+                      ? "text-slate-400 dark:text-slate-500"
+                      : "text-slate-500 dark:text-slate-400",
+                  ].join(" ")}
+                >
                   <div>
-                    <dt className="font-medium text-slate-600 dark:text-slate-300">Czas spędzony</dt>
+                    <dt
+                      className={[
+                        "font-medium",
+                        isClosed
+                          ? "text-slate-400 dark:text-slate-500"
+                          : "text-slate-600 dark:text-slate-300",
+                      ].join(" ")}
+                    >
+                      Czas spędzony
+                    </dt>
                     <dd>{formatMinutes(ticket.timeSpent)}</dd>
                   </div>
                   <div>
-                    <dt className="font-medium text-slate-600 dark:text-slate-300">
+                    <dt
+                      className={[
+                        "font-medium",
+                        isClosed
+                          ? "text-slate-400 dark:text-slate-500"
+                          : "text-slate-600 dark:text-slate-300",
+                      ].join(" ")}
+                    >
                       Czas zaplanowany
                     </dt>
                     <dd>{formatMinutes(ticket.estimatedTime)}</dd>
@@ -111,7 +158,7 @@ export const TicketList: React.FC<TicketListProps> = ({
                     type="button"
                     className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 disabled:cursor-not-allowed disabled:bg-indigo-300 dark:bg-indigo-500 dark:hover:bg-indigo-400"
                     onClick={() => onTicketSelect(ticket)}
-                    disabled={isPending}
+                    disabled={isPending || isClosing}
                   >
                     {isActive ? "Kontynuuj" : "Rozpocznij"}
                   </button>
@@ -120,9 +167,18 @@ export const TicketList: React.FC<TicketListProps> = ({
                     type="button"
                     className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                     onClick={() => onTicketPause(ticket.id)}
-                    disabled={isPending || ticket.status !== "in_progress"}
+                    disabled={isPending || isClosing || ticket.status !== "in_progress"}
                   >
                     Wstrzymaj
+                  </button>
+
+                  <button
+                    type="button"
+                    className="rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-500/40 dark:bg-red-900/40 dark:text-red-200 dark:hover:bg-red-900/60"
+                    onClick={() => onTicketClose(ticket.id)}
+                    disabled={isPending || isClosing || ticket.status === "closed"}
+                  >
+                    {isClosing ? "Zamykanie..." : "Zamknij"}
                   </button>
                 </div>
               </div>
