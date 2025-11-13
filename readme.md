@@ -19,6 +19,70 @@ Zakładamy, że:
 4. Pracownicy priorytetyzują odpowiadanie na bieżące telefony ponad to co mają na grafiku zaplanowane.
 Tzn. jeśli pracownik nad czymś pracuje i zadzwoni telefon i nie ma innego wolnego pracownika który by mógł odebrać telefon, to czasem przerwie bieżącą pracę i odbierze telefon.
 
+## Diagram procesu układania grafika
+
+```plantuml
+@startuml
+title Proces układania grafika Call Center
+
+|#LightBlue|Pracownik|
+start
+:Układa swoją dostępność\ntydzień wcześniej;
+note right: Pracownik deklaruje\nw których dniach i godzinach\njest dostępny
+
+|#LightGreen|Planowanie|
+:Może ułożyć własny planning\nna stronie planowania\ndzień wcześniej lub kilka dni wcześniej;
+note right: Pracownik przypisuje tickety\nz backlogu do poszczególnych dni\nna podstawie dostępności
+
+|#LightYellow|Dzień pracy|
+:Rozpoczyna dzień pracy;
+:Wyświetla zaplanowane tickety\nna dany dzień;
+
+|#LightCoral|Obsługa zadań|
+repeat
+  :Pracuje nad zaplanowanym ticketem;
+  :Rejestruje czas spędzony na zadaniu;
+  
+  |#LightPink|Nowe telefony|
+  if (Przychodzi nowy telefon?) then (tak)
+    :Odbiera telefon;
+    :Tworzy/wybiera ticket;
+    :Dodaje ticket do grafika\nbieżącego dnia;
+    :Rejestruje czas rozmowy;
+    note right: Nowy ticket ma priorytet\nnad zaplanowanymi zadaniami
+  else (nie)
+  endif
+  
+  :Aktualizuje status ticketa\n(w toku / oczekujący);
+  
+  if (Zadanie zakończone?) then (nie)
+    :Może kontynuować pracę\nw kolejnych dniach;
+    note right: Niezakończone zadania\nmogą być przeniesione\nna następny dzień
+  else (tak)
+    :Zamyka ticket;
+  endif
+  
+  |#LightBlue|System|
+  :System liczy obciążenie pracownika;
+  note right: Obciążenie = proporcja czasu\nszacowanego zaplanowanych zadań\ndo długości dnia
+  
+  :System liczy efektywność pracownika;
+  note right: Efektywność = proporcja typowego\nczasu trwania zadania z kategorii\nwzględem faktycznego czasu\nspędzonego na zamkniętych zadaniach
+  
+repeat while (Dzień pracy trwa?) is (tak)
+->nie;
+
+|#LightGreen|Manager|
+:Manager monitoruje obciążenie pracowników;
+note right: Manager widzi:\n- obciążenie pracowników\n- efektywność pracowników\n- czas spędzony na zadaniach\n- czas zaplanowany
+
+|#LightBlue|Pracownik|
+:Widzi swój czas spędzony\nna telefonach i obsłudze zadań;
+note right: Pracownik widzi:\n- czas spędzony na zadaniach\n- czas zaplanowany\n- status swoich ticketów
+
+stop
+@enduml
+```
 
 # Moduły aplikacji na backendzie
 Backend w Symfony, PHP. DB w MySQL. Server-sent events poprzez Mercure, Mercure Hub.
