@@ -12,8 +12,12 @@ use App\Modules\BackendForFrontend\Manager\Persistence\ManagerAutoAssignmentSett
 use App\Modules\TicketCategories\Application\TicketCategoryServiceInterface;
 use App\Modules\Tickets\Application\TicketServiceInterface;
 use App\Modules\Tickets\Domain\TicketInterface;
+use App\Modules\WorkerAvailability\Application\WorkerAvailabilityServiceInterface;
 use App\Modules\WorkerSchedule\Application\WorkerScheduleServiceInterface;
 
+/**
+ * Testy w {@see \Tests\Unit\Modules\BackendForFrontend\Manager\Service\ManagerMonitoringServiceTest}.
+ */
 final class ManagerMonitoringService implements ManagerMonitoringServiceInterface
 {
     /**
@@ -33,6 +37,7 @@ final class ManagerMonitoringService implements ManagerMonitoringServiceInterfac
         private readonly TicketServiceInterface $ticketService,
         private readonly ManagerAutoAssignmentSettingsRepositoryInterface $settingsRepository,
         private readonly WorkerScheduleServiceInterface $workerScheduleService,
+        private readonly WorkerAvailabilityServiceInterface $workerAvailabilityService,
         ?callable $nowFactory = null,
     ) {
         $this->nowFactory = $nowFactory ?? static fn (): \DateTimeImmutable => new \DateTimeImmutable();
@@ -47,7 +52,7 @@ final class ManagerMonitoringService implements ManagerMonitoringServiceInterfac
         $workerIds = array_values(array_unique(array_column($assignments, 'worker_id')));
         $timeSpentMap = $this->ticketService->getWorkersTimeSpentForDate($workerIds, $date);
 
-        $workerStats = $this->buildWorkerStats($assignments, $timeSpentMap);
+        $workerStats = $this->buildWorkerStats($assignments, $timeSpentMap, $date);
         $queueStats = $this->buildQueueStats($assignments);
         $summary = $this->buildSummary(
             $workerStats,
@@ -157,7 +162,7 @@ final class ManagerMonitoringService implements ManagerMonitoringServiceInterfac
      *
      * @return array<string, array<string, mixed>>
      */
-    private function buildWorkerStats(array $assignments, array $timeSpentMap): array
+    private function buildWorkerStats(array $assignments, array $timeSpentMap, \DateTimeImmutable $date): array
     {
         $stats = [];
         $resolutionTotals = [];
@@ -208,9 +213,12 @@ final class ManagerMonitoringService implements ManagerMonitoringServiceInterfac
             $timeSpent = $timeSpentMap[$workerId] ?? 0;
             $stat['timeSpent'] = $timeSpent;
 
-            $ratio = $timePlanned > 0 ? $timeSpent / $timePlanned : 0.0;
-            $stat['workloadLevel'] = $this->determineWorkloadLevel($ratio);
-            $stat['efficiency'] = round(min(max($ratio, 0), 2), 2);
+            $availableTime = $this->workerAvailabilityService->getAvailableTimeForDate($workerId, $date);
+            $workloadRatio = $availableTime > 0 ? $timePlanned / $availableTime : 0.0;
+            $stat['workloadLevel'] = $this->determineWorkloadLevel($workloadRatio);
+
+            $efficiencyRatio = $timePlanned > 0 ? $timeSpent / $timePlanned : 0.0;
+            $stat['efficiency'] = round(min(max($efficiencyRatio, 0), 2), 2);
         }
         unset($stat);
 

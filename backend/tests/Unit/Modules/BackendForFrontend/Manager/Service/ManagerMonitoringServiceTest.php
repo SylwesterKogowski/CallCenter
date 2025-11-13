@@ -14,6 +14,7 @@ use App\Modules\TicketCategories\Application\TicketCategoryServiceInterface;
 use App\Modules\TicketCategories\Domain\TicketCategory;
 use App\Modules\Tickets\Application\TicketServiceInterface;
 use App\Modules\Tickets\Domain\TicketInterface;
+use App\Modules\WorkerAvailability\Application\WorkerAvailabilityServiceInterface;
 use App\Modules\WorkerSchedule\Application\Dto\WorkerScheduleAssignmentInterface;
 use App\Modules\WorkerSchedule\Application\WorkerScheduleServiceInterface;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -39,6 +40,9 @@ final class ManagerMonitoringServiceTest extends TestCase
     /** @var WorkerScheduleServiceInterface&MockObject */
     private WorkerScheduleServiceInterface $workerScheduleService;
 
+    /** @var WorkerAvailabilityServiceInterface&MockObject */
+    private WorkerAvailabilityServiceInterface $workerAvailabilityService;
+
     private ManagerMonitoringService $service;
 
     protected function setUp(): void
@@ -51,6 +55,7 @@ final class ManagerMonitoringServiceTest extends TestCase
         $this->ticketService = $this->createMock(TicketServiceInterface::class);
         $this->settingsRepository = $this->createMock(ManagerAutoAssignmentSettingsRepositoryInterface::class);
         $this->workerScheduleService = $this->createMock(WorkerScheduleServiceInterface::class);
+        $this->workerAvailabilityService = $this->createMock(WorkerAvailabilityServiceInterface::class);
 
         $this->service = new ManagerMonitoringService(
             $this->authenticationService,
@@ -59,6 +64,7 @@ final class ManagerMonitoringServiceTest extends TestCase
             $this->ticketService,
             $this->settingsRepository,
             $this->workerScheduleService,
+            $this->workerAvailabilityService,
             static fn (): \DateTimeImmutable => new \DateTimeImmutable('2024-05-03T12:00:00+00:00'),
         );
     }
@@ -143,6 +149,21 @@ final class ManagerMonitoringServiceTest extends TestCase
                 new TicketCategory('cat-2', 'Billing', null, 45),
             ]);
 
+        $this->workerAvailabilityService
+            ->expects(self::exactly(2))
+            ->method('getAvailableTimeForDate')
+            ->willReturnCallback(static function (string $workerId, \DateTimeImmutable $date): int {
+                self::assertSame('2024-05-01', $date->format('Y-m-d'));
+
+                // worker-1: 120 minutes available (2 hours)
+                // worker-2: 240 minutes available (4 hours)
+                return match ($workerId) {
+                    'worker-1' => 120,
+                    'worker-2' => 240,
+                    default => 0,
+                };
+            });
+
         $this->settingsRepository
             ->expects(self::once())
             ->method('find')
@@ -166,6 +187,7 @@ final class ManagerMonitoringServiceTest extends TestCase
         self::assertSame(2, $aliceStats['ticketsCount']);
         self::assertSame(45, $aliceStats['timeSpent']);
         self::assertSame(75, $aliceStats['timePlanned']);
+        // workloadLevel: 75 minutes planned / 120 minutes available = 0.625 -> 'normal'
         self::assertSame('normal', $aliceStats['workloadLevel']);
         self::assertSame(0.6, $aliceStats['efficiency']);
         self::assertSame(['Billing', 'Support'], $aliceStats['categories']);

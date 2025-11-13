@@ -327,6 +327,12 @@ final class WorkerScheduleControllerTest extends BackendForFrontendTestCase
             ->method('getWorkerTimeSpentOnTicket')
             ->willReturnOnConsecutiveCalls(25, 35);
 
+        $this->workerAvailabilityService
+            ->expects(self::once())
+            ->method('getAvailableTimeForDate')
+            ->with('worker-id', self::callback(static fn (\DateTimeImmutable $date): bool => $date->format('Y-m-d') === $today->format('Y-m-d')))
+            ->willReturn(600); // 10 hours = 600 minutes, ratio = 240/600 = 0.4 -> 'low'
+
         $this->createClientWithMocks($provider);
 
         /** @var WorkerScheduleController $controller */

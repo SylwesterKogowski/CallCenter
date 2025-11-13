@@ -13,6 +13,9 @@ use App\Modules\WorkerAvailability\Domain\WorkerAvailabilityRepositoryInterface;
 use App\Modules\WorkerAvailability\Infrastructure\Persistence\Doctrine\Entity\WorkerAvailability as WorkerAvailabilityEntity;
 use Symfony\Component\Uid\Uuid;
 
+/**
+ * Testy w {@see \Tests\Unit\Modules\WorkerAvailability\Application\WorkerAvailabilityServiceTest}.
+ */
 final class WorkerAvailabilityService implements WorkerAvailabilityServiceInterface
 {
     /**
@@ -179,6 +182,21 @@ final class WorkerAvailabilityService implements WorkerAvailabilityServiceInterf
         }
 
         return new CopyAvailabilityResult($copied, $skipped);
+    }
+
+    public function getAvailableTimeForDate(string $workerId, \DateTimeImmutable $date): int
+    {
+        $normalizedWorkerId = $this->normalizeWorkerId($workerId);
+        $normalizedDate = $this->normalizeDate($date);
+
+        $availabilities = $this->repository->findForDate($normalizedWorkerId, $normalizedDate);
+        $totalMinutes = 0;
+
+        foreach ($availabilities as $availability) {
+            $totalMinutes += $availability->getDurationMinutes();
+        }
+
+        return $totalMinutes;
     }
 
     /**

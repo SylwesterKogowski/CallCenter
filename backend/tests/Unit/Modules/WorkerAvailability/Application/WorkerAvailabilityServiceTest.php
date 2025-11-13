@@ -297,6 +297,56 @@ final class WorkerAvailabilityServiceTest extends TestCase
         self::assertSame($targetDate->format('Y-m-d'), $skipped[0]->format('Y-m-d'));
     }
 
+    public function testGetAvailableTimeForDateReturnsTotalMinutes(): void
+    {
+        $service = $this->createService();
+        $date = new \DateTimeImmutable('2030-07-01 00:00:00');
+
+        $availabilities = [
+            new WorkerAvailability(
+                Uuid::v7()->toRfc4122(),
+                self::WORKER_ID,
+                new \DateTimeImmutable('2030-07-01 09:00:00'),
+                new \DateTimeImmutable('2030-07-01 12:00:00'),
+                $this->now,
+            ),
+            new WorkerAvailability(
+                Uuid::v7()->toRfc4122(),
+                self::WORKER_ID,
+                new \DateTimeImmutable('2030-07-01 14:00:00'),
+                new \DateTimeImmutable('2030-07-01 17:00:00'),
+                $this->now,
+            ),
+        ];
+
+        $this->repository
+            ->expects(self::once())
+            ->method('findForDate')
+            ->with(self::WORKER_ID, $date->setTime(0, 0))
+            ->willReturn($availabilities);
+
+        $result = $service->getAvailableTimeForDate(self::WORKER_ID, $date);
+
+        // 3 hours (9-12) + 3 hours (14-17) = 6 hours = 360 minutes
+        self::assertSame(360, $result);
+    }
+
+    public function testGetAvailableTimeForDateReturnsZeroWhenNoAvailability(): void
+    {
+        $service = $this->createService();
+        $date = new \DateTimeImmutable('2030-07-02 00:00:00');
+
+        $this->repository
+            ->expects(self::once())
+            ->method('findForDate')
+            ->with(self::WORKER_ID, $date->setTime(0, 0))
+            ->willReturn([]);
+
+        $result = $service->getAvailableTimeForDate(self::WORKER_ID, $date);
+
+        self::assertSame(0, $result);
+    }
+
     private function createService(): WorkerAvailabilityService
     {
         $uuidSequence = 0;

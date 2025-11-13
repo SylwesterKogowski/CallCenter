@@ -24,6 +24,7 @@ use App\Modules\Tickets\Domain\Exception\TicketWorkNotFoundException;
 use App\Modules\Tickets\Domain\TicketInterface;
 use App\Modules\Tickets\Domain\TicketMessageInterface;
 use App\Modules\Tickets\Domain\TicketNoteInterface;
+use App\Modules\WorkerAvailability\Application\WorkerAvailabilityServiceInterface;
 use App\Modules\WorkerSchedule\Application\Dto\WorkerScheduleAssignmentInterface;
 use App\Modules\WorkerSchedule\Application\WorkerScheduleServiceInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -48,6 +49,7 @@ final class WorkerScheduleController extends AbstractJsonController
         private readonly WorkerScheduleServiceInterface $workerScheduleService,
         private readonly TicketServiceInterface $ticketService,
         private readonly AuthenticationServiceInterface $authenticationService,
+        private readonly WorkerAvailabilityServiceInterface $workerAvailabilityService,
     ) {
         parent::__construct($validator, $debug);
     }
@@ -141,7 +143,7 @@ final class WorkerScheduleController extends AbstractJsonController
             }
 
             return [
-                'status' => $this->buildWorkStatusPayload($stats, $timeSpent),
+                'status' => $this->buildWorkStatusPayload($stats, $timeSpent, $worker->getId(), $today),
                 'todayStats' => $this->buildTodayStatsPayload($stats, $today, $timeSpent),
             ];
         });
@@ -465,7 +467,7 @@ final class WorkerScheduleController extends AbstractJsonController
      *     timePlanned: int
      * }
      */
-    private function buildWorkStatusPayload(array $stats, int $timeSpent): array
+    private function buildWorkStatusPayload(array $stats, int $timeSpent, string $workerId, \DateTimeImmutable $date): array
     {
         $ticketsCount = max(0, $stats['ticketsCount'] ?? 0);
         $timePlanned = max(0, $stats['timePlanned'] ?? 0);
@@ -480,17 +482,18 @@ final class WorkerScheduleController extends AbstractJsonController
             ];
         }
 
-        $ratio = $timePlanned > 0 ? $timeSpent / max($timePlanned, 1) : 0;
+        $availableTime = $this->workerAvailabilityService->getAvailableTimeForDate($workerId, $date);
+        $ratio = $availableTime > 0 ? $timePlanned / $availableTime : 0.0;
         $level = 'normal';
         $message = 'Obciążenie w normie';
 
         if ($ratio < 0.5) {
             $level = 'low';
             $message = 'Masz sporo wolnego czasu – rozważ przejęcie dodatkowych ticketów';
-        } elseif ($ratio > 1.5) {
+        } elseif ($ratio >= 1.0) {
             $level = 'critical';
             $message = 'Krytyczne obciążenie – porozmawiaj z managerem o wsparciu';
-        } elseif ($ratio > 1.2) {
+        } elseif ($ratio >= 0.8) {
             $level = 'high';
             $message = 'Duże obciążenie – monitoruj postępy i priorytety';
         }

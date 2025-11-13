@@ -45,4 +45,10 @@ interface WorkerAvailabilityServiceInterface
         array $targetDates,
         bool $overwrite,
     ): CopyAvailabilityResultInterface;
+
+    /**
+     * Returns total available time in minutes for a worker on a given date.
+     * Returns 0 if the worker has no availability for that date.
+     */
+    public function getAvailableTimeForDate(string $workerId, \DateTimeImmutable $date): int;
 }
